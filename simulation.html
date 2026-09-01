@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>AI Road Safety Simulation</title>
+<title>AI Road Safety Simulation • Autonomous Cockpit</title>
 
 <style>
 
@@ -20,7 +20,7 @@ html,body{
     width:100%;
     height:100%;
     overflow:hidden;
-    font-family:Inter,Arial,sans-serif;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
     background:#87ceeb;
 }
 
@@ -40,84 +40,77 @@ canvas{
     display:block;
 }
 
-
-/* =========================================================
-   TOP TITLE
-========================================================= */
-
 #title{
     position:absolute;
     top:16px;
     left:50%;
     transform:translateX(-50%);
-    padding:12px 25px;
+    padding:10px 24px;
     border-radius:30px;
     background:rgba(255,255,255,.94);
-    color:#26313a;
-    font-size:17px;
+    color:#1e293b;
+    font-size:15px;
     font-weight:800;
     letter-spacing:.2px;
     box-shadow:0 10px 35px rgba(0,0,0,.18);
     z-index:20;
     white-space:nowrap;
+    border:1px solid rgba(255,255,255,.8);
 }
-
-
-/* =========================================================
-   LEFT TELEMETRY
-========================================================= */
 
 #telemetry{
     position:absolute;
     left:18px;
     top:18px;
     width:275px;
-    max-height:94vh;
+    max-height:92vh;
     overflow-y:auto;
-    padding:18px;
+    padding:16px 18px;
     border-radius:20px;
     background:rgba(255,255,255,.94);
     box-shadow:0 12px 40px rgba(0,0,0,.18);
     backdrop-filter:blur(12px);
     z-index:20;
+    border:1px solid rgba(255,255,255,.8);
 }
 
 .telemetry-title{
-    font-size:16px;
-    font-weight:800;
-    margin-bottom:15px;
+    font-size:15px;
+    font-weight:850;
+    margin-bottom:12px;
+    color:#0f172a;
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:6px;
 }
 
 .row{
-    margin-bottom:11px;
+    margin-bottom:10px;
 }
 
 .label{
-    font-size:8px;
-    color:#8b9299;
-    font-weight:700;
-    letter-spacing:1.2px;
+    font-size:8.5px;
+    color:#64748b;
+    font-weight:750;
+    letter-spacing:1px;
     text-transform:uppercase;
 }
 
 .value{
-    margin-top:4px;
-    font-size:13.5px;
-    color:#29313a;
+    margin-top:3px;
+    font-size:13px;
+    color:#1e293b;
     font-weight:750;
 }
 
 .badge{
     display:inline-block;
-    margin-top:4px;
-    padding:5px 11px;
-    border-radius:20px;
+    margin-top:3px;
+    padding:4px 10px;
+    border-radius:16px;
     font-size:10px;
     font-weight:850;
-    letter-spacing:0.4px;
+    letter-spacing:0.3px;
 }
 
 .badge-continue{ background:#d8f5df; color:#277746; border:1px solid #a7f3d0; }
@@ -139,79 +132,77 @@ canvas{
     border:1px solid #e2e8f0;
 }
 
-
-
-/* =========================================================
-   RIGHT CONTROL PANEL
-========================================================= */
-
 #controls{
     position:absolute;
     right:18px;
     top:18px;
-    width:255px;
-    padding:17px;
+    width:250px;
+    padding:16px;
     border-radius:20px;
     background:rgba(255,255,255,.94);
     box-shadow:0 12px 40px rgba(0,0,0,.18);
     backdrop-filter:blur(12px);
     z-index:20;
+    border:1px solid rgba(255,255,255,.8);
 }
 
 .control-title{
-    font-size:16px;
-    font-weight:800;
-    color:#29313a;
-    margin-bottom:13px;
+    font-size:15px;
+    font-weight:850;
+    color:#0f172a;
+    margin-bottom:12px;
 }
 
 button{
     width:100%;
     border:none;
-    padding:10px 12px;
-    margin-bottom:7px;
-    border-radius:11px;
-    background:#eef2f5;
-    color:#303840;
+    padding:9px 12px;
+    margin-bottom:6px;
+    border-radius:10px;
+    background:#f1f5f9;
+    color:#1e293b;
     font-size:11px;
     font-weight:750;
     cursor:pointer;
     transition:.15s ease;
+    border:1px solid #e2e8f0;
 }
 
 button:hover{
-    transform:translateY(-2px);
-    background:#dfe7ed;
+    transform:translateY(-1px);
+    background:#e2e8f0;
 }
 
 button:active{
-    transform:scale(.97);
+    transform:scale(.98);
 }
 
 #reset{
-    background:#29313a;
+    background:#1e293b;
     color:white;
+    border:none;
+    margin-top:4px;
 }
 
-
-/* =========================================================
-   WEATHER WARNING
-========================================================= */
+#reset:hover{
+    background:#0f172a;
+}
 
 #weather{
     position:absolute;
     top:170px;
-    right:292px;
-    width:310px;
-    padding:17px;
-    border-radius:19px;
+    right:285px;
+    width:300px;
+    padding:16px;
+    border-radius:18px;
     background:rgba(255,255,255,.96);
     box-shadow:0 15px 45px rgba(0,0,0,.22);
     z-index:25;
     opacity:0;
     transform:translateX(20px);
     pointer-events:none;
-    transition:.3s;
+    transition:.3s ease;
+    border:1px solid rgba(255,255,255,.8);
 }
 
 #weather.show{
@@ -220,65 +211,57 @@ button:active{
 }
 
 #weatherIcon{
-    font-size:30px;
+    font-size:28px;
 }
 
 #weatherTitle{
-    font-size:17px;
+    font-size:15px;
     font-weight:850;
     margin-top:4px;
+    color:#0f172a;
 }
 
 #weatherText{
-    margin-top:7px;
-    color:#626b73;
-    font-size:11px;
-    line-height:1.5;
+    margin-top:6px;
+    color:#475569;
+    font-size:10.5px;
+    line-height:1.45;
 }
 
 #weatherSpeed{
     display:inline-block;
-    margin-top:11px;
-    padding:7px 11px;
-    border-radius:15px;
+    margin-top:10px;
+    padding:6px 10px;
+    border-radius:14px;
     background:#fff0ce;
     color:#946000;
-    font-size:10px;
+    font-size:9.5px;
     font-weight:850;
 }
-
-
-/* =========================================================
-   EVENT MESSAGE
-========================================================= */
 
 #message{
     position:absolute;
     bottom:34px;
     left:50%;
     transform:translateX(-50%) translateY(10px);
-    padding:11px 20px;
+    padding:10px 20px;
     border-radius:25px;
-    background:rgba(24,29,34,.93);
+    background:rgba(15,23,42,.94);
     color:white;
     font-size:12px;
     font-weight:750;
     box-shadow:0 8px 30px rgba(0,0,0,.25);
     z-index:30;
     opacity:0;
-    transition:.25s;
+    transition:.25s ease;
     white-space:nowrap;
+    border:1px solid rgba(255,255,255,.15);
 }
 
 #message.show{
     opacity:1;
     transform:translateX(-50%) translateY(0);
 }
-
-
-/* =========================================================
-   CAMERA HINT
-========================================================= */
 
 #hint{
     position:absolute;
@@ -293,7 +276,6 @@ button:active{
 
 </head>
 
-
 <body>
 
 <div id="app">
@@ -301,9 +283,8 @@ button:active{
 <div id="canvas"></div>
 
 <div id="title">
-    🚗 AI ROAD SAFETY • PREDICT • PREVENT • PROTECT
+🚗 AI ROAD SAFETY • PREDICT • PREVENT • PROTECT
 </div>
-
 
 <div id="telemetry">
 
@@ -368,8 +349,6 @@ button:active{
 
 </div>
 
-
-
 <div id="controls">
 
     <div class="control-title">
@@ -406,7 +385,6 @@ button:active{
 
 </div>
 
-
 <div id="weather">
 
     <div id="weatherIcon"></div>
@@ -419,1854 +397,557 @@ button:active{
 
 </div>
 
-
 <div id="message"></div>
 
 <div id="hint">
-    Drag to rotate camera • Scroll to zoom
+Drag to rotate camera • Scroll to zoom
 </div>
 
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-
 
 <script>
 
 /* =========================================================
-   SCENE
+   SCENE & CAMERA
 ========================================================= */
 
 const scene = new THREE.Scene();
-
 scene.background = new THREE.Color(0x91d8ff);
 
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
-const camera =
-    new THREE.PerspectiveCamera(
-        52,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-
-camera.position.set(
-    10,
-    7.5,
-    18
+const camera = new THREE.PerspectiveCamera(
+    52,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
 );
+
+camera.position.set(10, 7.5, 18);
 
 
 /* =========================================================
-   RENDERER
+   RENDERER (OPTIMIZED FOR 60 FPS)
 ========================================================= */
 
-const renderer =
-    new THREE.WebGLRenderer({
-        antialias: true,
-        powerPreference: "high-performance",
-        precision: "mediump"
-    });
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: "high-performance",
+    precision: "mediump"
+});
 
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
-
-renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 1.5)
-);
-
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-document
-    .getElementById("canvas")
-    .appendChild(renderer.domElement);
+document.getElementById("canvas").appendChild(renderer.domElement);
 
 
 /* =========================================================
    LIGHTING
 ========================================================= */
 
-const hemisphere =
-    new THREE.HemisphereLight(
-        0xdff5ff,
-        0x597553,
-        2.8
-    );
-
+const hemisphere = new THREE.HemisphereLight(0xdff5ff, 0x597553, 2.8);
 scene.add(hemisphere);
 
-
-const sunlight =
-    new THREE.DirectionalLight(
-        0xfff4d0,
-        3.4
-    );
-
-sunlight.position.set(
-    -25,
-    35,
-    20
-);
-
+const sunlight = new THREE.DirectionalLight(0xfff4d0, 3.4);
+sunlight.position.set(-25, 35, 20);
 sunlight.castShadow = true;
 sunlight.shadow.mapSize.width = 1024;
 sunlight.shadow.mapSize.height = 1024;
-
 sunlight.shadow.camera.left = -40;
 sunlight.shadow.camera.right = 40;
 sunlight.shadow.camera.top = 40;
 sunlight.shadow.camera.bottom = -40;
-
 scene.add(sunlight);
-
 
 
 /* =========================================================
    SUN
 ========================================================= */
 
-const sunMesh =
-    new THREE.Mesh(
-        new THREE.SphereGeometry(
-            3.5,
-            32,
-            32
-        ),
-        new THREE.MeshBasicMaterial({
-            color:0xffefaa
-        })
-    );
-
-sunMesh.position.set(
-    -30,
-    28,
-    -80
+const sunMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(3.5, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffefaa })
 );
-
+sunMesh.position.set(-30, 28, -80);
 scene.add(sunMesh);
 
 
 /* =========================================================
-   GROUND
+   GROUND & ROAD
 ========================================================= */
 
-const ground =
-    new THREE.Mesh(
-        new THREE.PlaneGeometry(
-            500,
-            500
-        ),
-        new THREE.MeshStandardMaterial({
-            color:0x83c879,
-            roughness:1
-        })
-    );
-
-ground.rotation.x=-Math.PI/2;
-ground.position.y=-0.12;
-ground.receiveShadow=true;
-
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 500),
+    new THREE.MeshStandardMaterial({ color: 0x83c879, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.12;
+ground.receiveShadow = true;
 scene.add(ground);
 
-
-/* =========================================================
-   ROAD
-========================================================= */
-
-const road =
-    new THREE.Mesh(
-        new THREE.BoxGeometry(
-            12,
-            .2,
-            500
-        ),
-        new THREE.MeshStandardMaterial({
-            color:0x30343a,
-            roughness:.75,
-            metalness:.05
-        })
-    );
-
-road.receiveShadow=true;
-
+const road = new THREE.Mesh(
+    new THREE.BoxGeometry(12, 0.2, 500),
+    new THREE.MeshStandardMaterial({ color: 0x30343a, roughness: 0.75, metalness: 0.05 })
+);
+road.receiveShadow = true;
 scene.add(road);
 
 
 /* =========================================================
-   ROAD SHOULDERS
+   ROAD SHOULDERS & LINES
 ========================================================= */
 
-function addRoadShoulder(x){
-
-    const shoulder =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .8,
-                .035,
-                500
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xb7b9a9,
-                roughness:1
-            })
-        );
-
-    shoulder.position.set(
-        x,
-        .12,
-        0
+function addRoadShoulder(x) {
+    const shoulder = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.035, 500),
+        new THREE.MeshStandardMaterial({ color: 0xb7b9a9, roughness: 1 })
     );
-
+    shoulder.position.set(x, 0.12, 0);
     scene.add(shoulder);
 }
-
 addRoadShoulder(-6);
 addRoadShoulder(6);
 
-
-/* =========================================================
-   ROAD EDGE LINES
-========================================================= */
-
-function addRoadLine(x){
-
-    const line =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .16,
-                .06,
-                500
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xffffff
-            })
-        );
-
-    line.position.set(
-        x,
-        .16,
-        0
+function addRoadLine(x) {
+    const line = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16, 0.06, 500),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
     );
-
+    line.position.set(x, 0.16, 0);
     scene.add(line);
 }
-
 addRoadLine(-5.55);
 addRoadLine(5.55);
 
-
-/* =========================================================
-   CENTER DASHES
-========================================================= */
-
-const centerMarkers=[];
-
-for(
-    let z=-250;
-    z<250;
-    z+=8
-){
-
-    const marker =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .12,
-                .06,
-                4
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xffffff
-            })
-        );
-
-    marker.position.set(
-        0,
-        .17,
-        z
+const centerMarkers = [];
+for (let z = -250; z < 250; z += 8) {
+    const marker = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.06, 4),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
     );
-
+    marker.position.set(0, 0.17, z);
     scene.add(marker);
-
     centerMarkers.push(marker);
 }
 
-
-/* =========================================================
-   LANES
-========================================================= */
-
-const LEFT=-3;
-const RIGHT=3;
-
-const LANES=[
-    LEFT,
-    RIGHT
-];
+const LEFT = -3;
+const RIGHT = 3;
+const LANES = [LEFT, RIGHT];
 
 
 /* =========================================================
-   TREE CREATOR
+   TREES, BUSHES & ENVIRONMENT
 ========================================================= */
 
-function createTree(x,z,scale=1){
+function createTree(x, z, scale = 1) {
+    const tree = new THREE.Group();
 
-    const tree =
-        new THREE.Group();
-
-
-    const trunk =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .20,
-                .32,
-                2.4,
-                10
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x795548,
-                roughness:1
-            })
-        );
-
-    trunk.position.y=1.2;
-    trunk.castShadow=true;
-
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.20, 0.32, 2.4, 10),
+        new THREE.MeshStandardMaterial({ color: 0x795548, roughness: 1 })
+    );
+    trunk.position.y = 1.2;
+    trunk.castShadow = true;
     tree.add(trunk);
 
-
-    const foliageMat =
-        new THREE.MeshStandardMaterial({
-            color:0x3e9951,
-            roughness:1
-        });
-
-
-    const lower =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                1.25,
-                16,
-                12
-            ),
-            foliageMat
-        );
-
-    lower.position.y=2.35;
-    lower.castShadow=true;
-
+    const lower = new THREE.Mesh(
+        new THREE.SphereGeometry(1.25, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0x3e9951, roughness: 1 })
+    );
+    lower.position.y = 2.35;
+    lower.castShadow = true;
     tree.add(lower);
 
-
-    const middle =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                1.05,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x51a85e,
-                roughness:1
-            })
-        );
-
-    middle.position.set(
-        -.45,
-        3.2,
-        0
+    const middle = new THREE.Mesh(
+        new THREE.SphereGeometry(1.05, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0x51a85e, roughness: 1 })
     );
-
-    middle.castShadow=true;
-
+    middle.position.set(-0.45, 3.2, 0);
+    middle.castShadow = true;
     tree.add(middle);
 
-
-    const top =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .8,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x67b96d,
-                roughness:1
-            })
-        );
-
-    top.position.set(
-        .35,
-        3.65,
-        0
+    const top = new THREE.Mesh(
+        new THREE.SphereGeometry(0.8, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0x67b96d, roughness: 1 })
     );
-
-    top.castShadow=true;
-
+    top.position.set(0.35, 3.65, 0);
+    top.castShadow = true;
     tree.add(top);
 
-
-    tree.position.set(
-        x,
-        0,
-        z
-    );
-
+    tree.position.set(x, 0, z);
     tree.scale.setScalar(scale);
-
     scene.add(tree);
-
     return tree;
 }
 
-
-const trees=[];
-
-
-/* =========================================================
-   ROAD SIDE TREES
-========================================================= */
-
-for(
-    let z=-10;
-    z>-340;
-    z-=13
-){
-
-    trees.push(
-        createTree(
-            -8.5-Math.random()*2,
-            z,
-            .75+Math.random()*.45
-        )
-    );
-
-    trees.push(
-        createTree(
-            8.5+Math.random()*2,
-            z-5,
-            .75+Math.random()*.45
-        )
-    );
+const trees = [];
+for (let z = -10; z > -340; z -= 13) {
+    trees.push(createTree(-8.5 - Math.random() * 2, z, 0.75 + Math.random() * 0.45));
+    trees.push(createTree(8.5 + Math.random() * 2, z - 5, 0.75 + Math.random() * 0.45));
 }
 
-
-/* =========================================================
-   BUSH
-========================================================= */
-
-function createBush(x,z,scale=1){
-
-    const bush =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .7,
-                14,
-                10
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x4d9f50,
-                roughness:1
-            })
-        );
-
-    bush.position.set(
-        x,
-        .5,
-        z
+function createBush(x, z, scale = 1) {
+    const bush = new THREE.Mesh(
+        new THREE.SphereGeometry(0.7, 14, 10),
+        new THREE.MeshStandardMaterial({ color: 0x4d9f50, roughness: 1 })
     );
-
-    bush.scale.set(
-        1.4*scale,
-        .8*scale,
-        1.1*scale
-    );
-
-    bush.castShadow=true;
-
+    bush.position.set(x, 0.5, z);
+    bush.scale.set(1.4 * scale, 0.8 * scale, 1.1 * scale);
+    bush.castShadow = true;
     scene.add(bush);
-
     return bush;
 }
 
-
-/* =========================================================
-   BUSHES
-========================================================= */
-
-const bushes=[];
-
-for(
-    let z=-8;
-    z>-320;
-    z-=9
-){
-
-    bushes.push(
-        createBush(
-            -7.2,
-            z,
-            .55+Math.random()*.5
-        )
-    );
-
-    bushes.push(
-        createBush(
-            7.2,
-            z-3,
-            .55+Math.random()*.5
-        )
-    );
+const bushes = [];
+for (let z = -8; z > -320; z -= 9) {
+    bushes.push(createBush(-7.2, z, 0.55 + Math.random() * 0.5));
+    bushes.push(createBush(7.2, z - 3, 0.55 + Math.random() * 0.5));
 }
 
-
-/* =========================================================
-   FLOWERS
-========================================================= */
-
-const flowers=[];
-
-function createFlower(x,z){
-
-    const flower =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .09,
-                8,
-                8
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xffe28a
-            })
-        );
-
-    flower.position.set(
-        x,
-        .18,
-        z
+const flowers = [];
+function createFlower(x, z) {
+    const flower = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 8, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffe28a })
     );
-
+    flower.position.set(x, 0.18, z);
     scene.add(flower);
-
     return flower;
 }
-
-
-for(
-    let z=-5;
-    z>-300;
-    z-=4
-){
-
-    flowers.push(
-        createFlower(
-            -6.65-Math.random()*.4,
-            z
-        )
-    );
-
-    flowers.push(
-        createFlower(
-            6.65+Math.random()*.4,
-            z-1.5
-        )
-    );
+for (let z = -5; z > -300; z -= 4) {
+    flowers.push(createFlower(-6.65 - Math.random() * 0.4, z));
+    flowers.push(createFlower(6.65 + Math.random() * 0.4, z - 1.5));
 }
 
-
-/* =========================================================
-   CLOUDS
-========================================================= */
-
-function createCloud(
-    x,
-    y,
-    z,
-    scale
-){
-
-    const cloud =
-        new THREE.Group();
-
-
-    const material =
-        new THREE.MeshStandardMaterial({
-            color:0xffffff,
-            roughness:1
-        });
-
-
-    const parts=[
-        [-1.5,0,0,1],
-        [-.6,.35,0,1.35],
-        [.55,.25,0,1.15],
-        [1.4,0,0,.85]
-    ];
-
-
-    parts.forEach(p=>{
-
-        const puff =
-            new THREE.Mesh(
-                new THREE.SphereGeometry(
-                    p[3],
-                    16,
-                    12
-                ),
-                material
-            );
-
-        puff.position.set(
-            p[0],
-            p[1],
-            p[2]
-        );
-
+function createCloud(x, y, z, scale) {
+    const cloud = new THREE.Group();
+    const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+    const parts = [[-1.5, 0, 0, 1], [-0.6, 0.35, 0, 1.35], [0.55, 0.25, 0, 1.15], [1.4, 0, 0, 0.85]];
+    parts.forEach(p => {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(p[3], 16, 12), material);
+        puff.position.set(p[0], p[1], p[2]);
         cloud.add(puff);
     });
-
-
-    cloud.position.set(
-        x,
-        y,
-        z
-    );
-
+    cloud.position.set(x, y, z);
     cloud.scale.setScalar(scale);
-
     scene.add(cloud);
-
     return cloud;
 }
+const clouds = [
+    createCloud(-20, 17, -60, 2.2),
+    createCloud(20, 18, -120, 1.8),
+    createCloud(-24, 15, -200, 1.6),
+    createCloud(25, 17, -270, 2)
+];
 
-
-const clouds=[];
-
-clouds.push(
-    createCloud(-20,17,-60,2.2)
-);
-
-clouds.push(
-    createCloud(20,18,-120,1.8)
-);
-
-clouds.push(
-    createCloud(-24,15,-200,1.6)
-);
-
-clouds.push(
-    createCloud(25,17,-270,2)
-);
-
-
-/* =========================================================
-   CITY BUILDINGS
-========================================================= */
-
-function createBuilding(x, z, width, depth, height){
-
+function createBuilding(x, z, width, depth, height) {
     const building = new THREE.Group();
-
-    /* BUILDING BODY */
-
-    const body =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                width,
-                height,
-                depth
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x7d8791,
-                roughness: .85
-            })
-        );
-
-    building.position.set(
-        x,
-        0,
-        z
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        new THREE.MeshStandardMaterial({ color: 0x7d8791, roughness: 0.85 })
     );
-
     body.position.y = height / 2;
-
     body.castShadow = true;
     body.receiveShadow = true;
-
     building.add(body);
 
-
-    /* WINDOWS */
-
-    const windowMat =
-        new THREE.MeshStandardMaterial({
-            color: 0xbdebf5,
-            emissive: 0x416b75,
-            emissiveIntensity: .35,
-            roughness: .2
-        });
-
-
-    const windowWidth = .32;
-    const windowHeight = .45;
-
-    const spacingX = .75;
-    const spacingY = .95;
-
-
-    const columns =
-        Math.max(
-            1,
-            Math.floor(
-                (width - .6) / spacingX
-            )
-        );
-
-    const rows =
-        Math.max(
-            1,
-            Math.floor(
-                (height - .8) / spacingY
-            )
-        );
-
-
-    /* FRONT WINDOWS */
-
-    for(let row = 0; row < rows; row++){
-
-        for(let col = 0; col < columns; col++){
-
-            const windowMesh =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        windowWidth,
-                        windowHeight,
-                        .04
-                    ),
-                    windowMat
-                );
-
-            const startX =
-                -((columns - 1) *
-                spacingX) / 2;
-
-            windowMesh.position.set(
-                startX +
-                col * spacingX,
-
-                .65 +
-                row * spacingY,
-
-                depth / 2 + .025
-            );
-
-            building.add(windowMesh);
-        }
-    }
-
-
-    /* BACK WINDOWS */
-
-    for(let row = 0; row < rows; row++){
-
-        for(let col = 0; col < columns; col++){
-
-            const windowMesh =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        windowWidth,
-                        windowHeight,
-                        .04
-                    ),
-                    windowMat
-                );
-
-            const startX =
-                -((columns - 1) *
-                spacingX) / 2;
-
-            windowMesh.position.set(
-                startX +
-                col * spacingX,
-
-                .65 +
-                row * spacingY,
-
-                -depth / 2 - .025
-            );
-
-            building.add(windowMesh);
-        }
-    }
-
-
-    /* SIDE WINDOWS */
-
-    const sideColumns =
-        Math.max(
-            1,
-            Math.floor(
-                (depth - .6) / spacingX
-            )
-        );
-
-
-    for(let row = 0; row < rows; row++){
-
-        for(let col = 0; col < sideColumns; col++){
-
-            const startZ =
-                -((sideColumns - 1) *
-                spacingX) / 2;
-
-
-            /* LEFT SIDE */
-
-            const leftWindow =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        .04,
-                        windowHeight,
-                        windowWidth
-                    ),
-                    windowMat
-                );
-
-            leftWindow.position.set(
-                -width / 2 - .025,
-
-                .65 +
-                row * spacingY,
-
-                startZ +
-                col * spacingX
-            );
-
-            building.add(leftWindow);
-
-
-            /* RIGHT SIDE */
-
-            const rightWindow =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        .04,
-                        windowHeight,
-                        windowWidth
-                    ),
-                    windowMat
-                );
-
-            rightWindow.position.set(
-                width / 2 + .025,
-
-                .65 +
-                row * spacingY,
-
-                startZ +
-                col * spacingX
-            );
-
-            building.add(rightWindow);
-        }
-    }
-
-
-    /* ROOF */
-
-    const roof =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                width + .15,
-                .18,
-                depth + .15
-            ),
-            new THREE.MeshStandardMaterial({
-                color: 0x555d65,
-                roughness: .9
-            })
-        );
-
-    roof.position.y =
-        height + .09;
-
+    const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(width + 0.15, 0.18, depth + 0.15),
+        new THREE.MeshStandardMaterial({ color: 0x555d65, roughness: 0.9 })
+    );
+    roof.position.y = height + 0.09;
     roof.castShadow = true;
-
     building.add(roof);
 
-
+    building.position.set(x, 0, z);
     scene.add(building);
-
     return building;
 }
-
-
-/* =========================================================
-   BUILDINGS
-========================================================= */
-
 const buildings = [];
-
-
-/* LEFT BUILDINGS */
-
-for(
-    let z = -30;
-    z > -340;
-    z -= 35
-){
-
-    buildings.push(
-        createBuilding(
-            -14,
-            z,
-            5.5,
-            11,
-            9 + Math.random() * 8
-        )
-    );
+for (let z = -30; z > -340; z -= 35) {
+    buildings.push(createBuilding(-14, z, 5.5, 11, 9 + Math.random() * 8));
+}
+for (let z = -45; z > -340; z -= 40) {
+    buildings.push(createBuilding(14, z, 5.5, 11, 10 + Math.random() * 9));
 }
 
-
-/* RIGHT BUILDINGS */
-
-for(
-    let z = -45;
-    z > -340;
-    z -= 40
-){
-
-    buildings.push(
-        createBuilding(
-            14,
-            z,
-            5.5,
-            11,
-            10 + Math.random() * 9
-        )
+const streetLights = [];
+function createStreetLight(x, z) {
+    const group = new THREE.Group();
+    const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.1, 4, 10),
+        new THREE.MeshStandardMaterial({ color: 0x596168, metalness: 0.6, roughness: 0.4 })
     );
-}
-
-
-/* =========================================================
-   STREET LIGHTS
-========================================================= */
-
-const streetLights=[];
-
-
-function createStreetLight(x,z){
-
-    const group =
-        new THREE.Group();
-
-
-    const pole =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .08,
-                .1,
-                4,
-                10
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x596168,
-                metalness:.6,
-                roughness:.4
-            })
-        );
-
-    pole.position.y=2;
-
+    pole.position.y = 2;
     group.add(pole);
 
-
-    const arm =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .8,
-                .08,
-                .08
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x596168
-            })
-        );
-
-    arm.position.set(
-        x<0 ? .35 : -.35,
-        4,
-        0
+    const arm = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.08, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x596168 })
     );
-
+    arm.position.set(x < 0 ? 0.35 : -0.35, 4, 0);
     group.add(arm);
 
-
-    const lamp =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .16,
-                12,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xfff0a8,
-                emissive:0xffd85a,
-                emissiveIntensity:1
-            })
-        );
-
-    lamp.position.set(
-        x<0 ? .7 : -.7,
-        3.92,
-        0
+    const lamp = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xfff0a8, emissive: 0xffd85a, emissiveIntensity: 1 })
     );
-
+    lamp.position.set(x < 0 ? 0.7 : -0.7, 3.92, 0);
     group.add(lamp);
 
-
-    group.position.set(
-        x,
-        0,
-        z
-    );
-
+    group.position.set(x, 0, z);
     scene.add(group);
+    return group;
+}
+for (let z = -15; z > -330; z -= 30) {
+    streetLights.push(createStreetLight(-6.9, z));
+    streetLights.push(createStreetLight(6.9, z - 15));
+}
 
+
+/* =========================================================
+   CAR MESH CREATOR
+========================================================= */
+
+function createCar(color, isPlayer = false) {
+    const car = new THREE.Group();
+
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1.75, 0.58, 3.25),
+        new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.15 })
+    );
+    body.position.y = 0.57;
+    body.castShadow = true;
+    car.add(body);
+
+    const lower = new THREE.Mesh(
+        new THREE.BoxGeometry(1.9, 0.28, 2.8),
+        new THREE.MeshStandardMaterial({ color: color, roughness: 0.35 })
+    );
+    lower.position.y = 0.38;
+    car.add(lower);
+
+    const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(1.35, 0.67, 1.65),
+        new THREE.MeshStandardMaterial({ color: 0x75c6d9, roughness: 0.1, metalness: 0.35, transparent: true, opacity: 0.9 })
+    );
+    cabin.position.y = 1.02;
+    cabin.castShadow = true;
+    car.add(cabin);
+
+    const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(1.22, 0.07, 1.48),
+        new THREE.MeshStandardMaterial({ color: 0x5faabd, roughness: 0.2 })
+    );
+    roof.position.y = 1.37;
+    car.add(roof);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.25, 20);
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x17191c, roughness: 0.7 });
+    const wheels = [];
+    [[-0.94, 0.38, -1.05], [0.94, 0.38, -1.05], [-0.94, 0.38, 1.05], [0.94, 0.38, 1.05]].forEach(p => {
+        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(p[0], p[1], p[2]);
+        wheel.castShadow = true;
+        car.add(wheel);
+        wheels.push(wheel);
+    });
+    car.userData.wheels = wheels;
+
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffffc2, emissive: 0xffdd70, emissiveIntensity: 1.7 });
+    [-0.53, 0.53].forEach(x => {
+        const light = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.08), headMat);
+        light.position.set(x, 0.68, -1.65);
+        car.add(light);
+    });
+
+    const brakeMat = new THREE.MeshStandardMaterial({ color: 0xff3030, emissive: 0xff1111, emissiveIntensity: 0.7 });
+    [-0.53, 0.53].forEach(x => {
+        const light = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.13, 0.08), brakeMat);
+        light.position.set(x, 0.67, 1.65);
+        car.add(light);
+    });
+
+    if (isPlayer) {
+        const ring = new THREE.Mesh(
+            new THREE.RingGeometry(2.1, 2.16, 48),
+            new THREE.MeshBasicMaterial({ color: 0x70e1ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.22;
+        car.add(ring);
+        car.userData.sensorRing = ring;
+    }
+    return car;
+}
+
+const smartCar = createCar(0xff6591, true);
+smartCar.position.set(RIGHT, 0, 0);
+scene.add(smartCar);
+
+const traffic = [];
+function addTraffic(lane, z, color, speed) {
+    const mesh = createCar(color, false);
+    mesh.position.set(lane, 0, z);
+    scene.add(mesh);
+    const car = { mesh: mesh, lane: lane, speed: speed, baseSpeed: speed };
+    traffic.push(car);
+    return car;
+}
+addTraffic(LEFT, -70, 0x5b8cff, 17);
+addTraffic(RIGHT, -125, 0xffc44d, 19);
+addTraffic(LEFT, -180, 0x9c7bea, 18);
+addTraffic(RIGHT, -235, 0x55d39a, 17);
+addTraffic(LEFT, -285, 0xff775f, 20);
+
+
+/* =========================================================
+   PEDESTRIAN, ANIMAL & OBSTACLE MESHES
+========================================================= */
+
+let pedestrian = null;
+function createPedestrian() {
+    const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2563eb });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8 });
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.3), bodyMat);
+    torso.position.y = 1.0;
+    torso.castShadow = true;
+    group.add(torso);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), skinMat);
+    head.position.y = 1.6;
+    head.castShadow = true;
+    group.add(head);
+
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+    [-0.15, 0.15].forEach(x => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8), legMat);
+        leg.position.set(x, 0.3, 0);
+        leg.castShadow = true;
+        group.add(leg);
+    });
+    scene.add(group);
     return group;
 }
 
-
-for(
-    let z=-15;
-    z>-300;
-    z-=30
-){
-
-    streetLights.push(
-        createStreetLight(
-            -6.9,
-            z
-        )
+let animal = null;
+function createAnimal() {
+    const dog = new THREE.Group();
+    const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.52, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0xa66b40, roughness: 1 })
     );
-
-    streetLights.push(
-        createStreetLight(
-            6.9,
-            z-15
-        )
-    );
-}
-
-
-/* =========================================================
-   CAR CREATOR
-========================================================= */
-
-function createCar(
-    color,
-    isPlayer=false
-){
-
-    const car =
-        new THREE.Group();
-
-
-    /* BODY */
-
-    const body =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1.75,
-                .58,
-                3.25
-            ),
-            new THREE.MeshStandardMaterial({
-                color:color,
-                roughness:.3,
-                metalness:.15
-            })
-        );
-
-    body.position.y=.57;
-    body.castShadow=true;
-
-    car.add(body);
-
-
-    /* LOWER BODY */
-
-    const lower =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1.9,
-                .28,
-                2.8
-            ),
-            new THREE.MeshStandardMaterial({
-                color:color,
-                roughness:.35
-            })
-        );
-
-    lower.position.y=.38;
-
-    car.add(lower);
-
-
-    /* CABIN */
-
-    const cabin =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1.35,
-                .67,
-                1.65
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x75c6d9,
-                roughness:.1,
-                metalness:.35,
-                transparent:true,
-                opacity:.9
-            })
-        );
-
-    cabin.position.y=1.02;
-
-    cabin.castShadow=true;
-
-    car.add(cabin);
-
-
-    /* ROOF */
-
-    const roof =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1.22,
-                .07,
-                1.48
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x5faabd,
-                roughness:.2
-            })
-        );
-
-    roof.position.y=1.37;
-
-    car.add(roof);
-
-
-    /* WHEELS */
-
-    const wheelGeo =
-        new THREE.CylinderGeometry(
-            .34,
-            .34,
-            .25,
-            20
-        );
-
-    const wheelMat =
-        new THREE.MeshStandardMaterial({
-            color:0x17191c,
-            roughness:.7
-        });
-
-
-    [
-        [-.94,.38,-1.05],
-        [.94,.38,-1.05],
-        [-.94,.38,1.05],
-        [.94,.38,1.05]
-    ].forEach(p=>{
-
-        const wheel =
-            new THREE.Mesh(
-                wheelGeo,
-                wheelMat
-            );
-
-        wheel.rotation.z=
-            Math.PI/2;
-
-        wheel.position.set(
-            p[0],
-            p[1],
-            p[2]
-        );
-
-        wheel.castShadow=true;
-
-        car.add(wheel);
-    });
-
-
-    /* HEADLIGHTS */
-
-    const headMat =
-        new THREE.MeshStandardMaterial({
-            color:0xffffc2,
-            emissive:0xffdd70,
-            emissiveIntensity:1.7
-        });
-
-
-    [-.53,.53].forEach(x=>{
-
-        const light =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    .3,
-                    .14,
-                    .08
-                ),
-                headMat
-            );
-
-        light.position.set(
-            x,
-            .68,
-            -1.65
-        );
-
-        car.add(light);
-    });
-
-
-    /* BRAKE LIGHTS */
-
-    const brakeMat =
-        new THREE.MeshStandardMaterial({
-            color:0xff3030,
-            emissive:0xff1111,
-            emissiveIntensity:.7
-        });
-
-
-    [-.53,.53].forEach(x=>{
-
-        const light =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    .28,
-                    .13,
-                    .08
-                ),
-                brakeMat
-            );
-
-        light.position.set(
-            x,
-            .67,
-            1.65
-        );
-
-        car.add(light);
-    });
-
-
-    /* PLAYER SENSOR RING */
-
-    if(isPlayer){
-
-        const ring =
-            new THREE.Mesh(
-                new THREE.RingGeometry(
-                    2.1,
-                    2.16,
-                    48
-                ),
-                new THREE.MeshBasicMaterial({
-                    color:0x70e1ff,
-                    transparent:true,
-                    opacity:.3,
-                    side:THREE.DoubleSide
-                })
-            );
-
-        ring.rotation.x=
-            -Math.PI/2;
-
-        ring.position.y=.22;
-
-        car.add(ring);
-    }
-
-
-    return car;
-}
-
-
-/* =========================================================
-   PLAYER
-========================================================= */
-
-const smartCar =
-    createCar(
-        0xff6591,
-        true
-    );
-
-smartCar.position.set(
-    RIGHT,
-    0,
-    0
-);
-
-scene.add(smartCar);
-
-
-/* =========================================================
-   TRAFFIC
-========================================================= */
-
-const traffic=[];
-
-
-function addTraffic(
-    lane,
-    z,
-    color,
-    speed
-){
-
-    const mesh =
-        createCar(
-            color,
-            false
-        );
-
-    mesh.position.set(
-        lane,
-        0,
-        z
-    );
-
-    scene.add(mesh);
-
-
-    const car={
-        mesh:mesh,
-        lane:lane,
-        speed:speed,
-        baseSpeed:speed
-    };
-
-
-    traffic.push(car);
-
-    return car;
-}
-
-
-addTraffic(
-    LEFT,
-    -70,
-    0x5b8cff,
-    17
-);
-
-addTraffic(
-    RIGHT,
-    -125,
-    0xffc44d,
-    19
-);
-
-addTraffic(
-    LEFT,
-    -180,
-    0x9c7bea,
-    18
-);
-
-addTraffic(
-    RIGHT,
-    -235,
-    0x55d39a,
-    17
-);
-
-addTraffic(
-    LEFT,
-    -285,
-    0xff775f,
-    20
-);
-
-
-/* =========================================================
-   PEDESTRIAN
-========================================================= */
-
-let pedestrian=null;
-
-
-function createPedestrian(){
-
-    const person =
-        new THREE.Group();
-
-
-    const legsMat =
-        new THREE.MeshStandardMaterial({
-            color:0x303a7a
-        });
-
-
-    [-.13,.13].forEach(x=>{
-
-        const leg =
-            new THREE.Mesh(
-                new THREE.CylinderGeometry(
-                    .09,
-                    .1,
-                    .65,
-                    10
-                ),
-                legsMat
-            );
-
-        leg.position.set(
-            x,
-            .35,
-            0
-        );
-
-        person.add(leg);
-    });
-
-
-    const body =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .24,
-                .3,
-                .85,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x526bd1
-            })
-        );
-
-    body.position.y=.98;
-
-    person.add(body);
-
-
-    const head =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .28,
-                16,
-                16
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xf0b48c
-            })
-        );
-
-    head.position.y=1.6;
-
-    person.add(head);
-
-
-    const hair =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .29,
-                16,
-                16
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x33261f
-            })
-        );
-
-    hair.position.set(
-        0,
-        1.72,
-        0
-    );
-
-    hair.scale.set(
-        1,
-        .65,
-        1
-    );
-
-    person.add(hair);
-
-
-    scene.add(person);
-
-    return person;
-}
-
-
-/* =========================================================
-   ANIMAL
-========================================================= */
-
-let animal=null;
-
-
-function createAnimal(){
-
-    const dog =
-        new THREE.Group();
-
-
-    const body =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .52,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xa66b40,
-                roughness:1
-            })
-        );
-
-    body.scale.set(
-        1.35,
-        .75,
-        1.5
-    );
-
-    body.position.y=.58;
-
+    body.scale.set(1.35, 0.75, 1.5);
+    body.position.y = 0.58;
     dog.add(body);
 
-
-    const head =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .37,
-                16,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xb87846
-            })
-        );
-
-    head.position.set(
-        0,
-        .75,
-        -.7
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.37, 16, 12),
+        new THREE.MeshStandardMaterial({ color: 0xb87846 })
     );
-
+    head.position.set(0, 0.75, -0.7);
     dog.add(head);
 
-
-    const earMat =
-        new THREE.MeshStandardMaterial({
-            color:0x77482d
-        });
-
-
-    [-.23,.23].forEach(x=>{
-
-        const ear =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    .15,
-                    .4,
-                    8
-                ),
-                earMat
-            );
-
-        ear.position.set(
-            x,
-            1.05,
-            -.73
-        );
-
+    const earMat = new THREE.MeshStandardMaterial({ color: 0x77482d });
+    [-0.23, 0.23].forEach(x => {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 8), earMat);
+        ear.position.set(x, 1.05, -0.73);
         dog.add(ear);
     });
 
-
-    for(
-        let i=0;
-        i<4;
-        i++
-    ){
-
-        const leg =
-            new THREE.Mesh(
-                new THREE.CylinderGeometry(
-                    .08,
-                    .1,
-                    .45,
-                    8
-                ),
-                earMat
-            );
-
-        leg.position.set(
-            i<2 ? -.35:.35,
-            .25,
-            i%2===0 ? -.42:.42
-        );
-
+    const legs = [];
+    for (let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.45, 8), earMat);
+        leg.position.set(i < 2 ? -0.35 : 0.35, 0.25, i % 2 === 0 ? -0.42 : 0.42);
         dog.add(leg);
+        legs.push(leg);
     }
-
-
+    dog.userData.legs = legs;
     scene.add(dog);
-
     return dog;
 }
 
-
-/* =========================================================
-   OBSTACLE
-========================================================= */
-
-let obstacle=null;
-
-
-function createObstacle(){
-
-    const group =
-        new THREE.Group();
-
-
-    const base =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1.55,
-                .8,
-                1.5
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xffa52c,
-                roughness:.8
-            })
-        );
-
-    base.position.y=.5;
-
-    base.castShadow=true;
-
+let obstacle = null;
+function createObstacle() {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(1.55, 0.8, 1.5),
+        new THREE.MeshStandardMaterial({ color: 0xffa52c, roughness: 0.8 })
+    );
+    base.position.y = 0.5;
+    base.castShadow = true;
     group.add(base);
 
-
-    for(
-        let z=-.58;
-        z<=.58;
-        z+=.38
-    ){
-
-        const stripe =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    1.6,
-                    .09,
-                    .17
-                ),
-                new THREE.MeshStandardMaterial({
-                    color:0x252525
-                })
-            );
-
-        stripe.position.set(
-            0,
-            .72,
-            z
+    for (let z = -0.58; z <= 0.58; z += 0.38) {
+        const stripe = new THREE.Mesh(
+            new THREE.BoxGeometry(1.6, 0.09, 0.17),
+            new THREE.MeshStandardMaterial({ color: 0x252525 })
         );
-
+        stripe.position.set(0, 0.72, z);
         group.add(stripe);
     }
 
-
-    const warning =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .08,
-                .9,
-                .08
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x555555
-            })
-        );
-
-    warning.position.set(
-        0,
-        1.15,
-        0
-    );
-
-    group.add(warning);
-
-
-    group.visible=false;
-
+    group.visible = false;
     scene.add(group);
-
     return group;
 }
-
-
-obstacle=
-    createObstacle();
+obstacle = createObstacle();
 
 
 /* =========================================================
-   RAIN
+   RAIN (OPTIMIZED 800 PARTICLES)
 ========================================================= */
 
-let rain=null;
-
-
-function createRain(){
-
+let rain = null;
+function createRain() {
     const count = 800;
-
-    const geometry =
-        new THREE.BufferGeometry();
-
-    const positions =
-        new Float32Array(
-            count*3
-        );
-
-
-
-    for(
-        let i=0;
-        i<count;
-        i++
-    ){
-
-        positions[i*3]=
-            (Math.random()-.5)*45;
-
-        positions[i*3+1]=
-            Math.random()*30;
-
-        positions[i*3+2]=
-            (Math.random()-.5)*140;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 45;
+        positions[i * 3 + 1] = Math.random() * 30;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 140;
     }
-
-
-    geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(
-            positions,
-            3
-        )
-    );
-
-
-    const material =
-        new THREE.PointsMaterial({
-            color:0xd4eaff,
-            size:.13,
-            transparent:true,
-            opacity:.8
-        });
-
-
-    rain =
-        new THREE.Points(
-            geometry,
-            material
-        );
-
-    rain.visible=false;
-
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({ color: 0xd4eaff, size: 0.13, transparent: true, opacity: 0.8 });
+    rain = new THREE.Points(geometry, material);
+    rain.visible = false;
     scene.add(rain);
 }
-
-
 createRain();
 
 
 /* =========================================================
-   STATE
+   SIMULATION STATE & PARAMETERS
 ========================================================= */
 
-let activeScenario="normal";
+let stormFlash = 0;
+let activeScenario = "normal";
+let scenarioTime = 0;
+let currentSpeed = 50;
+let targetSpeed = 50;
+let currentLane = RIGHT;
+let originalLane = RIGHT;
+let targetLane = null;
+let laneChanging = false;
+let avoidanceLocked = false;
+let eventFinished = false;
 
-let scenarioTime=0;
-
-let currentSpeed=50;
-
-let targetSpeed=50;
-
-let currentLane=RIGHT;
-
-let originalLane=RIGHT;
-
-let targetLane=null;
-
-let laneChanging=false;
-
-let avoidanceLocked=false;
-
-let eventFinished=false;
+const FRONT_DISTANCE = 22;
+const REAR_DISTANCE = 18;
+const SIDE_MARGIN = 1.8;
 
 
 /* =========================================================
-   SAFETY PARAMETERS
+   BRAIN.PY CONTINUOUS RISK & KINEMATICS ENGINE
 ========================================================= */
-
-const FRONT_DISTANCE=22;
-const REAR_DISTANCE=18;
-const SIDE_MARGIN=1.8;
-
-
-/* =========================================================
-   BRAIN.PY DECISION ENGINE (JS RUNTIME INTEGRATION)
-========================================================= */
-
-const BrainHazardType = {
-    CLEAR: "clear",
-    PEDESTRIAN: "pedestrian",
-    VEHICLE: "vehicle",
-    STATIC_OBSTACLE: "static_obstacle",
-    CYCLIST: "cyclist",
-    ANIMAL: "animal",
-    SENSOR_FAILURE: "sensor_failure"
-};
-
-const BrainAction = {
-    CONTINUE: "CONTINUE",
-    MAINTAIN_SPEED: "MAINTAIN_SPEED",
-    SLOW_DOWN: "SLOW_DOWN",
-    BRAKE: "BRAKE",
-    STOP: "STOP",
-    EMERGENCY_STOP: "EMERGENCY_STOP",
-    MOVE_LEFT: "MOVE_LEFT",
-    MOVE_RIGHT: "MOVE_RIGHT"
-};
-
-const BrainRisk = {
-    LOW: "LOW",
-    MEDIUM: "MEDIUM",
-    HIGH: "HIGH",
-    CRITICAL: "CRITICAL",
-    UNCERTAIN: "UNCERTAIN"
-};
 
 function computeBrainKinematics(speedKmh, distanceM, closingSpeedKmh = null) {
     const vMs = speedKmh / 3.6;
@@ -2303,18 +984,11 @@ function setRisk(level) {
     if (!el) return;
     el.textContent = level;
     el.className = "badge";
-
-    if (level === "LOW" || level === "FINE") {
-        el.classList.add("badge-continue");
-    } else if (level === "MEDIUM") {
-        el.classList.add("badge-slow");
-    } else if (level === "HIGH") {
-        el.classList.add("badge-stop");
-    } else if (level === "CRITICAL") {
-        el.classList.add("badge-brake");
-    } else {
-        el.classList.add("badge-uncertain");
-    }
+    if (level === "LOW" || level === "FINE") el.classList.add("badge-continue");
+    else if (level === "MEDIUM") el.classList.add("badge-slow");
+    else if (level === "HIGH") el.classList.add("badge-stop");
+    else if (level === "CRITICAL") el.classList.add("badge-brake");
+    else el.classList.add("badge-uncertain");
 }
 
 function setStatus(status, event, risk, distanceM = null, closingSpeedKmh = null) {
@@ -2327,15 +1001,10 @@ function setStatus(status, event, risk, distanceM = null, closingSpeedKmh = null
     const rationaleEl = document.getElementById("brain-rationale");
 
     const kin = computeBrainKinematics(currentSpeed, distanceM, closingSpeedKmh);
-
-    // Normalize Action
     let act = status.toUpperCase().replace(/\s+/g, "_");
     if (act === "DRIVING" || act === "RESUMING") act = "CONTINUE";
     if (act === "DETECTING" || act === "MANOEUVRING") act = "SLOW_DOWN";
-    if (act === "AVOIDING_LEFT") act = "MOVE_LEFT";
-    if (act === "AVOIDING_RIGHT") act = "MOVE_RIGHT";
 
-    // Normalize Risk
     let riskLevel = risk ? risk.toUpperCase() : "LOW";
     if (riskLevel === "FINE") riskLevel = "LOW";
 
@@ -2369,896 +1038,320 @@ function setStatus(status, event, risk, distanceM = null, closingSpeedKmh = null
         stopDistEl.textContent = `${kin.totalStoppingDistM}m`;
     }
 
-    // Generate explainable Brain rationale
     if (rationaleEl) {
         let reason = "";
         const evtUpper = event.toUpperCase();
         if (evtUpper.includes("CLEAR")) {
             reason = "No roadway hazards detected. The vehicle can continue cruising safely.";
         } else if (evtUpper.includes("HUMAN") || evtUpper.includes("PEDESTRIAN")) {
-            reason = `Pedestrian detected crossing front lane. Time-to-Collision is critical (${kin.ttcSeconds || '0.6'}s). Executing automated STOP.`;
+            reason = `Pedestrian crossing detected in host corridor. Time-To-Collision is critical (${kin.ttcSeconds || '0.6'}s). Executing automated STOP.`;
         } else if (evtUpper.includes("ANIMAL")) {
-            reason = `Animal hazard detected in roadway corridor. Emergency braking initiated to prevent collision.`;
+            reason = `Animal hazard detected in roadway corridor. Emergency braking engaged to prevent collision.`;
         } else if (evtUpper.includes("OBSTRUCTION") || evtUpper.includes("OBSTACLE")) {
-            reason = `Static obstruction detected ahead. Executing lateral evasive lane change into clear lane.`;
+            reason = `Obstruction detected ahead. Executing lateral evasive lane change into verified clear lane.`;
         } else if (evtUpper.includes("COLLISION") || evtUpper.includes("BRAKING")) {
-            reason = `Rapidly decelerating lead vehicle detected ahead. Active braking engaged to preserve safety buffer.`;
+            reason = `Decelerating lead vehicle detected ahead. Active braking engaged to preserve safety buffer.`;
         } else if (evtUpper.includes("RAIN") || evtUpper.includes("STORM")) {
             reason = `Adverse weather conditions detected (friction: 0.55). Speed reduced to maintain safe stopping margins.`;
         } else if (evtUpper.includes("LANE BLOCKED")) {
-            reason = `Swerve conflict: destination lane is blocked by another vehicle. Aborting lane change; slowing down in-lane.`;
+            reason = `Swerve conflict: adjacent lane is blocked by another vehicle. Slowing down in-lane.`;
         } else {
-            reason = `${evtUpper} detected. Risk level is ${riskLevel}. Brain recommended action: ${act.replace("_", " ")}.`;
+            reason = `${evtUpper} detected. Risk level is ${riskLevel}. Recommended action: ${act.replace('_', ' ')}.`;
         }
         rationaleEl.textContent = reason;
     }
 }
 
-
-
-function updateLaneUI(){
-
-    document.getElementById(
-        "lane"
-    ).textContent =
-        currentLane===LEFT
-        ? "LEFT LANE"
-        : "RIGHT LANE";
+function updateLaneUI() {
+    const el = document.getElementById("lane");
+    if (el) {
+        el.textContent = currentLane === LEFT ? "LEFT LANE" : "RIGHT LANE";
+    }
 }
 
-
-function showMessage(text){
-
-    const el =
-        document.getElementById(
-            "message"
-        );
-
-    el.textContent=text;
-
+function showMessage(text) {
+    const el = document.getElementById("message");
+    if (!el) return;
+    el.textContent = text;
     el.classList.add("show");
-
     clearTimeout(el.timer);
-
-    el.timer =
-        setTimeout(
-            ()=>{
-                el.classList.remove("show");
-            },
-            2800
-        );
+    el.timer = setTimeout(() => { el.classList.remove("show"); }, 2800);
 }
 
-
-/* =========================================================
-   WEATHER
-========================================================= */
-
-function showWeather(type){
-
-    const box =
-        document.getElementById("weather");
-
-    const icon =
-        document.getElementById("weatherIcon");
-
-    const title =
-        document.getElementById("weatherTitle");
-
-    const text =
-        document.getElementById("weatherText");
-
-    const speed =
-        document.getElementById("weatherSpeed");
-
-
+function showWeather(type) {
+    const box = document.getElementById("weather");
+    const icon = document.getElementById("weatherIcon");
+    const title = document.getElementById("weatherTitle");
+    const text = document.getElementById("weatherText");
+    const speed = document.getElementById("weatherSpeed");
+    if (!box) return;
     box.classList.add("show");
-
-
-    if(type==="rain"){
-
-        icon.textContent="🌧️";
-
-        title.textContent=
-            "HEAVY RAIN DETECTED";
-
-        text.textContent=
-            "Due to heavy rain, sensors may be compromised. Visibility and road traction are reduced. The AI automatically reduces vehicle speed and increases following distance.";
-
-        speed.textContent=
-            "AI RESPONSE • REDUCE SPEED";
-
-    }
-
-    else{
-
-        icon.textContent="⛈️";
-
-        title.textContent=
-            "SEVERE STORM DETECTED";
-
-        text.textContent=
-            "Storm conditions can compromise sensor reliability and visibility. The vehicle enters high-caution mode and significantly reduces speed.";
-
-        speed.textContent=
-            "AI RESPONSE • HIGH CAUTION";
+    if (type === "rain") {
+        icon.textContent = "🌧️";
+        title.textContent = "HEAVY RAIN DETECTED";
+        text.textContent = "Adverse weather conditions detected. Visibility and road traction are reduced. Speed reduced.";
+        speed.textContent = "AI RESPONSE • REDUCE SPEED";
+    } else {
+        icon.textContent = "⛈️";
+        title.textContent = "SEVERE STORM DETECTED";
+        text.textContent = "Storm conditions can compromise sensor reliability and visibility. High caution engaged.";
+        speed.textContent = "AI RESPONSE • HIGH CAUTION";
     }
 }
 
-
-function hideWeather(){
-
-    document
-        .getElementById("weather")
-        .classList.remove("show");
+function hideWeather() {
+    const el = document.getElementById("weather");
+    if (el) el.classList.remove("show");
 }
 
 
 /* =========================================================
-   VEHICLE SAFETY
+   LANE SAFETY & ARBITRATION
 ========================================================= */
 
-function vehicleSafeInLane(
-    lane,
-    ourZ
-){
-
-    for(const car of traffic){
-
-        if(
-            Math.abs(
-                car.mesh.position.x-lane
-            ) > SIDE_MARGIN
-        ){
-            continue;
-        }
-
-
-        const dz =
-            car.mesh.position.z-ourZ;
-
-
-        /*
-            Since the smart car is at z=0,
-            negative Z means ahead.
-        */
-
-        if(
-            dz < 0 &&
-            dz > -FRONT_DISTANCE
-        ){
-            return false;
-        }
-
-
-        /*
-            Positive Z means behind us.
-        */
-
-        if(
-            dz > 0 &&
-            dz < REAR_DISTANCE
-        ){
-            return false;
-        }
+function vehicleSafeInLane(lane, ourZ) {
+    for (const car of traffic) {
+        if (Math.abs(car.mesh.position.x - lane) > SIDE_MARGIN) continue;
+        const dz = car.mesh.position.z - ourZ;
+        if (dz < 0 && dz > -FRONT_DISTANCE) return false;
+        if (dz > 0 && dz < REAR_DISTANCE) return false;
     }
-
-
     return true;
 }
 
-
-/* =========================================================
-   OBJECT SAFETY
-========================================================= */
-
-function objectSafeInLane(
-    lane,
-    ourZ
-){
-
-    if(
-        obstacle &&
-        obstacle.visible
-    ){
-
-        if(
-            Math.abs(
-                obstacle.position.x-lane
-            ) < 1.7
-        ){
-
-            const dz =
-                obstacle.position.z-ourZ;
-
-            if(
-                dz < 0 &&
-                dz > -FRONT_DISTANCE
-            ){
-
-                return false;
-            }
+function objectSafeInLane(lane, ourZ) {
+    if (obstacle && obstacle.visible) {
+        if (Math.abs(obstacle.position.x - lane) < 1.7) {
+            const dz = obstacle.position.z - ourZ;
+            if (dz < 0 && dz > -FRONT_DISTANCE) return false;
         }
     }
-
-
-    if(pedestrian){
-
-        if(
-            Math.abs(
-                pedestrian.position.x-lane
-            ) < 1.8
-        ){
-
-            const dz =
-                pedestrian.position.z-ourZ;
-
-            if(
-                dz < 0 &&
-                dz > -20
-            ){
-
-                return false;
-            }
+    if (animal && animal.position) {
+        if (Math.abs(animal.position.x - lane) < 1.8) {
+            const dz = animal.position.z - ourZ;
+            if (dz < 0 && dz > -20) return false;
         }
     }
-
-
-    if(animal){
-
-        if(
-            Math.abs(
-                animal.position.x-lane
-            ) < 1.8
-        ){
-
-            const dz =
-                animal.position.z-ourZ;
-
-            if(
-                dz < 0 &&
-                dz > -20
-            ){
-
-                return false;
-            }
-        }
-    }
-
-
     return true;
 }
 
-
-/* =========================================================
-   COMPLETE SAFETY CHECK
-========================================================= */
-
-function laneIsSafe(lane){
-
-    const ourZ =
-        smartCar.position.z;
-
-    return (
-        vehicleSafeInLane(
-            lane,
-            ourZ
-        )
-        &&
-        objectSafeInLane(
-            lane,
-            ourZ
-        )
-    );
+function laneIsSafe(lane) {
+    const ourZ = smartCar.position.z;
+    return vehicleSafeInLane(lane, ourZ) && objectSafeInLane(lane, ourZ);
 }
 
-
-/* =========================================================
-   PREDICTIVE SAFETY
-========================================================= */
-
-function laneWillRemainSafe(lane){
-
-    const ourZ =
-        smartCar.position.z;
-
-
-    for(const car of traffic){
-
-        if(
-            Math.abs(
-                car.mesh.position.x-lane
-            ) > SIDE_MARGIN
-        ){
-            continue;
-        }
-
-
-        /*
-            Predict where the traffic vehicle
-            will be shortly.
-        */
-
-        const predicted =
-            car.mesh.position.z +
-            car.speed *
-            0.12 *
-            1.2;
-
-
-        const dz =
-            predicted-ourZ;
-
-
-        if(
-            dz < 0 &&
-            dz > -28
-        ){
-
-            return false;
-        }
-
-
-        if(
-            dz > 0 &&
-            dz < 14
-        ){
-
-            return false;
-        }
+function laneWillRemainSafe(lane) {
+    const ourZ = smartCar.position.z;
+    for (const car of traffic) {
+        if (Math.abs(car.mesh.position.x - lane) > SIDE_MARGIN) continue;
+        const predicted = car.mesh.position.z + car.speed * 0.12 * 1.2;
+        const dz = predicted - ourZ;
+        if (dz < 0 && dz > -28) return false;
+        if (dz > 0 && dz < 14) return false;
     }
-
-
     return laneIsSafe(lane);
 }
 
-
-/* =========================================================
-   FIND SAFE LANE
-========================================================= */
-
-function findSafeLane(){
-
-    const otherLane =
-        currentLane===RIGHT
-        ? LEFT
-        : RIGHT;
-
-
-    if(
-        laneWillRemainSafe(
-            otherLane
-        )
-    ){
-
-        return otherLane;
-    }
-
-
+function findSafeLane() {
+    const otherLane = currentLane === RIGHT ? LEFT : RIGHT;
+    if (laneWillRemainSafe(otherLane)) return otherLane;
     return null;
 }
 
-
-/* =========================================================
-   BEGIN LANE CHANGE
-========================================================= */
-
-function beginLaneChange(){
-
-    if(laneChanging){
-        return true;
-    }
-
-
-    if(avoidanceLocked){
-        return false;
-    }
-
-
-    const safeLane =
-        findSafeLane();
-
-
-    if(safeLane===null){
-
-        return false;
-    }
-
-
-    targetLane =
-        safeLane;
-
-    laneChanging=true;
-
-    avoidanceLocked=true;
-
+function beginLaneChange() {
+    if (laneChanging) return true;
+    if (avoidanceLocked) return false;
+    const safeLane = findSafeLane();
+    if (safeLane === null) return false;
+    targetLane = safeLane;
+    laneChanging = true;
+    avoidanceLocked = true;
     return true;
 }
 
-
-/* =========================================================
-   UPDATE LANE CHANGE
-========================================================= */
-
-function updateLaneChange(delta){
-
-    if(!laneChanging){
+function updateLaneChange(delta) {
+    if (!laneChanging) return;
+    if (!laneIsSafe(targetLane)) {
+        laneChanging = false;
+        targetLane = null;
+        targetSpeed = 3;
+        setStatus("BRAKING", "LANE BLOCKED", "HIGH");
+        showMessage("⚠️ Unsafe lane detected — emergency braking");
         return;
     }
 
+    const dx = targetLane - smartCar.position.x;
+    smartCar.position.x += dx * Math.min(delta * 3.2, 1);
+    const desiredTilt = -dx * 0.055;
+    smartCar.rotation.z += (desiredTilt - smartCar.rotation.z) * Math.min(delta * 10, 1);
 
-    /*
-        Only stop the manoeuvre if the destination
-        lane becomes genuinely dangerous.
-    */
-
-    if(
-        !laneIsSafe(targetLane)
-    ){
-
-        laneChanging=false;
-
-        targetLane=null;
-
-        targetSpeed=3;
-
-        setStatus(
-            "BRAKING",
-            "LANE BLOCKED",
-            "HIGH"
-        );
-
-        showMessage(
-            "⚠️ Unsafe lane detected — emergency braking"
-        );
-
-        return;
-    }
-
-
-    const dx =
-        targetLane-
-        smartCar.position.x;
-
-
-    smartCar.position.x +=
-        dx *
-        Math.min(
-            delta*3.2,
-            1
-        );
-
-
-    smartCar.rotation.z =
-        -dx*.035;
-
-
-    if(
-        Math.abs(dx)<.06
-    ){
-
-        smartCar.position.x =
-            targetLane;
-
-        currentLane =
-            targetLane;
-
-        laneChanging=false;
-
-        targetLane=null;
-
-        smartCar.rotation.z=0;
-
-        avoidanceLocked=false;
-
+    if (Math.abs(dx) < 0.06) {
+        smartCar.position.x = targetLane;
+        currentLane = targetLane;
+        laneChanging = false;
+        targetLane = null;
+        smartCar.rotation.z = 0;
+        avoidanceLocked = false;
         updateLaneUI();
     }
 }
 
-
-/* =========================================================
-   RETURN TO ORIGINAL LANE
-========================================================= */
-
-function tryReturnToOriginal(){
-
-    if(
-        currentLane===originalLane
-    ){
-
-        return true;
-    }
-
-
-    if(
-        !laneIsSafe(originalLane)
-    ){
-
-        targetSpeed=18;
-
+function tryReturnToOriginal() {
+    if (currentLane === originalLane) return true;
+    if (!laneIsSafe(originalLane) || !laneWillRemainSafe(originalLane)) {
+        targetSpeed = 22;
         return false;
     }
-
-
-    if(
-        !laneWillRemainSafe(originalLane)
-    ){
-
-        targetSpeed=18;
-
-        return false;
-    }
-
-
-    targetLane =
-        originalLane;
-
-    laneChanging=true;
-
-    avoidanceLocked=true;
-
+    targetLane = originalLane;
+    laneChanging = true;
+    avoidanceLocked = true;
     return true;
 }
 
 
 /* =========================================================
-   SPEED
+   SPEED UPDATE (DOM THROTTLED FOR MAXIMUM PERFORMANCE)
 ========================================================= */
 
 let cachedSpeedEl = null;
 let lastDisplayedSpeed = -1;
 
-function updateSpeed(delta){
-
-    currentSpeed +=
-        (
-            targetSpeed-currentSpeed
-        ) *
-        Math.min(
-            delta*3.5,
-            1
-        );
-
+function updateSpeed(delta) {
+    currentSpeed += (targetSpeed - currentSpeed) * Math.min(delta * 3.5, 1);
     const intSpeed = Math.max(0, Math.round(currentSpeed));
     if (intSpeed !== lastDisplayedSpeed) {
         lastDisplayedSpeed = intSpeed;
-        if (!cachedSpeedEl) {
-            cachedSpeedEl = document.getElementById("speed");
-        }
-        if (cachedSpeedEl) {
-            cachedSpeedEl.textContent = intSpeed;
-        }
+        if (!cachedSpeedEl) cachedSpeedEl = document.getElementById("speed");
+        if (cachedSpeedEl) cachedSpeedEl.textContent = intSpeed;
     }
 }
-
 
 
 /* =========================================================
    TRAFFIC MOVEMENT
 ========================================================= */
 
-function updateTraffic(delta){
-
-    traffic.forEach(car=>{
-
-        /*
-            Positive Z moves traffic toward
-            the smart car.
-        */
-
-        car.mesh.position.z +=
-            car.speed *
-            delta *
-            0.12;
-
-
-        /*
-            Once a vehicle has passed the
-            smart car, recycle it far ahead.
-        */
-
-        if(
-            car.mesh.position.z > 35
-        ){
-
-            let farthest=-60;
-
-
-            traffic.forEach(other=>{
-
-                if(other!==car){
-
-                    farthest =
-                        Math.min(
-                            farthest,
-                            other.mesh.position.z
-                        );
-                }
+function updateTraffic(delta) {
+    traffic.forEach(car => {
+        car.mesh.position.z += car.speed * delta * 0.12;
+        if (car.mesh.userData.wheels) {
+            car.mesh.userData.wheels.forEach(wheel => {
+                wheel.rotation.x += car.speed * delta * 0.35;
             });
+        }
+        car.mesh.position.y = Math.sin(performance.now() * 0.004 + car.mesh.position.z) * 0.008;
 
-
-            car.mesh.position.z =
-                farthest -
-                45 -
-                Math.random()*35;
-
-
-            car.lane =
-                LANES[
-                    Math.floor(
-                        Math.random()*LANES.length
-                    )
-                ];
-
-
-            car.mesh.position.x =
-                car.lane;
-
-
-            car.speed =
-                16+
-                Math.random()*5;
-
-            car.baseSpeed =
-                car.speed;
+        if (car.mesh.position.z > 35) {
+            let farthest = -60;
+            traffic.forEach(other => {
+                if (other !== car) farthest = Math.min(farthest, other.mesh.position.z);
+            });
+            car.mesh.position.z = farthest - 45 - Math.random() * 35;
+            car.lane = LANES[Math.floor(Math.random() * LANES.length)];
+            car.mesh.position.x = car.lane;
+            car.speed = 16 + Math.random() * 5;
+            car.baseSpeed = car.speed;
         }
     });
 }
 
 
 /* =========================================================
-   PEDESTRIAN
+   SCENARIO UPDATES (CONTINUOUS PHYSICAL RISK & KINEMATICS)
 ========================================================= */
 
-function updatePedestrian(delta){
-
-    if(!pedestrian){
-        return;
-    }
-
-
-    /*
-        Pedestrian moves toward the car
-        while crossing the road.
-    */
-
-    pedestrian.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
-
-
-    pedestrian.position.x +=
-        delta*1.8;
-
-
-    pedestrian.rotation.z =
-        Math.sin(
-            scenarioTime*8
-        )*.04;
+function updatePedestrian(delta) {
+    if (!pedestrian) return;
+    pedestrian.position.z += 1.5 * delta;
+    pedestrian.position.x -= delta * 1.8;
+    pedestrian.rotation.z = Math.sin(scenarioTime * 8) * 0.04;
 }
 
-
-/* =========================================================
-   ANIMAL
-========================================================= */
-
-function updateAnimal(delta){
-
-    if(!animal){
-        return;
-    }
-
-
-    animal.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
-
-
-    animal.position.x -=
-        delta*1.8;
-
-
-    animal.rotation.y =
-        Math.sin(
-            scenarioTime*7
-        )*.08;
-}
-
-
-/* =========================================================
-   RAIN
-========================================================= */
-
-function updateRain(delta){
-
-    if(
-        !rain ||
-        !rain.visible
-    ){
-        return;
-    }
-
-
-    const pos =
-        rain.geometry
-        .attributes
-        .position
-        .array;
-
-
-    for(
-        let i=0;
-        i<pos.length;
-        i+=3
-    ){
-
-        pos[i+1] -=
-            delta*27;
-
-
-        pos[i+2] +=
-            delta*3;
-
-
-        if(
-            pos[i+1]<0
-        ){
-
-            pos[i+1]=30;
-
-            pos[i]=
-                (Math.random()-.5)*45;
-
-            pos[i+2]=
-                (Math.random()-.5)*140;
-        }
-    }
-
-
-    rain.geometry
-        .attributes
-        .position
-        .needsUpdate=true;
-}
-
-
-/* =========================================================
-   PEDESTRIAN SCENARIO (BRAIN.PY INTEGRATED)
-========================================================= */
-
-function updatePedestrian(delta){
-
-    if(!pedestrian){
-        return;
-    }
-
-    /*
-        Pedestrian moves independently across the road.
-    */
-    pedestrian.position.z +=
-        1.5 * delta;
-
-    pedestrian.position.x -=
-        delta * 1.8;
-
-    pedestrian.rotation.z =
-        Math.sin(
-            scenarioTime * 8
-        ) * .04;
-}
-
-function updateHumanScenario(delta){
-
+function updateHumanScenario(delta) {
     scenarioTime += delta;
     updatePedestrian(delta);
+    if (!pedestrian) return;
 
-    if(!pedestrian){
-        return;
+    const distZ = Math.max(0.1, -pedestrian.position.z);
+    const dx = pedestrian.position.x - smartCar.position.x;
+    const inCorridor = Math.abs(dx) < 2.4;
+    const kin = computeBrainKinematics(currentSpeed, distZ, currentSpeed);
+    const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
+
+    if (inCorridor) {
+        if (ttc < 1.8 || distZ < 9.0) {
+            targetSpeed = 0.0;
+            setStatus("STOP", "PEDESTRIAN IN LANE", "HIGH", distZ, currentSpeed);
+        } else {
+            targetSpeed = Math.max(15, currentSpeed * 0.6);
+            setStatus("SLOW_DOWN", "PEDESTRIAN APPROACHING", "MEDIUM", distZ, currentSpeed);
+        }
+    } else {
+        if (pedestrian.position.x <= -4.5 || pedestrian.position.z >= 6.0) {
+            targetSpeed = 50.0;
+            setStatus("CONTINUE", "PEDESTRIAN CLEARED", "LOW", distZ, currentSpeed);
+            if (!eventFinished) {
+                eventFinished = true;
+                showMessage("✓ Pedestrian cleared lane — resuming cruising speed");
+            }
+        } else {
+            targetSpeed = Math.min(currentSpeed, 35.0);
+            setStatus("SLOW_DOWN", "PEDESTRIAN NEAR LANE", "MEDIUM", distZ, currentSpeed);
+        }
     }
-
-    const distZ = Math.max(0.1, 15 - pedestrian.position.z);
-    const inCorridor = pedestrian.position.x > -6.0 && pedestrian.position.x < 6.0;
-
-    if (scenarioTime < 1.5) {
-        targetSpeed = 30;
-        setStatus("DETECTING", "PEDESTRIAN", "MEDIUM", distZ, currentSpeed);
-        return;
-    }
-
-    if (scenarioTime < 3.5 || (inCorridor && distZ < 12)) {
-        targetSpeed = 0;
-        setStatus("STOP", "PEDESTRIAN CROSSING", "HIGH", distZ, currentSpeed);
-        return;
-    }
-
-    if (pedestrian.position.x <= -6.0 || pedestrian.position.z >= 14) {
-        targetSpeed = 40;
-        setStatus("RESUMING", "PEDESTRIAN CLEAR", "LOW");
-        showMessage("✓ Pedestrian cleared — resuming safely");
-        pedestrian.position.x = -25;
-        return;
-    }
-
-    if (scenarioTime < 20) {
-        targetSpeed = 45;
-        setStatus("DRIVING", "ROAD CLEAR", "LOW");
-        return;
-    }
-
-    finishScenario();
 }
 
-/* =========================================================
-   ANIMAL SCENARIO (BRAIN.PY INTEGRATED)
-========================================================= */
+function updateAnimal(delta) {
+    if (!animal) return;
+    animal.position.z += 1.5 * delta;
+    animal.position.x -= delta * 1.8;
+    const walk = Math.sin(scenarioTime * 10);
+    if (animal.userData.legs) {
+        animal.userData.legs.forEach((leg, index) => {
+            leg.rotation.z = index % 2 === 0 ? walk * 0.3 : -walk * 0.3;
+        });
+    }
+    animal.position.y = Math.abs(Math.sin(scenarioTime * 10)) * 0.018;
+    animal.rotation.y = Math.sin(scenarioTime * 7) * 0.08;
+}
 
-function updateAnimalScenario(delta){
-
+function updateAnimalScenario(delta) {
     scenarioTime += delta;
     updateAnimal(delta);
+    if (!animal) return;
 
-    if(!animal){
-        return;
+    const distZ = Math.max(0.1, -animal.position.z);
+    const dx = animal.position.x - smartCar.position.x;
+    const inCorridor = Math.abs(dx) < 2.5;
+    const kin = computeBrainKinematics(currentSpeed, distZ, currentSpeed);
+    const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
+
+    if (inCorridor) {
+        if (ttc < 1.8 || distZ < 9.0) {
+            targetSpeed = 0.0;
+            setStatus("STOP", "ANIMAL IN LANE", "HIGH", distZ, currentSpeed);
+        } else {
+            targetSpeed = Math.max(15, currentSpeed * 0.6);
+            setStatus("SLOW_DOWN", "ANIMAL AHEAD", "MEDIUM", distZ, currentSpeed);
+        }
+    } else {
+        if (animal.position.x <= -5.0 || animal.position.z >= 6.0) {
+            targetSpeed = 50.0;
+            setStatus("CONTINUE", "ANIMAL CLEARED", "LOW", distZ, currentSpeed);
+            if (!eventFinished) {
+                eventFinished = true;
+                showMessage("✓ Animal cleared roadway — resuming cruising");
+            }
+        } else {
+            targetSpeed = Math.min(currentSpeed, 35.0);
+            setStatus("SLOW_DOWN", "ANIMAL NEAR CORRIDOR", "MEDIUM", distZ, currentSpeed);
+        }
     }
-
-    const distZ = Math.max(0.1, 14 - animal.position.z);
-
-    if(
-        scenarioTime < 1.5
-    ){
-        targetSpeed = 30;
-        setStatus("DETECTING", "ANIMAL", "MEDIUM", distZ, currentSpeed);
-        return;
-    }
-
-    if(
-        scenarioTime < 3.5 || (animal.position.x > -7 && animal.position.z < 12)
-    ){
-        targetSpeed = 0;
-        setStatus("STOP", "ANIMAL CROSSING", "HIGH", distZ, currentSpeed);
-        return;
-    }
-
-    if(
-        animal.position.x <= -7 || animal.position.z >= 12
-    ){
-        targetSpeed = 35;
-        setStatus("RESUMING", "ANIMAL CLEAR", "LOW");
-        showMessage("✓ Animal cleared — resuming safely");
-        animal.position.x = -20;
-        return;
-    }
-
-    if(
-        scenarioTime < 20
-    ){
-        targetSpeed = 40;
-        setStatus("DRIVING", "ANIMAL CLEAR", "LOW");
-        return;
-    }
-
-    finishScenario();
 }
 
-
-/* =========================================================
-   OBSTACLE SCENARIO (BRAIN.PY CONTINUOUS RISK LOGIC)
-========================================================= */
-
-
-function updateObstacleScenario(delta){
-
-    if(!obstacle){
-        return;
-    }
-
-    // Move obstacle along road relative to car velocity
-    obstacle.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
+function updateObstacleScenario(delta) {
+    if (!obstacle) return;
+    obstacle.position.z += currentSpeed * delta * 0.12;
 
     const distZ = Math.max(0.1, -obstacle.position.z);
     const dx = obstacle.position.x - smartCar.position.x;
@@ -3266,30 +1359,22 @@ function updateObstacleScenario(delta){
     const kin = computeBrainKinematics(currentSpeed, distZ, currentSpeed);
     const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
 
-    // Obstacle has been completely passed
     if (obstacle.position.z > 4.0) {
         if (!laneChanging && currentLane !== originalLane) {
             tryReturnToOriginal();
         }
-        if (laneChanging) {
-            updateLaneChange(delta);
-        }
+        if (laneChanging) updateLaneChange(delta);
         targetSpeed = 50.0;
         setStatus("CONTINUE", "OBSTACLE CLEARED", "LOW");
-        if (obstacle.position.z > 20.0) {
-            finishScenario();
-        }
+        if (obstacle.position.z > 20.0) finishScenario();
         return;
     }
 
     if (inHostLane) {
-        // Obstacle is in host driving path
         if (ttc < 1.4 || distZ < 6.5) {
-            // Imminent emergency collision
             targetSpeed = 0.0;
             setStatus("STOP", "OBSTRUCTION IMMINENT", "HIGH", distZ, currentSpeed);
         } else if (distZ <= 26.0) {
-            // Evaluates Brain Lateral Swerve Clearance
             const safeLane = findSafeLane();
             if (safeLane !== null && !laneChanging && !avoidanceLocked) {
                 beginLaneChange();
@@ -3302,7 +1387,6 @@ function updateObstacleScenario(delta){
                 const actName = targetLane === LEFT ? "MOVE_LEFT" : "MOVE_RIGHT";
                 setStatus(actName, "AVOIDING OBSTACLE", "MEDIUM", distZ, currentSpeed);
             } else if (safeLane === null) {
-                // Swerve conflict (lateral lanes blocked)
                 targetSpeed = Math.max(0.0, currentSpeed - delta * 20);
                 setStatus("BRAKE", "LATERAL LANES BLOCKED", "HIGH", distZ, currentSpeed);
             } else {
@@ -3310,28 +1394,17 @@ function updateObstacleScenario(delta){
                 setStatus("SLOW_DOWN", "OBSTRUCTION AHEAD", "MEDIUM", distZ, currentSpeed);
             }
         } else {
-            // Far distance warning
             targetSpeed = 45.0;
             setStatus("CONTINUE", "OBSTRUCTION MONITORED", "LOW", distZ, currentSpeed);
         }
     } else {
-        // Host vehicle has cleared into adjacent lane
-        if (laneChanging) {
-            updateLaneChange(delta);
-        }
+        if (laneChanging) updateLaneChange(delta);
         targetSpeed = 40.0;
         setStatus("CONTINUE", "NAVIGATING AROUND OBSTACLE", "LOW", distZ, currentSpeed);
     }
 }
 
-
-/* =========================================================
-   COLLISION SCENARIO (BRAIN.PY CONTINUOUS TTC & RISK)
-========================================================= */
-
-function updateCollisionScenario(delta){
-
-    // Find lead traffic vehicle in front of host car
+function updateCollisionScenario(delta) {
     const leadCar = traffic.find(c => c.lane === currentLane && c.mesh.position.z < smartCar.position.z);
     const distZ = leadCar ? Math.max(0.1, Math.abs(leadCar.mesh.position.z - smartCar.position.z)) : 999.0;
     const relSpeed = leadCar ? Math.max(8.0, currentSpeed - leadCar.speed) : currentSpeed;
@@ -3339,11 +1412,9 @@ function updateCollisionScenario(delta){
     const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
 
     if (distZ < 7.0 || ttc < 1.2) {
-        // Critical TTC: Emergency Braking
         targetSpeed = 0.0;
         setStatus("BRAKE", "IMMINENT COLLISION", "CRITICAL", distZ, relSpeed);
     } else if (distZ < 18.0 || ttc < 2.6) {
-        // High Risk: Evaluate safe evasive overtake
         const safeLane = findSafeLane();
         if (safeLane !== null && !laneChanging && !avoidanceLocked) {
             beginLaneChange();
@@ -3363,799 +1434,304 @@ function updateCollisionScenario(delta){
         targetSpeed = Math.max(25.0, currentSpeed * 0.75);
         setStatus("SLOW_DOWN", "FOLLOWING TRAFFIC", "MEDIUM", distZ, relSpeed);
     } else {
-        if (laneChanging) {
-            updateLaneChange(delta);
-        }
+        if (laneChanging) updateLaneChange(delta);
         targetSpeed = 50.0;
         setStatus("CONTINUE", "SAFE FOLLOWING DISTANCE", "LOW", distZ, relSpeed);
     }
 }
 
-
-/* =========================================================
-   WEATHER SCENARIO (BRAIN.PY DEGRADED SENSORS)
-========================================================= */
-
-function updateWeatherScenario(){
-
+function updateWeatherScenario() {
     const isStorm = (activeScenario === "storm");
-    const targetKmh = isStorm ? 20.0 : 28.0;
-    targetSpeed = targetKmh;
-
-    const eventName = isStorm ? "SEVERE STORM (SENSORS DEGRADED)" : "HEAVY RAIN (REDUCED FRICTION)";
+    targetSpeed = isStorm ? 20.0 : 28.0;
     setStatus(
         "SLOW_DOWN",
-        eventName,
+        isStorm ? "SEVERE STORM (SENSORS DEGRADED)" : "HEAVY RAIN (REDUCED FRICTION)",
         "UNCERTAIN"
     );
 }
 
-
-/* =========================================================
-   FINISH SCENARIO
-========================================================= */
-
-
-function finishScenario(){
-
-    if(eventFinished){
-        return;
-    }
-
-
-    eventFinished=true;
-
-    avoidanceLocked=false;
-
-    laneChanging=false;
-
-    targetLane=null;
-
-    targetSpeed=50;
-
-
-    setStatus(
-        "DRIVING",
-        "CLEAR",
-        "FINE"
-    );
-
-
-    showMessage(
-        "✓ Hazard cleared — normal driving resumed"
-    );
+function finishScenario() {
+    if (eventFinished) return;
+    eventFinished = true;
+    avoidanceLocked = false;
+    laneChanging = false;
+    targetLane = null;
+    targetSpeed = 50;
+    setStatus("DRIVING", "CLEAR", "FINE");
+    showMessage("✓ Hazard cleared — normal driving resumed");
 }
 
-
-/* =========================================================
-   START SCENARIO
-========================================================= */
-
-function startScenario(scenario){
-
+function startScenario(scenario) {
     resetSimulation();
+    activeScenario = scenario;
+    scenarioTime = 0;
+    eventFinished = false;
 
-    activeScenario=scenario;
-
-    scenarioTime=0;
-
-    eventFinished=false;
-
-
-    if(
-        scenario==="human"
-    ){
-
-        pedestrian =
-            createPedestrian();
-
-
-        pedestrian.position.set(
-            -3.8,
-            0,
-            -25
-        );
-
-
-        setStatus(
-            "DETECTING",
-            "PEDESTRIAN",
-            "MEDIUM"
-        );
-
-
-        showMessage(
-            "🧍 Pedestrian detected ahead"
-        );
-    }
-
-
-    else if(
-        scenario==="animal"
-    ){
-
-        animal =
-            createAnimal();
-
-
-        animal.position.set(
-            3.8,
-            0,
-            -25
-        );
-
-
-        setStatus(
-            "DETECTING",
-            "ANIMAL",
-            "MEDIUM"
-        );
-
-
-        showMessage(
-            "🐕 Animal detected ahead"
-        );
-    }
-
-
-    else if(
-        scenario==="obstacle"
-    ){
-
-        obstacle.visible=true;
-
-
-        obstacle.position.set(
-            RIGHT,
-            0,
-            -25
-        );
-
-
-        setStatus(
-            "DETECTING",
-            "OBSTRUCTION",
-            "MEDIUM"
-        );
-
-
-        showMessage(
-            "🚧 Road obstruction detected"
-        );
-    }
-
-
-    else if(
-        scenario==="collision"
-    ){
-
-        const danger =
-            traffic[1];
-
-
-        danger.lane =
-            RIGHT;
-
-
-        danger.mesh.position.set(
-            RIGHT,
-            0,
-            -30
-        );
-
-
-        /*
-            Positive speed moves the
-            danger vehicle toward z=0.
-        */
-
-        danger.speed=22;
-
-
-        setStatus(
-            "PREDICTING",
-            "COLLISION",
-            "HIGH"
-        );
-
-
-        showMessage(
-            "🚨 Collision trajectory detected"
-        );
-    }
-
-
-    else if(
-        scenario==="rain"
-    ){
-
-        rain.visible=true;
-
-
-        scene.background =
-            new THREE.Color(
-                0x7595aa
-            );
-
-
+    if (scenario === "human") {
+        pedestrian = createPedestrian();
+        pedestrian.position.set(-3.8, 0, -25);
+        setStatus("DETECTING", "PEDESTRIAN", "MEDIUM");
+        showMessage("🧍 Pedestrian detected ahead");
+    } else if (scenario === "animal") {
+        animal = createAnimal();
+        animal.position.set(3.8, 0, -25);
+        setStatus("DETECTING", "ANIMAL", "MEDIUM");
+        showMessage("🐕 Animal detected ahead");
+    } else if (scenario === "obstacle") {
+        obstacle.visible = true;
+        obstacle.position.set(RIGHT, 0, -25);
+        setStatus("DETECTING", "OBSTRUCTION", "MEDIUM");
+        showMessage("🚧 Road obstruction detected");
+    } else if (scenario === "collision") {
+        const danger = traffic[1];
+        danger.lane = RIGHT;
+        danger.mesh.position.set(RIGHT, 0, -30);
+        danger.speed = 22;
+        setStatus("PREDICTING", "COLLISION", "HIGH");
+        showMessage("🚨 Collision trajectory detected");
+    } else if (scenario === "rain") {
+        rain.visible = true;
+        scene.background = new THREE.Color(0x7595aa);
         showWeather("rain");
-        setStatus(
-            "SLOW_DOWN",
-            "HEAVY RAIN (REDUCED FRICTION)",
-            "UNCERTAIN"
-        );
-    }
-
-
-    else if(
-        scenario==="storm"
-    ){
-
-        rain.visible=true;
-        rain.material.opacity=.95;
-
-        scene.background =
-            new THREE.Color(
-                0x414d5b
-            );
-
+        setStatus("SLOW_DOWN", "HEAVY RAIN (REDUCED FRICTION)", "UNCERTAIN");
+    } else if (scenario === "storm") {
+        rain.visible = true;
+        rain.material.opacity = 0.95;
+        scene.background = new THREE.Color(0x414d5b);
         showWeather("storm");
-        setStatus(
-            "SLOW_DOWN",
-            "SEVERE STORM (SENSORS DEGRADED)",
-            "UNCERTAIN"
-        );
+        setStatus("SLOW_DOWN", "SEVERE STORM (SENSORS DEGRADED)", "UNCERTAIN");
     }
 }
 
-
-
-/* =========================================================
-   RESET
-========================================================= */
-
-function resetSimulation(){
-
-    activeScenario="normal";
-
-    scenarioTime=0;
-
-    currentSpeed=50;
-
-    targetSpeed=50;
-
-    currentLane=RIGHT;
-
-    originalLane=RIGHT;
-
-    targetLane=null;
-
-    laneChanging=false;
-
-    avoidanceLocked=false;
-
-    eventFinished=false;
-
+function resetSimulation() {
+    activeScenario = "normal";
+    scenarioTime = 0;
+    currentSpeed = 50;
+    targetSpeed = 50;
+    currentLane = RIGHT;
+    originalLane = RIGHT;
+    targetLane = null;
+    laneChanging = false;
+    avoidanceLocked = false;
+    eventFinished = false;
+    stormFlash = 0;
 
     hideWeather();
 
-
-    if(pedestrian){
-
-        scene.remove(
-            pedestrian
-        );
-
-        pedestrian=null;
+    if (animal) {
+        scene.remove(animal);
+        animal = null;
+    }
+    if (pedestrian) {
+        scene.remove(pedestrian);
+        pedestrian = null;
     }
 
+    obstacle.visible = false;
+    rain.visible = false;
+    rain.material.opacity = 0.8;
+    scene.background = new THREE.Color(0x91d8ff);
 
-    if(animal){
+    smartCar.position.set(RIGHT, 0, 0);
+    smartCar.rotation.set(0, 0, 0);
 
-        scene.remove(
-            animal
-        );
+    const resetPositions = [-70, -125, -180, -235, -285];
+    const resetSpeeds = [17, 19, 18, 17, 20];
+    const resetLanes = [LEFT, RIGHT, LEFT, RIGHT, LEFT];
 
-        animal=null;
-    }
+    traffic.forEach((car, i) => {
+        car.mesh.position.z = resetPositions[i];
+        car.mesh.position.x = resetLanes[i];
+        car.mesh.position.y = 0;
+        car.lane = resetLanes[i];
+        car.speed = resetSpeeds[i];
+        car.baseSpeed = resetSpeeds[i];
+        car.mesh.rotation.set(0, 0, 0);
+    });
 
-
-    obstacle.visible=false;
-
-
-    rain.visible=false;
-
-    rain.material.opacity=.8;
-
-
-    scene.background =
-        new THREE.Color(
-            0x91d8ff
-        );
-
-
-    smartCar.position.set(
-        RIGHT,
-        0,
-        0
-    );
-
-
-    smartCar.rotation.set(
-        0,
-        0,
-        0
-    );
-
-
-    const resetPositions=[
-        -70,
-        -125,
-        -180,
-        -235,
-        -285
-    ];
-
-
-    const resetSpeeds=[
-        17,
-        19,
-        18,
-        17,
-        20
-    ];
-
-
-    const resetLanes=[
-        LEFT,
-        RIGHT,
-        LEFT,
-        RIGHT,
-        LEFT
-    ];
-
-
-    traffic.forEach(
-        (car,i)=>{
-
-            car.mesh.position.z =
-                resetPositions[i];
-
-            car.mesh.position.x =
-                resetLanes[i];
-
-            car.lane =
-                resetLanes[i];
-
-            car.speed =
-                resetSpeeds[i];
-
-            car.baseSpeed =
-                resetSpeeds[i];
-        }
-    );
-
-
-    setStatus(
-        "DRIVING",
-        "CLEAR",
-        "FINE"
-    );
-
-
+    setStatus("DRIVING", "CLEAR", "FINE");
     updateLaneUI();
 }
 
 
 /* =========================================================
-   ENVIRONMENT MOVEMENT
+   ENVIRONMENT & PLAYER ANIMATION
 ========================================================= */
 
-function moveObjectForward(
-    object,
-    speed,
-    delta,
-    recycleDistance
-){
-
-    object.position.z +=
-        speed *
-        delta *
-        0.12;
-
-
-    if(
-        object.position.z >
-        recycleDistance
-    ){
-
-        object.position.z -=
-            350;
+function updateRain(delta) {
+    if (!rain || !rain.visible) return;
+    const pos = rain.geometry.attributes.position.array;
+    for (let i = 0; i < pos.length; i += 3) {
+        pos[i + 1] -= delta * 30;
+        pos[i + 2] += delta * 5;
+        pos[i] += delta * 0.5;
+        if (pos[i + 1] < 0) {
+            pos[i + 1] = 30;
+            pos[i] = (Math.random() - 0.5) * 45;
+            pos[i + 2] = (Math.random() - 0.5) * 140;
+        }
     }
+    rain.geometry.attributes.position.needsUpdate = true;
 }
 
+function moveObjectForward(object, speed, delta, recycleDistance) {
+    object.position.z += speed * delta * 0.12;
+    if (object.position.z > recycleDistance) object.position.z -= 350;
+}
 
-/* =========================================================
-   ENVIRONMENT
-========================================================= */
+function updateEnvironment(delta) {
+    trees.forEach(tree => {
+        moveObjectForward(tree, currentSpeed, delta, 30);
+        tree.rotation.z = Math.sin(scenarioTime * 0.8 + tree.position.z * 0.03) * 0.008;
+    });
+    bushes.forEach(bush => { moveObjectForward(bush, currentSpeed, delta, 30); });
+    flowers.forEach(flower => { moveObjectForward(flower, currentSpeed, delta, 30); });
+    streetLights.forEach(light => { moveObjectForward(light, currentSpeed, delta, 35); });
+    buildings.forEach(building => { moveObjectForward(building, currentSpeed, delta, 45); });
 
-function updateEnvironment(delta){
-
-    /*
-        Trees
-    */
-
-    trees.forEach(tree=>{
-
-        moveObjectForward(
-            tree,
-            currentSpeed,
-            delta,
-            30
-        );
+    centerMarkers.forEach(marker => {
+        marker.position.z += currentSpeed * delta * 0.12;
+        if (marker.position.z > 30) marker.position.z -= 500;
     });
 
-
-    /*
-        Bushes
-    */
-
-    bushes.forEach(bush=>{
-
-        moveObjectForward(
-            bush,
-            currentSpeed,
-            delta,
-            30
-        );
-    });
-
-
-    /*
-        Flowers
-    */
-
-    flowers.forEach(flower=>{
-
-        moveObjectForward(
-            flower,
-            currentSpeed,
-            delta,
-            30
-        );
-    });
-
-
-    /*
-        Street lights
-    */
-
-    streetLights.forEach(light=>{
-
-        moveObjectForward(
-            light,
-            currentSpeed,
-            delta,
-            35
-        );
-    });
-
-
-    /*
-        Center road markings
-    */
-
-    centerMarkers.forEach(marker=>{
-
-        marker.position.z +=
-            currentSpeed *
-            delta *
-            0.12;
-
-
-        if(
-            marker.position.z>30
-        ){
-
-            marker.position.z -=500;
-        }
-    });
-
-
-    /*
-        Clouds move slowly.
-    */
-
-    clouds.forEach(cloud=>{
-
-        cloud.position.x +=
-            delta*.08;
-
-
-        if(
-            cloud.position.x>40
-        ){
-
-            cloud.position.x=-40;
-        }
+    clouds.forEach(cloud => {
+        cloud.position.x += delta * 0.08;
+        if (cloud.position.x > 40) cloud.position.x = -40;
     });
 }
 
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
-let cameraAngle=0;
-
-let cameraDistance=18;
-
-let cameraHeight=7.5;
-
-let dragging=false;
-
-let lastMouseX=0;
-
-let lastMouseY=0;
-
-
-renderer.domElement.addEventListener(
-    "mousedown",
-    e=>{
-
-        dragging=true;
-
-        lastMouseX=e.clientX;
-
-        lastMouseY=e.clientY;
+function updatePlayerAnimation(delta) {
+    if (smartCar.userData.wheels) {
+        smartCar.userData.wheels.forEach(wheel => {
+            wheel.rotation.x += currentSpeed * delta * 0.35;
+        });
     }
-);
+    const drivingAmount = Math.min(currentSpeed / 50, 1);
+    smartCar.position.y = Math.sin(performance.now() * 0.008) * 0.012 * drivingAmount;
 
-
-window.addEventListener(
-    "mouseup",
-    ()=>{
-
-        dragging=false;
-    }
-);
-
-
-window.addEventListener(
-    "mousemove",
-    e=>{
-
-        if(!dragging){
-            return;
-        }
-
-
-        const dx =
-            e.clientX-lastMouseX;
-
-        const dy =
-            e.clientY-lastMouseY;
-
-
-        cameraAngle -=
-            dx*.005;
-
-
-        cameraHeight -=
-            dy*.025;
-
-
-        cameraHeight =
-            Math.max(
-                4.5,
-                Math.min(
-                    12,
-                    cameraHeight
-                )
-            );
-
-
-        lastMouseX=e.clientX;
-
-        lastMouseY=e.clientY;
-    }
-);
-
-
-renderer.domElement.addEventListener(
-    "wheel",
-    e=>{
-
-        cameraDistance +=
-            e.deltaY*.012;
-
-
-        cameraDistance =
-            Math.max(
-                11,
-                Math.min(
-                    30,
-                    cameraDistance
-                )
-            );
-    }
-);
-
-
-/* =========================================================
-   MAIN ANIMATION
-========================================================= */
-
-let previousTime =
-    performance.now();
-
-
-function animate(){
-
-    requestAnimationFrame(
-        animate
+    const cabin = smartCar.children.find(
+        child => child.geometry && child.geometry.parameters && child.geometry.parameters.width === 1.35
     );
+    if (cabin) {
+        cabin.position.y = 1.02 + Math.sin(performance.now() * 0.006) * 0.006 * drivingAmount;
+    }
+
+    if (smartCar.userData.sensorRing) {
+        smartCar.userData.sensorRing.material.opacity = 0.22 + Math.sin(performance.now() * 0.004) * 0.08;
+    }
+}
+
+function updateStorm(delta) {
+    if (activeScenario !== "storm") {
+        sunlight.intensity = 3.4;
+        return;
+    }
+    if (Math.random() < delta * 0.45) stormFlash = 0.12;
+    if (stormFlash > 0) {
+        sunlight.intensity = 5.5;
+        hemisphere.intensity = 4.2;
+        stormFlash -= delta;
+    } else {
+        sunlight.intensity = 1.5;
+        hemisphere.intensity = 1.8;
+    }
+}
 
 
-    const now =
-        performance.now();
+/* =========================================================
+   CAMERA ORBIT & MOUSE CONTROLS
+========================================================= */
+
+let cameraAngle = 0;
+let cameraDistance = 18;
+let cameraHeight = 7.5;
+let dragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let smoothCameraX = camera.position.x;
+let smoothCameraY = camera.position.y;
+let smoothCameraZ = camera.position.z;
+
+renderer.domElement.addEventListener("mousedown", e => {
+    dragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+});
+window.addEventListener("mouseup", () => { dragging = false; });
+window.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    cameraAngle -= dx * 0.005;
+    cameraHeight -= dy * 0.025;
+    cameraHeight = Math.max(4.5, Math.min(12, cameraHeight));
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+});
+renderer.domElement.addEventListener("wheel", e => {
+    cameraDistance += e.deltaY * 0.012;
+    cameraDistance = Math.max(11, Math.min(30, cameraDistance));
+});
 
 
-    const delta =
-        Math.min(
-            (now-previousTime)/1000,
-            .05
-        );
+/* =========================================================
+   MAIN ANIMATION LOOP
+========================================================= */
 
+let previousTime = performance.now();
 
-    previousTime=now;
-
-
-    /*
-        Traffic continuously moves.
-    */
+function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    const delta = Math.min((now - previousTime) / 1000, 0.05);
+    previousTime = now;
 
     updateTraffic(delta);
-
-
-    /*
-        Environment continuously moves.
-    */
-
     updateEnvironment(delta);
-
-
-    /*
-        Rain.
-    */
-
     updateRain(delta);
+    updateStorm(delta);
+    updatePlayerAnimation(delta);
 
-
-    /*
-        Scenario logic.
-    */
-
-    if(
-        activeScenario==="human"
-    ){
-
-        updateHumanScenario(delta);
-    }
-
-    else if(
-        activeScenario==="animal"
-    ){
-
-        updateAnimalScenario(delta);
-    }
-
-    else if(
-        activeScenario==="obstacle"
-    ){
-
-        updateObstacleScenario(delta);
-    }
-
-    else if(
-        activeScenario==="collision"
-    ){
-
-        updateCollisionScenario(delta);
-    }
-
-    else if(
-        activeScenario==="rain" ||
-        activeScenario==="storm"
-    ){
-
-        updateWeatherScenario();
-    }
-
-
-    /*
-        Smooth speed.
-    */
+    if (activeScenario === "human") updateHumanScenario(delta);
+    else if (activeScenario === "animal") updateAnimalScenario(delta);
+    else if (activeScenario === "obstacle") updateObstacleScenario(delta);
+    else if (activeScenario === "collision") updateCollisionScenario(delta);
+    else if (activeScenario === "rain" || activeScenario === "storm") updateWeatherScenario();
 
     updateSpeed(delta);
+    smartCar.position.z = 0;
 
+    const targetCameraX = smartCar.position.x + Math.sin(cameraAngle) * cameraDistance;
+    const targetCameraY = cameraHeight;
+    const targetCameraZ = Math.cos(cameraAngle) * cameraDistance;
 
-    /*
-        IMPORTANT:
-        The smart car stays fixed at z=0.
-        The world moves toward it.
-    */
+    smoothCameraX += (targetCameraX - smoothCameraX) * Math.min(delta * 6, 1);
+    smoothCameraY += (targetCameraY - smoothCameraY) * Math.min(delta * 6, 1);
+    smoothCameraZ += (targetCameraZ - smoothCameraZ) * Math.min(delta * 6, 1);
 
-    smartCar.position.z=0;
+    camera.position.x = smoothCameraX;
+    camera.position.y = smoothCameraY;
+    camera.position.z = smoothCameraZ;
+    camera.lookAt(smartCar.position.x, 0.7, -6);
 
-
-    /*
-        Camera follows lateral movement.
-    */
-
-    camera.position.x =
-        smartCar.position.x +
-        Math.sin(cameraAngle) *
-        cameraDistance;
-
-
-    camera.position.y =
-        cameraHeight;
-
-
-    camera.position.z =
-        Math.cos(cameraAngle) *
-        cameraDistance;
-
-
-    camera.lookAt(
-        smartCar.position.x,
-        .7,
-        -6
-    );
-
-
-    renderer.render(
-        scene,
-        camera
-    );
+    renderer.render(scene, camera);
 }
 
 
 /* =========================================================
-   RESIZE
+   RESIZE LISTENER & LAUNCH
 ========================================================= */
 
-window.addEventListener(
-    "resize",
-    ()=>{
-
-        camera.aspect =
-            window.innerWidth/
-            window.innerHeight;
-
-
-        camera.updateProjectionMatrix();
-
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
-);
-
-
-/* =========================================================
-   START
-========================================================= */
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 resetSimulation();
-
 animate();
 
 </script>
 
 </body>
-
 </html>
