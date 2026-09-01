@@ -22,10 +22,26 @@ The system:
 ## 📁 Structure
 
 ```text
-simulation.py   # Sensor simulation
-brain.py        # Decision engine
-app.py          # Live dashboard
-metrics.py      # Performance tracking
+simulation.py   # Sensor simulation & scenario catalog
+brain.py        # Decision engine, kinematic TTC, & multi-hazard arbitration
+app.py          # Live Cockpit HUD, 2D BEV Perception, & Telemetry Dashboard
+road.py         # Canvas simulator runner & bridge component for app.py
+simulation.html # Interactive canvas-based 2D/3D driving simulation
+metrics.py      # Performance tracking & blackbox audit
+test_brain.py   # Comprehensive verification test suite
 ```
 
+## 🚀 Running the System
+
+- **Full Cockpit HUD & Decision Dashboard** (Includes embedded 3D Road Simulator):
+  ```bash
+  streamlit run app.py
+  ```
+
+- **Standalone 3D Road Simulation**:
+  ```bash
+  streamlit run road.py
+  ```
+
 > **Our goal:** Don't just detect hazards—understand what they mean, decide what to do, and explain why.
+

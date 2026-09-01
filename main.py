@@ -1,6 +1,5 @@
 from simulation import SimulationEngine
-from metrices import record_event, get_metrics
-
+from metrics import record_event, get_metrics
 
 def run_trip():
 
