@@ -33,38 +33,51 @@ def get_user_event():
     
 scenario = [
     {
+        "time": 0,
+        "type": "clear",
+        "distance": None,
+        "position": "none",
+        "confidence": 1.0,
+        "sensor_status": "active"
+    },
+    {
+        "time": 5,
+        "type": "vehicle",
+        "distance": 18,
+        "position": "front",
+        "confidence": 0.95,
+        "sensor_status": "active"
+    },
+    {
+        "time": 10,
         "type": "pedestrian",
         "distance": 6,
         "position": "front",
-        "confidence": 0.95,
-        "sensor": "camera",
-        "sensor_status": "active"
-    },
-    {
-        "type": "vehicle",
-        "distance": 15,
-        "position": "front",
         "confidence": 0.98,
-        "sensor": "camera",
         "sensor_status": "active"
     },
     {
+        "time": 15,
         "type": "obstacle",
         "distance": 5,
         "position": "front",
         "confidence": 0.90,
-        "sensor": "lidar",
+        "sensor_status": "active"
+    },
+    {
+        "time": 20,
+         "type": "sensor_gap",
+        "distance": None,
+        "position": "unknown",
+        "confidence": 0.0,
+        "sensor_status": "failed"
+    },
+    {
+        "time": 25,
+        "type": "clear",
+        "distance": None,
+        "position": "none",
+        "confidence": 1.0,
         "sensor_status": "active"
     }
 ]
-
-def get_event(index):
-    return scenario[index]
-
-if __name__ == "__main__":
-    for i in range(len(scenario)):
-        print(f"Event {i + 1}:")
-        print(get_event(i))
-        print()
-
-    
