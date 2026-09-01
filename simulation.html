@@ -40,11 +40,6 @@ canvas{
     display:block;
 }
 
-
-/* =========================================================
-   TOP TITLE
-========================================================= */
-
 #title{
     position:absolute;
     top:16px;
@@ -61,11 +56,6 @@ canvas{
     z-index:20;
     white-space:nowrap;
 }
-
-
-/* =========================================================
-   LEFT TELEMETRY
-========================================================= */
 
 #telemetry{
     position:absolute;
@@ -114,11 +104,6 @@ canvas{
     font-weight:850;
 }
 
-
-/* =========================================================
-   RIGHT CONTROL PANEL
-========================================================= */
-
 #controls{
     position:absolute;
     right:18px;
@@ -166,11 +151,6 @@ button:active{
     background:#29313a;
     color:white;
 }
-
-
-/* =========================================================
-   WEATHER WARNING
-========================================================= */
 
 #weather{
     position:absolute;
@@ -221,11 +201,6 @@ button:active{
     font-weight:850;
 }
 
-
-/* =========================================================
-   EVENT MESSAGE
-========================================================= */
-
 #message{
     position:absolute;
     bottom:34px;
@@ -249,11 +224,6 @@ button:active{
     transform:translateX(-50%) translateY(0);
 }
 
-
-/* =========================================================
-   CAMERA HINT
-========================================================= */
-
 #hint{
     position:absolute;
     bottom:12px;
@@ -267,7 +237,6 @@ button:active{
 
 </head>
 
-
 <body>
 
 <div id="app">
@@ -275,9 +244,8 @@ button:active{
 <div id="canvas"></div>
 
 <div id="title">
-    🚗 AI ROAD SAFETY • PREDICT • PREVENT • PROTECT
+🚗 AI ROAD SAFETY • PREDICT • PREVENT • PROTECT
 </div>
-
 
 <div id="telemetry">
 
@@ -329,7 +297,6 @@ button:active{
 
 </div>
 
-
 <div id="controls">
 
     <div class="control-title">
@@ -366,7 +333,6 @@ button:active{
 
 </div>
 
-
 <div id="weather">
 
     <div id="weatherIcon"></div>
@@ -379,18 +345,15 @@ button:active{
 
 </div>
 
-
 <div id="message"></div>
 
 <div id="hint">
-    Drag to rotate camera • Scroll to zoom
+Drag to rotate camera • Scroll to zoom
 </div>
 
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-
 
 <script>
 
@@ -400,7 +363,8 @@ button:active{
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x91d8ff);
+scene.background =
+    new THREE.Color(0x91d8ff);
 
 
 /* =========================================================
@@ -411,7 +375,7 @@ const camera =
     new THREE.PerspectiveCamera(
         52,
         window.innerWidth / window.innerHeight,
-        0.1,
+        .1,
         1000
     );
 
@@ -534,7 +498,7 @@ const ground =
     );
 
 ground.rotation.x=-Math.PI/2;
-ground.position.y=-0.12;
+ground.position.y=-.12;
 ground.receiveShadow=true;
 
 scene.add(ground);
@@ -684,7 +648,6 @@ function createTree(x,z,scale=1){
     const tree =
         new THREE.Group();
 
-
     const trunk =
         new THREE.Mesh(
             new THREE.CylinderGeometry(
@@ -704,14 +667,6 @@ function createTree(x,z,scale=1){
 
     tree.add(trunk);
 
-
-    const foliageMat =
-        new THREE.MeshStandardMaterial({
-            color:0x3e9951,
-            roughness:1
-        });
-
-
     const lower =
         new THREE.Mesh(
             new THREE.SphereGeometry(
@@ -719,14 +674,16 @@ function createTree(x,z,scale=1){
                 16,
                 12
             ),
-            foliageMat
+            new THREE.MeshStandardMaterial({
+                color:0x3e9951,
+                roughness:1
+            })
         );
 
     lower.position.y=2.35;
     lower.castShadow=true;
 
     tree.add(lower);
-
 
     const middle =
         new THREE.Mesh(
@@ -751,7 +708,6 @@ function createTree(x,z,scale=1){
 
     tree.add(middle);
 
-
     const top =
         new THREE.Mesh(
             new THREE.SphereGeometry(
@@ -774,7 +730,6 @@ function createTree(x,z,scale=1){
     top.castShadow=true;
 
     tree.add(top);
-
 
     tree.position.set(
         x,
@@ -859,10 +814,6 @@ function createBush(x,z,scale=1){
     return bush;
 }
 
-
-/* =========================================================
-   BUSHES
-========================================================= */
 
 const bushes=[];
 
@@ -958,13 +909,11 @@ function createCloud(
     const cloud =
         new THREE.Group();
 
-
     const material =
         new THREE.MeshStandardMaterial({
             color:0xffffff,
             roughness:1
         });
-
 
     const parts=[
         [-1.5,0,0,1],
@@ -972,7 +921,6 @@ function createCloud(
         [.55,.25,0,1.15],
         [1.4,0,0,.85]
     ];
-
 
     parts.forEach(p=>{
 
@@ -994,7 +942,6 @@ function createCloud(
 
         cloud.add(puff);
     });
-
 
     cloud.position.set(
         x,
@@ -1030,14 +977,20 @@ clouds.push(
 
 
 /* =========================================================
-   CITY BUILDINGS
+   BUILDINGS
 ========================================================= */
 
-function createBuilding(x, z, width, depth, height){
+function createBuilding(
+    x,
+    z,
+    width,
+    depth,
+    height
+){
 
-    const building = new THREE.Group();
+    const building =
+        new THREE.Group();
 
-    /* BUILDING BODY */
 
     const body =
         new THREE.Mesh(
@@ -1047,21 +1000,16 @@ function createBuilding(x, z, width, depth, height){
                 depth
             ),
             new THREE.MeshStandardMaterial({
-                color: 0x7d8791,
-                roughness: .85
+                color:0x7d8791,
+                roughness:.85
             })
         );
 
-    building.position.set(
-        x,
-        0,
-        z
-    );
+    body.position.y =
+        height/2;
 
-    body.position.y = height / 2;
-
-    body.castShadow = true;
-    body.receiveShadow = true;
+    body.castShadow=true;
+    body.receiveShadow=true;
 
     building.add(body);
 
@@ -1070,44 +1018,53 @@ function createBuilding(x, z, width, depth, height){
 
     const windowMat =
         new THREE.MeshStandardMaterial({
-            color: 0xbdebf5,
-            emissive: 0x416b75,
-            emissiveIntensity: .35,
-            roughness: .2
+            color:0xbdebf5,
+            emissive:0x416b75,
+            emissiveIntensity:.35,
+            roughness:.2
         });
 
 
-    const windowWidth = .32;
-    const windowHeight = .45;
+    const windowWidth=.32;
+    const windowHeight=.45;
 
-    const spacingX = .75;
-    const spacingY = .95;
+    const spacingX=.75;
+    const spacingY=.95;
 
 
     const columns =
         Math.max(
             1,
             Math.floor(
-                (width - .6) / spacingX
+                (width-.6)/spacingX
             )
         );
+
 
     const rows =
         Math.max(
             1,
             Math.floor(
-                (height - .8) / spacingY
+                (height-.8)/spacingY
             )
         );
 
 
-    /* FRONT WINDOWS */
+    /* FRONT */
 
-    for(let row = 0; row < rows; row++){
+    for(
+        let row=0;
+        row<rows;
+        row++
+    ){
 
-        for(let col = 0; col < columns; col++){
+        for(
+            let col=0;
+            col<columns;
+            col++
+        ){
 
-            const windowMesh =
+            const w =
                 new THREE.Mesh(
                     new THREE.BoxGeometry(
                         windowWidth,
@@ -1118,31 +1075,34 @@ function createBuilding(x, z, width, depth, height){
                 );
 
             const startX =
-                -((columns - 1) *
-                spacingX) / 2;
+                -((columns-1)*spacingX)/2;
 
-            windowMesh.position.set(
-                startX +
-                col * spacingX,
-
-                .65 +
-                row * spacingY,
-
-                depth / 2 + .025
+            w.position.set(
+                startX+col*spacingX,
+                .65+row*spacingY,
+                depth/2+.025
             );
 
-            building.add(windowMesh);
+            building.add(w);
         }
     }
 
 
-    /* BACK WINDOWS */
+    /* BACK */
 
-    for(let row = 0; row < rows; row++){
+    for(
+        let row=0;
+        row<rows;
+        row++
+    ){
 
-        for(let col = 0; col < columns; col++){
+        for(
+            let col=0;
+            col<columns;
+            col++
+        ){
 
-            const windowMesh =
+            const w =
                 new THREE.Mesh(
                     new THREE.BoxGeometry(
                         windowWidth,
@@ -1153,45 +1113,45 @@ function createBuilding(x, z, width, depth, height){
                 );
 
             const startX =
-                -((columns - 1) *
-                spacingX) / 2;
+                -((columns-1)*spacingX)/2;
 
-            windowMesh.position.set(
-                startX +
-                col * spacingX,
-
-                .65 +
-                row * spacingY,
-
-                -depth / 2 - .025
+            w.position.set(
+                startX+col*spacingX,
+                .65+row*spacingY,
+                -depth/2-.025
             );
 
-            building.add(windowMesh);
+            building.add(w);
         }
     }
 
 
-    /* SIDE WINDOWS */
+    /* SIDES */
 
     const sideColumns =
         Math.max(
             1,
             Math.floor(
-                (depth - .6) / spacingX
+                (depth-.6)/spacingX
             )
         );
 
 
-    for(let row = 0; row < rows; row++){
+    for(
+        let row=0;
+        row<rows;
+        row++
+    ){
 
-        for(let col = 0; col < sideColumns; col++){
+        for(
+            let col=0;
+            col<sideColumns;
+            col++
+        ){
 
             const startZ =
-                -((sideColumns - 1) *
-                spacingX) / 2;
+                -((sideColumns-1)*spacingX)/2;
 
-
-            /* LEFT SIDE */
 
             const leftWindow =
                 new THREE.Mesh(
@@ -1204,19 +1164,13 @@ function createBuilding(x, z, width, depth, height){
                 );
 
             leftWindow.position.set(
-                -width / 2 - .025,
-
-                .65 +
-                row * spacingY,
-
-                startZ +
-                col * spacingX
+                -width/2-.025,
+                .65+row*spacingY,
+                startZ+col*spacingX
             );
 
             building.add(leftWindow);
 
-
-            /* RIGHT SIDE */
 
             const rightWindow =
                 new THREE.Mesh(
@@ -1229,13 +1183,9 @@ function createBuilding(x, z, width, depth, height){
                 );
 
             rightWindow.position.set(
-                width / 2 + .025,
-
-                .65 +
-                row * spacingY,
-
-                startZ +
-                col * spacingX
+                width/2+.025,
+                .65+row*spacingY,
+                startZ+col*spacingX
             );
 
             building.add(rightWindow);
@@ -1248,23 +1198,29 @@ function createBuilding(x, z, width, depth, height){
     const roof =
         new THREE.Mesh(
             new THREE.BoxGeometry(
-                width + .15,
+                width+.15,
                 .18,
-                depth + .15
+                depth+.15
             ),
             new THREE.MeshStandardMaterial({
-                color: 0x555d65,
-                roughness: .9
+                color:0x555d65,
+                roughness:.9
             })
         );
 
     roof.position.y =
-        height + .09;
+        height+.09;
 
-    roof.castShadow = true;
+    roof.castShadow=true;
 
     building.add(roof);
 
+
+    building.position.set(
+        x,
+        0,
+        z
+    );
 
     scene.add(building);
 
@@ -1272,19 +1228,15 @@ function createBuilding(x, z, width, depth, height){
 }
 
 
-/* =========================================================
-   BUILDINGS
-========================================================= */
-
-const buildings = [];
+const buildings=[];
 
 
 /* LEFT BUILDINGS */
 
 for(
-    let z = -30;
-    z > -340;
-    z -= 35
+    let z=-30;
+    z>-340;
+    z-=35
 ){
 
     buildings.push(
@@ -1293,7 +1245,7 @@ for(
             z,
             5.5,
             11,
-            9 + Math.random() * 8
+            9+Math.random()*8
         )
     );
 }
@@ -1302,9 +1254,9 @@ for(
 /* RIGHT BUILDINGS */
 
 for(
-    let z = -45;
-    z > -340;
-    z -= 40
+    let z=-45;
+    z>-340;
+    z-=40
 ){
 
     buildings.push(
@@ -1313,7 +1265,7 @@ for(
             z,
             5.5,
             11,
-            10 + Math.random() * 9
+            10+Math.random()*9
         )
     );
 }
@@ -1365,7 +1317,7 @@ function createStreetLight(x,z){
         );
 
     arm.position.set(
-        x<0 ? .35 : -.35,
+        x<0 ? .35:-.35,
         4,
         0
     );
@@ -1388,7 +1340,7 @@ function createStreetLight(x,z){
         );
 
     lamp.position.set(
-        x<0 ? .7 : -.7,
+        x<0 ? .7:-.7,
         3.92,
         0
     );
@@ -1410,7 +1362,7 @@ function createStreetLight(x,z){
 
 for(
     let z=-15;
-    z>-300;
+    z>-330;
     z-=30
 ){
 
@@ -1443,8 +1395,6 @@ function createCar(
         new THREE.Group();
 
 
-    /* BODY */
-
     const body =
         new THREE.Mesh(
             new THREE.BoxGeometry(
@@ -1465,8 +1415,6 @@ function createCar(
     car.add(body);
 
 
-    /* LOWER BODY */
-
     const lower =
         new THREE.Mesh(
             new THREE.BoxGeometry(
@@ -1484,8 +1432,6 @@ function createCar(
 
     car.add(lower);
 
-
-    /* CABIN */
 
     const cabin =
         new THREE.Mesh(
@@ -1509,8 +1455,6 @@ function createCar(
 
     car.add(cabin);
 
-
-    /* ROOF */
 
     const roof =
         new THREE.Mesh(
@@ -1547,6 +1491,9 @@ function createCar(
         });
 
 
+    const wheels=[];
+
+
     [
         [-.94,.38,-1.05],
         [.94,.38,-1.05],
@@ -1572,7 +1519,12 @@ function createCar(
         wheel.castShadow=true;
 
         car.add(wheel);
+
+        wheels.push(wheel);
     });
+
+
+    car.userData.wheels=wheels;
 
 
     /* HEADLIGHTS */
@@ -1639,8 +1591,6 @@ function createCar(
     });
 
 
-    /* PLAYER SENSOR RING */
-
     if(isPlayer){
 
         const ring =
@@ -1664,6 +1614,8 @@ function createCar(
         ring.position.y=.22;
 
         car.add(ring);
+
+        car.userData.sensorRing=ring;
     }
 
 
@@ -1782,6 +1734,8 @@ function createPedestrian(){
         new THREE.Group();
 
 
+    const legs=[];
+
     const legsMat =
         new THREE.MeshStandardMaterial({
             color:0x303a7a
@@ -1808,6 +1762,8 @@ function createPedestrian(){
         );
 
         person.add(leg);
+
+        legs.push(leg);
     });
 
 
@@ -1872,6 +1828,8 @@ function createPedestrian(){
 
     person.add(hair);
 
+
+    person.userData.legs=legs;
 
     scene.add(person);
 
@@ -1965,6 +1923,8 @@ function createAnimal(){
     });
 
 
+    const legs=[];
+
     for(
         let i=0;
         i<4;
@@ -1989,8 +1949,12 @@ function createAnimal(){
         );
 
         dog.add(leg);
+
+        legs.push(leg);
     }
 
+
+    dog.userData.legs=legs;
 
     scene.add(dog);
 
@@ -2160,6 +2124,13 @@ function createRain(){
 
 
 createRain();
+
+
+/* =========================================================
+   STORM LIGHT
+========================================================= */
+
+let stormFlash=0;
 
 
 /* =========================================================
@@ -2377,11 +2348,6 @@ function vehicleSafeInLane(
             car.mesh.position.z-ourZ;
 
 
-        /*
-            Since the smart car is at z=0,
-            negative Z means ahead.
-        */
-
         if(
             dz < 0 &&
             dz > -FRONT_DISTANCE
@@ -2389,10 +2355,6 @@ function vehicleSafeInLane(
             return false;
         }
 
-
-        /*
-            Positive Z means behind us.
-        */
 
         if(
             dz > 0 &&
@@ -2533,15 +2495,10 @@ function laneWillRemainSafe(lane){
         }
 
 
-        /*
-            Predict where the traffic vehicle
-            will be shortly.
-        */
-
         const predicted =
             car.mesh.position.z +
             car.speed *
-            0.12 *
+            .12 *
             1.2;
 
 
@@ -2624,7 +2581,7 @@ function beginLaneChange(){
     }
 
 
-    targetLane =
+    targetLane=
         safeLane;
 
     laneChanging=true;
@@ -2645,11 +2602,6 @@ function updateLaneChange(delta){
         return;
     }
 
-
-    /*
-        Only stop the manoeuvre if the destination
-        lane becomes genuinely dangerous.
-    */
 
     if(
         !laneIsSafe(targetLane)
@@ -2681,25 +2633,39 @@ function updateLaneChange(delta){
 
 
     smartCar.position.x +=
-        dx *
+        dx*
         Math.min(
             delta*3.2,
             1
         );
 
 
-    smartCar.rotation.z =
-        -dx*.035;
+    /*
+        Smoother visual banking.
+    */
+
+    const desiredTilt =
+        -dx*.055;
+
+    smartCar.rotation.z +=
+        (
+            desiredTilt-
+            smartCar.rotation.z
+        )*
+        Math.min(
+            delta*10,
+            1
+        );
 
 
     if(
         Math.abs(dx)<.06
     ){
 
-        smartCar.position.x =
+        smartCar.position.x=
             targetLane;
 
-        currentLane =
+        currentLane=
             targetLane;
 
         laneChanging=false;
@@ -2749,7 +2715,7 @@ function tryReturnToOriginal(){
     }
 
 
-    targetLane =
+    targetLane=
         originalLane;
 
     laneChanging=true;
@@ -2769,7 +2735,7 @@ function updateSpeed(delta){
     currentSpeed +=
         (
             targetSpeed-currentSpeed
-        ) *
+        )*
         Math.min(
             delta*3,
             1
@@ -2778,7 +2744,7 @@ function updateSpeed(delta){
 
     document.getElementById(
         "speed"
-    ).textContent =
+    ).textContent=
         Math.max(
             0,
             Math.round(currentSpeed)
@@ -2794,24 +2760,43 @@ function updateTraffic(delta){
 
     traffic.forEach(car=>{
 
-        /*
-            Positive Z moves traffic toward
-            the smart car.
-        */
-
         car.mesh.position.z +=
-            car.speed *
-            delta *
-            0.12;
+            car.speed*
+            delta*
+            .12;
 
 
         /*
-            Once a vehicle has passed the
-            smart car, recycle it far ahead.
+            Wheel animation.
         */
+
+        if(car.mesh.userData.wheels){
+
+            car.mesh.userData.wheels.forEach(
+                wheel=>{
+
+                    wheel.rotation.x +=
+                        car.speed*
+                        delta*
+                        .35;
+                }
+            );
+        }
+
+
+        /*
+            Very subtle suspension.
+        */
+
+        car.mesh.position.y =
+            Math.sin(
+                performance.now()*.004+
+                car.mesh.position.z
+            )*.008;
+
 
         if(
-            car.mesh.position.z > 35
+            car.mesh.position.z>35
         ){
 
             let farthest=-60;
@@ -2821,7 +2806,7 @@ function updateTraffic(delta){
 
                 if(other!==car){
 
-                    farthest =
+                    farthest=
                         Math.min(
                             farthest,
                             other.mesh.position.z
@@ -2830,13 +2815,13 @@ function updateTraffic(delta){
             });
 
 
-            car.mesh.position.z =
-                farthest -
-                45 -
+            car.mesh.position.z=
+                farthest-
+                45-
                 Math.random()*35;
 
 
-            car.lane =
+            car.lane=
                 LANES[
                     Math.floor(
                         Math.random()*LANES.length
@@ -2844,15 +2829,15 @@ function updateTraffic(delta){
                 ];
 
 
-            car.mesh.position.x =
+            car.mesh.position.x=
                 car.lane;
 
 
-            car.speed =
+            car.speed=
                 16+
                 Math.random()*5;
 
-            car.baseSpeed =
+            car.baseSpeed=
                 car.speed;
         }
     });
@@ -2871,21 +2856,52 @@ function updatePedestrian(delta){
 
 
     /*
-        Pedestrian moves toward the car
-        while crossing the road.
+        Pedestrian movement is independent
+        from vehicle speed.
     */
 
     pedestrian.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
+        1.5*
+        delta;
 
 
-    pedestrian.position.x +=
+    pedestrian.position.x -=
         delta*1.8;
 
 
-    pedestrian.rotation.z =
+    /*
+        Walking animation.
+    */
+
+    const walk =
+        Math.sin(
+            scenarioTime*9
+        );
+
+
+    if(
+        pedestrian.userData.legs
+    ){
+
+        pedestrian.userData.legs[0]
+            .rotation.z=
+            walk*.35;
+
+        pedestrian.userData.legs[1]
+            .rotation.z=
+            -walk*.35;
+    }
+
+
+    pedestrian.position.y =
+        Math.abs(
+            Math.sin(
+                scenarioTime*9
+            )
+        )*.025;
+
+
+    pedestrian.rotation.z=
         Math.sin(
             scenarioTime*8
         )*.04;
@@ -2903,14 +2919,52 @@ function updateAnimal(delta){
     }
 
 
+    /*
+        Animal moves independently from
+        the vehicle speed.
+    */
+
     animal.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
+        1.5*
+        delta;
 
 
     animal.position.x -=
         delta*1.8;
+
+
+    /*
+        Walking animation.
+    */
+
+    const walk =
+        Math.sin(
+            scenarioTime*10
+        );
+
+
+    if(
+        animal.userData.legs
+    ){
+
+        animal.userData.legs.forEach(
+            (leg,index)=>{
+
+                leg.rotation.z=
+                    index%2===0
+                    ? walk*.3
+                    : -walk*.3;
+            }
+        );
+    }
+
+
+    animal.position.y =
+        Math.abs(
+            Math.sin(
+                scenarioTime*10
+            )
+        )*.018;
 
 
     animal.rotation.y =
@@ -2947,12 +3001,16 @@ function updateRain(delta){
         i+=3
     ){
 
-        pos[i+1] -=
-            delta*27;
+        pos[i+1]-=
+            delta*30;
 
 
-        pos[i+2] +=
-            delta*3;
+        pos[i+2]+=
+            delta*5;
+
+
+        pos[i]+=
+            delta*.5;
 
 
         if(
@@ -2978,38 +3036,124 @@ function updateRain(delta){
 
 
 /* =========================================================
-   PEDESTRIAN
+   HUMAN SCENARIO
 ========================================================= */
 
-function updatePedestrian(delta){
+function updateHumanScenario(delta){
 
-    if(!pedestrian){
+    scenarioTime+=delta;
+
+    updatePedestrian(delta);
+
+
+    if(
+        scenarioTime<1.5
+    ){
+
+        targetSpeed=30;
+
+        setStatus(
+            "DETECTING",
+            "PEDESTRIAN",
+            "MEDIUM"
+        );
+
         return;
     }
 
-    /*
-        Pedestrian moves independently of the car.
-        This means the pedestrian keeps walking even
-        when the smart car is completely stopped.
-    */
-
-    pedestrian.position.z +=
-        1.5 *
-        delta;
 
     /*
-        Pedestrian crosses the road.
-        Right side → left side.
+        STOP instead of changing lanes.
     */
 
-    pedestrian.position.x -=
-        delta * 1.8;
+    if(
+        scenarioTime<3
+    ){
 
-    pedestrian.rotation.z =
-        Math.sin(
-            scenarioTime * 8
-        ) * .04;
+        targetSpeed=0;
+
+        setStatus(
+            "BRAKING",
+            "PEDESTRIAN",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    /*
+        Keep stopped until pedestrian
+        has cleared the road.
+    */
+
+    if(
+        pedestrian &&
+        pedestrian.position.x>-7 &&
+        pedestrian.position.z<12
+    ){
+
+        targetSpeed=0;
+
+        setStatus(
+            "STOPPED",
+            "PEDESTRIAN CROSSING",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    /*
+        Pedestrian is clear.
+    */
+
+    if(
+        pedestrian &&
+        (
+            pedestrian.position.x<=-7 ||
+            pedestrian.position.z>=12
+        )
+    ){
+
+        targetSpeed=35;
+
+        setStatus(
+            "RESUMING",
+            "PEDESTRIAN CLEAR",
+            "LOW"
+        );
+
+        showMessage(
+            "✓ Pedestrian cleared — resuming safely"
+        );
+
+        pedestrian.position.x=-20;
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<20
+    ){
+
+        targetSpeed=35;
+
+        setStatus(
+            "DRIVING",
+            "PEDESTRIAN CLEAR",
+            "LOW"
+        );
+
+        return;
+    }
+
+
+    finishScenario();
 }
+
 
 /* =========================================================
    ANIMAL SCENARIO
@@ -3017,25 +3161,16 @@ function updatePedestrian(delta){
 
 function updateAnimalScenario(delta){
 
-    scenarioTime += delta;
-
-    /*
-        Animal continues moving even when
-        the smart car has stopped.
-    */
+    scenarioTime+=delta;
 
     updateAnimal(delta);
 
 
-    /*
-        DETECTION
-    */
-
     if(
-        scenarioTime < 1.5
+        scenarioTime<1.5
     ){
 
-        targetSpeed = 30;
+        targetSpeed=30;
 
         setStatus(
             "DETECTING",
@@ -3048,14 +3183,14 @@ function updateAnimalScenario(delta){
 
 
     /*
-        BRAKING
+        Brake.
     */
 
     if(
-        scenarioTime < 3
+        scenarioTime<3
     ){
 
-        targetSpeed = 0;
+        targetSpeed=0;
 
         setStatus(
             "BRAKING",
@@ -3068,17 +3203,16 @@ function updateAnimalScenario(delta){
 
 
     /*
-        STOP COMPLETELY WHILE ANIMAL
-        IS STILL IN THE ROAD
+        Stop until animal completely clears.
     */
 
     if(
         animal &&
-        animal.position.x > -7 &&
-        animal.position.z < 12
+        animal.position.x>-7 &&
+        animal.position.z<12
     ){
 
-        targetSpeed = 0;
+        targetSpeed=0;
 
         setStatus(
             "STOPPED",
@@ -3091,19 +3225,18 @@ function updateAnimalScenario(delta){
 
 
     /*
-        ANIMAL IS OUT OF THE ROAD / OUT OF SIGHT
-        ONLY NOW CAN THE CAR MOVE AGAIN.
+        Animal has cleared the road.
     */
 
     if(
         animal &&
         (
-            animal.position.x <= -7 ||
-            animal.position.z >= 12
+            animal.position.x<=-7 ||
+            animal.position.z>=12
         )
     ){
 
-        targetSpeed = 35;
+        targetSpeed=35;
 
         setStatus(
             "RESUMING",
@@ -3115,26 +3248,17 @@ function updateAnimalScenario(delta){
             "✓ Animal cleared — resuming safely"
         );
 
-        /*
-            Prevent the animal from affecting
-            the car again.
-        */
-
-        animal.position.x = -20;
+        animal.position.x=-20;
 
         return;
     }
 
 
-    /*
-        NORMAL RESUMPTION
-    */
-
     if(
-        scenarioTime < 20
+        scenarioTime<20
     ){
 
-        targetSpeed = 35;
+        targetSpeed=35;
 
         setStatus(
             "DRIVING",
@@ -3149,13 +3273,14 @@ function updateAnimalScenario(delta){
     finishScenario();
 }
 
+
 /* =========================================================
    OBSTACLE SCENARIO
 ========================================================= */
 
 function updateObstacleScenario(delta){
 
-    scenarioTime += delta;
+    scenarioTime+=delta;
 
 
     if(!obstacle){
@@ -3163,14 +3288,10 @@ function updateObstacleScenario(delta){
     }
 
 
-    /*
-        Obstacle moves toward smart car.
-    */
-
     obstacle.position.z +=
-        currentSpeed *
-        delta *
-        0.12;
+        currentSpeed*
+        delta*
+        .12;
 
 
     if(
@@ -3341,7 +3462,7 @@ function updateObstacleScenario(delta){
 
 function updateCollisionScenario(delta){
 
-    scenarioTime += delta;
+    scenarioTime+=delta;
 
 
     if(
@@ -3591,7 +3712,7 @@ function startScenario(scenario){
         scenario==="human"
     ){
 
-        pedestrian =
+        pedestrian=
             createPedestrian();
 
 
@@ -3619,7 +3740,7 @@ function startScenario(scenario){
         scenario==="animal"
     ){
 
-        animal =
+        animal=
             createAnimal();
 
 
@@ -3674,11 +3795,11 @@ function startScenario(scenario){
         scenario==="collision"
     ){
 
-        const danger =
+        const danger=
             traffic[1];
 
 
-        danger.lane =
+        danger.lane=
             RIGHT;
 
 
@@ -3688,11 +3809,6 @@ function startScenario(scenario){
             -30
         );
 
-
-        /*
-            Positive speed moves the
-            danger vehicle toward z=0.
-        */
 
         danger.speed=22;
 
@@ -3717,7 +3833,7 @@ function startScenario(scenario){
         rain.visible=true;
 
 
-        scene.background =
+        scene.background=
             new THREE.Color(
                 0x7595aa
             );
@@ -3743,7 +3859,7 @@ function startScenario(scenario){
         rain.material.opacity=.95;
 
 
-        scene.background =
+        scene.background=
             new THREE.Color(
                 0x414d5b
             );
@@ -3787,6 +3903,8 @@ function resetSimulation(){
 
     eventFinished=false;
 
+    stormFlash=0;
+
 
     hideWeather();
 
@@ -3819,7 +3937,7 @@ function resetSimulation(){
     rain.material.opacity=.8;
 
 
-    scene.background =
+    scene.background=
         new THREE.Color(
             0x91d8ff
         );
@@ -3869,20 +3987,28 @@ function resetSimulation(){
     traffic.forEach(
         (car,i)=>{
 
-            car.mesh.position.z =
+            car.mesh.position.z=
                 resetPositions[i];
 
-            car.mesh.position.x =
+            car.mesh.position.x=
                 resetLanes[i];
 
-            car.lane =
+            car.mesh.position.y=0;
+
+            car.lane=
                 resetLanes[i];
 
-            car.speed =
+            car.speed=
                 resetSpeeds[i];
 
-            car.baseSpeed =
+            car.baseSpeed=
                 resetSpeeds[i];
+
+            car.mesh.rotation.set(
+                0,
+                0,
+                0
+            );
         }
     );
 
@@ -3910,13 +4036,13 @@ function moveObjectForward(
 ){
 
     object.position.z +=
-        speed *
-        delta *
-        0.12;
+        speed*
+        delta*
+        .12;
 
 
     if(
-        object.position.z >
+        object.position.z>
         recycleDistance
     ){
 
@@ -3944,6 +4070,17 @@ function updateEnvironment(delta){
             delta,
             30
         );
+
+
+        /*
+            Very subtle wind.
+        */
+
+        tree.rotation.z=
+            Math.sin(
+                scenarioTime*.8+
+                tree.position.z*.03
+            )*.008;
     });
 
 
@@ -3959,6 +4096,7 @@ function updateEnvironment(delta){
             delta,
             30
         );
+
     });
 
 
@@ -3974,6 +4112,7 @@ function updateEnvironment(delta){
             delta,
             30
         );
+
     });
 
 
@@ -3989,26 +4128,45 @@ function updateEnvironment(delta){
             delta,
             35
         );
+
     });
 
 
     /*
-        Center road markings
+        BUILDINGS
+        These now move exactly like the other
+        roadside environment objects.
+    */
+
+    buildings.forEach(building=>{
+
+        moveObjectForward(
+            building,
+            currentSpeed,
+            delta,
+            45
+        );
+
+    });
+
+
+    /*
+        Center road markings.
     */
 
     centerMarkers.forEach(marker=>{
 
         marker.position.z +=
-            currentSpeed *
-            delta *
-            0.12;
+            currentSpeed*
+            delta*
+            .12;
 
 
         if(
             marker.position.z>30
         ){
 
-            marker.position.z -=500;
+            marker.position.z-=500;
         }
     });
 
@@ -4034,6 +4192,151 @@ function updateEnvironment(delta){
 
 
 /* =========================================================
+   PLAYER VISUAL ANIMATION
+========================================================= */
+
+function updatePlayerAnimation(delta){
+
+    /*
+        Wheel rotation.
+        Visual only — does NOT affect safety.
+    */
+
+    if(
+        smartCar.userData.wheels
+    ){
+
+        smartCar.userData.wheels.forEach(
+            wheel=>{
+
+                wheel.rotation.x +=
+                    currentSpeed*
+                    delta*
+                    .35;
+            }
+        );
+    }
+
+
+    /*
+        Gentle suspension movement.
+    */
+
+    const drivingAmount =
+        Math.min(
+            currentSpeed/50,
+            1
+        );
+
+
+    const suspension =
+        Math.sin(
+            performance.now()*.008
+        )*
+        .012*
+        drivingAmount;
+
+
+    smartCar.position.y=
+        suspension;
+
+
+    /*
+        Cabin gives a subtle floating effect.
+    */
+
+    const cabin=
+        smartCar.children.find(
+            child=>
+                child.geometry &&
+                child.geometry.parameters &&
+                child.geometry.parameters.width===1.35
+        );
+
+
+    if(cabin){
+
+        cabin.position.y=
+            1.02+
+            Math.sin(
+                performance.now()*.006
+            )*.006*
+            drivingAmount;
+    }
+
+
+    /*
+        Sensor ring pulse.
+    */
+
+    if(
+        smartCar.userData.sensorRing
+    ){
+
+        smartCar.userData.sensorRing.material.opacity=
+            .22+
+            Math.sin(
+                performance.now()*.004
+            )*.08;
+    }
+}
+
+
+/* =========================================================
+   STORM VISUAL EFFECT
+========================================================= */
+
+function updateStorm(delta){
+
+    if(
+        activeScenario!=="storm"
+    ){
+
+        sunlight.intensity=
+            3.4;
+
+        return;
+    }
+
+
+    /*
+        Random lightning flash.
+        Purely visual.
+        Does NOT affect vehicle logic.
+    */
+
+    if(
+        Math.random()<delta*.45
+    ){
+
+        stormFlash=.12;
+    }
+
+
+    if(stormFlash>0){
+
+        sunlight.intensity=
+            5.5;
+
+        hemisphere.intensity=
+            4.2;
+
+        stormFlash-=delta;
+
+    }
+
+    else{
+
+        sunlight.intensity=
+            1.5;
+
+        hemisphere.intensity=
+            1.8;
+    }
+}
+
+
+/* =========================================================
    CAMERA
 ========================================================= */
 
@@ -4048,6 +4351,12 @@ let dragging=false;
 let lastMouseX=0;
 
 let lastMouseY=0;
+
+let smoothCameraX=camera.position.x;
+
+let smoothCameraY=camera.position.y;
+
+let smoothCameraZ=camera.position.z;
 
 
 renderer.domElement.addEventListener(
@@ -4081,22 +4390,22 @@ window.addEventListener(
         }
 
 
-        const dx =
+        const dx=
             e.clientX-lastMouseX;
 
-        const dy =
+        const dy=
             e.clientY-lastMouseY;
 
 
-        cameraAngle -=
+        cameraAngle-=
             dx*.005;
 
 
-        cameraHeight -=
+        cameraHeight-=
             dy*.025;
 
 
-        cameraHeight =
+        cameraHeight=
             Math.max(
                 4.5,
                 Math.min(
@@ -4106,9 +4415,11 @@ window.addEventListener(
             );
 
 
-        lastMouseX=e.clientX;
+        lastMouseX=
+            e.clientX;
 
-        lastMouseY=e.clientY;
+        lastMouseY=
+            e.clientY;
     }
 );
 
@@ -4117,11 +4428,11 @@ renderer.domElement.addEventListener(
     "wheel",
     e=>{
 
-        cameraDistance +=
+        cameraDistance+=
             e.deltaY*.012;
 
 
-        cameraDistance =
+        cameraDistance=
             Math.max(
                 11,
                 Math.min(
@@ -4137,7 +4448,7 @@ renderer.domElement.addEventListener(
    MAIN ANIMATION
 ========================================================= */
 
-let previousTime =
+let previousTime=
     performance.now();
 
 
@@ -4148,11 +4459,11 @@ function animate(){
     );
 
 
-    const now =
+    const now=
         performance.now();
 
 
-    const delta =
+    const delta=
         Math.min(
             (now-previousTime)/1000,
             .05
@@ -4163,28 +4474,42 @@ function animate(){
 
 
     /*
-        Traffic continuously moves.
+        TRAFFIC
     */
 
     updateTraffic(delta);
 
 
     /*
-        Environment continuously moves.
+        ENVIRONMENT
     */
 
     updateEnvironment(delta);
 
 
     /*
-        Rain.
+        RAIN
     */
 
     updateRain(delta);
 
 
     /*
-        Scenario logic.
+        STORM VISUALS
+    */
+
+    updateStorm(delta);
+
+
+    /*
+        PLAYER VISUALS
+    */
+
+    updatePlayerAnimation(delta);
+
+
+    /*
+        SCENARIO LOGIC
     */
 
     if(
@@ -4225,38 +4550,83 @@ function animate(){
 
 
     /*
-        Smooth speed.
+        SPEED
     */
 
     updateSpeed(delta);
 
 
     /*
-        IMPORTANT:
-        The smart car stays fixed at z=0.
-        The world moves toward it.
+        SMART CAR STAYS AT Z=0.
     */
 
     smartCar.position.z=0;
 
 
     /*
-        Camera follows lateral movement.
+        CAMERA TARGET
     */
 
-    camera.position.x =
-        smartCar.position.x +
-        Math.sin(cameraAngle) *
+    const targetCameraX=
+        smartCar.position.x+
+        Math.sin(cameraAngle)*
         cameraDistance;
 
 
-    camera.position.y =
+    const targetCameraY=
         cameraHeight;
 
 
-    camera.position.z =
-        Math.cos(cameraAngle) *
+    const targetCameraZ=
+        Math.cos(cameraAngle)*
         cameraDistance;
+
+
+    /*
+        Smooth camera interpolation.
+    */
+
+    smoothCameraX+=
+        (
+            targetCameraX-
+            smoothCameraX
+        )*
+        Math.min(
+            delta*6,
+            1
+        );
+
+
+    smoothCameraY+=
+        (
+            targetCameraY-
+            smoothCameraY
+        )*
+        Math.min(
+            delta*6,
+            1
+        );
+
+
+    smoothCameraZ+=
+        (
+            targetCameraZ-
+            smoothCameraZ
+        )*
+        Math.min(
+            delta*6,
+            1
+        );
+
+
+    camera.position.x=
+        smoothCameraX;
+
+    camera.position.y=
+        smoothCameraY;
+
+    camera.position.z=
+        smoothCameraZ;
 
 
     camera.lookAt(
@@ -4281,7 +4651,7 @@ window.addEventListener(
     "resize",
     ()=>{
 
-        camera.aspect =
+        camera.aspect=
             window.innerWidth/
             window.innerHeight;
 
@@ -4308,5 +4678,4 @@ animate();
 </script>
 
 </body>
-
 </html>
