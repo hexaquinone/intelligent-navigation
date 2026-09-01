@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional
 from brain import (
     make_decision,
     make_decisions,
+    fuse_sensor_streams,
     HazardEvent,
     HazardType,
     Position,
@@ -35,6 +36,18 @@ from metrics import (
     reset_metrics
 )
 from road import render_road_simulation_component
+from vision import (
+    VisionPerceptionEngine,
+    VisionDecisionResult,
+    generate_animated_driving_frame,
+    generate_synthetic_test_frame,
+    HAS_OPENCV,
+    HAS_ULTRALYTICS
+)
+import numpy as np
+import cv2
+import tempfile
+from PIL import Image
 
 
 # ============================================================
@@ -371,6 +384,7 @@ def render_sidebar_controls():
             "Operational Mode",
             [
                 "🚗 Live Trip Timeline",
+                "👁️ Live Vision & YOLO Perception",
                 "🔬 Preset Scenario Explorer",
                 "🛠️ Interactive What-If Sandbox",
                 "🎮 3D Road Simulator (road.py)"
@@ -426,6 +440,18 @@ def render_sidebar_controls():
 
             playback_speed = st.slider("Playback Speed (sec)", min_value=1.0, max_value=5.0, value=3.0, step=0.5)
 
+        elif active_mode == "👁️ Live Vision & YOLO Perception":
+            st.subheader("👁️ Perception Settings")
+            sandbox_values["vision_source"] = st.radio(
+                "Input Source",
+                ["Preset Animated Driving Scenes", "Upload Image or Dashcam Video", "Live Camera Snapshot (Webcam)"]
+            )
+            sandbox_values["vision_conf"] = st.slider("YOLO Confidence", 0.10, 0.95, 0.35, 0.05)
+            sandbox_values["vision_speed"] = st.slider("Host Ego Speed (km/h)", 0.0, 120.0, 40.0, 5.0)
+            sandbox_values["enable_lanes"] = st.checkbox("Enable OpenCV Lane Tracking", value=True)
+            sandbox_values["enable_fusion"] = st.checkbox("🔀 Multi-Sensor Fusion (Radar/LiDAR)", value=False)
+
+
         elif active_mode == "🔬 Preset Scenario Explorer":
             st.subheader("📚 Scenario Catalog")
             sc_keys = SimulationEngine.list_scenarios()
@@ -465,10 +491,12 @@ def render_sidebar_controls():
         st.subheader("📡 Subsystem Telemetry")
         st.markdown("🟢 **Perception Fusion:** `ONLINE`")
         st.markdown("🧠 **Brain Engine:** `ACTIVE`")
+        st.markdown("👁️ **Computer Vision (YOLO):** `READY`")
         st.markdown("📊 **Blackbox Audit:** `LOGGING`")
         st.markdown("🚗 **Road Simulator (`road.py`):** `LINKED`")
 
     return active_mode, playback_speed, sandbox_values
+
 
 
 
@@ -735,7 +763,176 @@ if active_mode == "🎮 3D Road Simulator (road.py)":
     canvas_h = sandbox_values.get("sim_height", 920)
     render_road_simulation_component(height=canvas_h)
 
+elif active_mode == "👁️ Live Vision & YOLO Perception":
+    st.markdown('<div class="hud-title">👁️ Computer Vision & YOLO Perception Suite</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hud-subtitle">Real-Time Object Detection (YOLOv8), Monocular Distance Estimation, OpenCV Lane Tracking, and Explainable Driving Decisions</div>', unsafe_allow_html=True)
+
+    source_choice = sandbox_values.get("vision_source", "Preset Animated Driving Scenes")
+    conf_val = sandbox_values.get("vision_conf", 0.35)
+    speed_val = sandbox_values.get("vision_speed", 40.0)
+    enable_lanes = sandbox_values.get("enable_lanes", True)
+    enable_fusion = sandbox_values.get("enable_fusion", False)
+
+    ego_state = EgoState(speed_kmh=speed_val, lane="center")
+    frame_to_process = None
+    override_boxes = None
+
+    if source_choice == "Preset Animated Driving Scenes":
+        sc_col1, sc_col2 = st.columns([1.2, 1.0])
+        with sc_col1:
+            sc_choice = st.selectbox(
+                "Select Driving Scenario",
+                [
+                    "🚶 Urban Pedestrian Crossing (Center Lane Risk)",
+                    "🚙 Highway Lead Vehicle Rapid Deceleration",
+                    "🚧 Dual Hazard Pinch (Left Barrier + Right Cyclist)"
+                ]
+            )
+            sc_key = "urban_pedestrian" if "Pedestrian" in sc_choice else ("highway_lead_vehicle" if "Highway" in sc_choice else "dual_hazard_pinch")
+        with sc_col2:
+            frame_slider = st.slider("🎬 Animation Timeline Step (30 FPS)", 0, 160, 25, 1)
+
+        frame_to_process, override_boxes = generate_animated_driving_frame(scenario=sc_key, frame_idx=frame_slider)
+
+    elif source_choice == "Upload Image or Dashcam Video":
+        uploaded_file = st.file_uploader("Upload Dashcam Image or Video (JPG, PNG, MP4, AVI, MOV)", type=["jpg", "jpeg", "png", "mp4", "avi", "mov"])
+        if uploaded_file is not None:
+            filename = uploaded_file.name.lower()
+            if any(filename.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                image_pil = Image.open(uploaded_file).convert("RGB")
+                frame_to_process = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
+            else:
+                # Video file processing
+                tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+                tfile.write(uploaded_file.read())
+                cap = cv2.VideoCapture(tfile.name)
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
+                fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+
+                v_col1, v_col2 = st.columns([1.2, 1.0])
+                with v_col1:
+                    st.caption(f"🎥 Video Loaded: {total_frames} frames ({fps} FPS)")
+                with v_col2:
+                    frame_num = st.slider("Video Frame Scrubber", 0, max(0, total_frames - 1), 0, 1)
+
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+                ret, frame_read = cap.read()
+                cap.release()
+                if ret:
+                    frame_to_process = frame_read
+                else:
+                    st.error("Could not extract selected frame from video.")
+        else:
+            st.info("👆 Please upload a dashcam image (.jpg/.png) or video clip (.mp4) above to run Computer Vision perception.")
+
+    elif source_choice == "Live Camera Snapshot (Webcam)":
+        cam_snap = st.camera_input("Capture Dashcam Frame from Webcam")
+        if cam_snap is not None:
+            bytes_data = cam_snap.getvalue()
+            frame_to_process = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+
+    if frame_to_process is not None:
+        engine = VisionPerceptionEngine(model_name="yolov8n.pt", enable_lanes=enable_lanes)
+        annotated_frame, current_hazards, decision, lane_info = engine.process_frame(
+            frame_to_process, ego_state=ego_state, conf_threshold=conf_val, override_boxes=override_boxes
+        )
+
+        # Multi-modal Sensor Fusion if enabled
+        if enable_fusion and current_hazards:
+            radar_sim = [
+                HazardEvent(
+                    id=h.id,
+                    type=h.type,
+                    subtype=h.subtype,
+                    position=h.position,
+                    distance=h.distance * 0.98 if h.distance else None,
+                    confidence=0.96,
+                    sensor="radar",
+                    relative_speed_kmh=h.relative_speed_kmh or 15.0
+                )
+                for h in current_hazards if h.type != HazardType.CLEAR
+            ]
+            decision = fuse_sensor_streams(current_hazards, radar_hazards=radar_sim, ego_state=ego_state)
+
+        primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
+        kinematics = compute_kinematics(ego_state.speed_kmh, primary_hazard.distance, primary_hazard.relative_speed_kmh)
+
+        # Render Top HUD
+        render_top_hud(ego_state, decision, kinematics)
+
+        # Central Split
+        c_vis, c_bev = st.columns([1.25, 1.0])
+        with c_vis:
+            st.markdown('<div class="section-label">📸 AR Cockpit Vision Perception (OpenCV + YOLO)</div>', unsafe_allow_html=True)
+            rgb_disp = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+            st.image(rgb_disp, use_container_width=True)
+
+            if lane_info.departure_warning:
+                st.error(f"⚠️ **{lane_info.warning_message}** (Offset: {lane_info.offset_from_center_px:.1f}px)")
+            elif lane_info.left_line and lane_info.right_line:
+                st.success("🟢 **Lane Keeping Assist:** Vehicle Centered in Host Lane")
+
+        with c_bev:
+            st.markdown('<div class="section-label">🗺️ Synchronized 2D Bird\'s-Eye View (BEV)</div>', unsafe_allow_html=True)
+            render_bev_road_component(current_hazards, decision, ego_state.speed_kmh)
+
+            st.markdown(
+                f'<div class="act-box {action_class_for(decision.action)}">'
+                f'🚦 {decision.action.replace("_", " ")}'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            st.info(f"💡 **AI Rationale:** {decision.reason}")
+
+        # Action Buttons for Blackbox Logging
+        log_col1, log_col2 = st.columns([0.6, 0.4])
+        with log_col1:
+            if st.button("💾 Record Vision Detection to Blackbox Audit Log", use_container_width=True):
+                for h in current_hazards:
+                    record_event(
+                        event=h,
+                        risk=decision.risk,
+                        action=decision.action,
+                        speed_kmh=ego_state.speed_kmh,
+                        dt_seconds=3.0
+                    )
+                st.session_state.event_history.append(build_history_entry(primary_hazard, decision, f"Vision_{len(st.session_state.event_history) + 1}"))
+                st.toast("✅ Vision detection event successfully logged to trip blackbox audit!")
+        with log_col2:
+            if enable_fusion:
+                st.success("🔀 Multi-Modal Sensor Fusion Active (Camera + Radar)")
+            else:
+                st.info("📷 Optical Camera Perception Active")
+
+        # Detected Targets Breakdown
+        st.markdown("### 🎯 Detected Environmental Hazards")
+        hazard_rows = []
+        for h in current_hazards:
+            h_type_str = h.type.value if hasattr(h.type, "value") else str(h.type)
+            if "clear" in h_type_str.lower():
+                continue
+            hazard_rows.append({
+                "Target ID": h.id,
+                "Classification": h_type_str.title(),
+                "Subtype": (h.subtype or "--").title(),
+                "Position": (h.position.value if hasattr(h.position, "value") else str(h.position)).title(),
+                "Estimated Distance": f"{h.distance:.1f} m" if h.distance is not None else "--",
+                "Confidence": f"{h.confidence * 100:.0f}%",
+                "Relative Speed": f"{h.relative_speed_kmh:.1f} km/h" if h.relative_speed_kmh is not None else "--",
+                "Sensor": h.sensor
+            })
+
+        if hazard_rows:
+            st.dataframe(pd.DataFrame(hazard_rows), use_container_width=True, hide_index=True)
+        else:
+            st.success("🟢 No active roadway hazards detected in field of view.")
+
+        # Analytics / Blackbox History
+        render_analytics(st.session_state.event_history)
+
+
 else:
+
     # ------------------------------------------------------------
     # SENSOR INGESTION & KINEMATICS EVALUATION
     # ------------------------------------------------------------

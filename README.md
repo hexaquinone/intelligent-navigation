@@ -22,6 +22,7 @@ The system:
 ## 📁 Structure
 
 ```text
+vision.py       # Computer Vision perception (YOLOv8/11 + OpenCV lane tracking & AR HUD)
 simulation.py   # Sensor simulation & scenario catalog
 brain.py        # Decision engine, kinematic TTC, & multi-hazard arbitration
 app.py          # Live Cockpit HUD, 2D BEV Perception, & Telemetry Dashboard
