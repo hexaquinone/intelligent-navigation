@@ -1,8 +1,4 @@
-# ==========================================
-# INTELLIGENT NAVIGATION SYSTEM
-# Trip Metrics & Performance Tracker
-# ==========================================
-
+from datetime import datetime
 from typing import Dict, Any, Optional, List, Union
 
 metrics: Dict[str, Any] = {
@@ -13,12 +9,13 @@ metrics: Dict[str, Any] = {
     "warnings_count": 0,
     "brake_events": 0,
     "trip_distance_km": 0.0,
-    "confidence_samples": []
+    "confidence_samples": [],
+    "event_history": []
 }
 
 
 def reset_metrics():
-    """Resets all trip performance metrics to initial state."""
+    """Resets all trip performance metrics and history to initial state."""
     global metrics
     metrics["total_events"] = 0
     metrics["hazards_detected"] = 0
@@ -28,6 +25,7 @@ def reset_metrics():
     metrics["brake_events"] = 0
     metrics["trip_distance_km"] = 0.0
     metrics["confidence_samples"] = []
+    metrics["event_history"] = []
 
 
 def record_event(
@@ -35,7 +33,10 @@ def record_event(
     risk: Optional[str] = None,
     action: Optional[str] = None,
     speed_kmh: float = 40.0,
-    dt_seconds: float = 3.0
+    dt_seconds: float = 3.0,
+    reason: Optional[str] = None,
+    distance_m: Optional[float] = None,
+    position: Optional[str] = None
 ):
     """
     Records a telemetry event and updates cumulative trip metrics:
@@ -43,7 +44,7 @@ def record_event(
     - Tracks hazards vs clear events
     - Categorizes warning vs braking interventions
     - Computes accumulated trip distance (km)
-    - Logs confidence samples
+    - Logs confidence samples and rolling audit history
     """
     metrics["total_events"] += 1
 
@@ -66,6 +67,13 @@ def record_event(
             metrics["confidence_samples"].append(float(confidence))
         except (ValueError, TypeError):
             pass
+
+    # Extract spatial attributes if not provided
+    if distance_m is None:
+        distance_m = getattr(event, "distance", None) or (event.get("distance") if isinstance(event, dict) else None)
+    if position is None:
+        pos_val = getattr(event, "position", None) or (event.get("position") if isinstance(event, dict) else "center")
+        position = getattr(pos_val, "value", str(pos_val)).lower()
 
     # Hazard classification
     if event_type not in ["clear", "sensor_gap", "unknown"] and "clear" not in event_type:
@@ -91,9 +99,42 @@ def record_event(
     dist_increment = (speed_kmh * (dt_seconds / 3600.0))
     metrics["trip_distance_km"] = round(metrics["trip_distance_km"] + dist_increment, 2)
 
+    # Append to rolling audit history (max 100 entries)
+    entry = {
+        "timestamp": datetime.now().strftime("%H:%M:%S"),
+        "event_type": event_type.replace("_", " ").title(),
+        "position": position.upper() if position else "FRONT",
+        "distance_m": f"{distance_m:.1f} m" if distance_m is not None else "--",
+        "speed_kmh": f"{speed_kmh:.0f} km/h",
+        "risk": risk or "LOW",
+        "action": action.replace("_", " ").upper() if action else "CONTINUE",
+        "reason": reason or "Nominal road conditions."
+    }
+    metrics["event_history"].append(entry)
+    if len(metrics["event_history"]) > 100:
+        metrics["event_history"].pop(0)
+
+
+def calculate_safety_score() -> int:
+    """Computes a dynamic 0-100% Safety Score based on trip safety interventions."""
+    total = metrics["total_events"]
+    if total == 0:
+        return 100
+
+    score = 100.0
+    # Penalty for critical/high risk events that required hard emergency braking
+    score -= (metrics["high_risk_events"] * 4.0)
+    score -= (metrics["brake_events"] * 2.5)
+    score -= (metrics["sensor_failures"] * 5.0)
+
+    # Reward for safe distance accumulated
+    score += min(15.0, metrics["trip_distance_km"] * 2.0)
+
+    return max(10, min(100, int(round(score))))
+
 
 def get_metrics() -> Dict[str, Any]:
-    """Returns current metrics snapshot with computed averages."""
+    """Returns current metrics snapshot with computed averages and safety score."""
     conf_samples = metrics["confidence_samples"]
     avg_confidence = round(sum(conf_samples) / len(conf_samples), 2) if conf_samples else 1.0
 
@@ -105,8 +146,15 @@ def get_metrics() -> Dict[str, Any]:
         "warnings_count": metrics["warnings_count"],
         "brake_events": metrics["brake_events"],
         "trip_distance_km": round(metrics["trip_distance_km"], 2),
-        "average_confidence": avg_confidence
+        "average_confidence": avg_confidence,
+        "safety_score": calculate_safety_score()
     }
+
+
+def get_event_history() -> List[Dict[str, Any]]:
+    """Returns the chronological audit log of recorded events."""
+    return list(metrics.get("event_history", []))
+
 
 
 if __name__ == "__main__":

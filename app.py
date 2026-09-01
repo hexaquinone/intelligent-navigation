@@ -9,7 +9,10 @@ import pandas as pd
 import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Union
-
+import numpy as np
+import cv2
+import tempfile
+from PIL import Image
 
 from brain import (
     make_decision,
@@ -40,7 +43,8 @@ from simulation import (
 from metrics import (
     record_event,
     get_metrics,
-    reset_metrics
+    reset_metrics,
+    get_event_history
 )
 from road import render_road_simulation_component
 from vision import (
@@ -51,10 +55,6 @@ from vision import (
     HAS_OPENCV,
     HAS_ULTRALYTICS
 )
-import numpy as np
-import cv2
-import tempfile
-from PIL import Image
 
 
 # ============================================================
@@ -62,7 +62,7 @@ from PIL import Image
 # ============================================================
 
 st.set_page_config(
-    page_title="Intelligent Navigation & Cockpit HUD",
+    page_title="Autonomous AI Cockpit • Intelligent Navigation",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -75,9 +75,8 @@ def get_cached_vision_engine(model_name: str = "yolov8n.pt", enable_lanes: bool 
     return VisionPerceptionEngine(model_name=model_name, enable_lanes=enable_lanes)
 
 
-
 # ============================================================
-# 2. CYBERNETIC COCKPIT CSS THEME
+# 2. CYBERNETIC COCKPIT CSS THEME & GLASSMORPHISM
 # ============================================================
 
 st.markdown("""
@@ -90,60 +89,75 @@ st.markdown("""
 }
 
 .block-container {
-    max-width: 1600px;
-    padding-top: 1.2rem;
+    max-width: 1650px;
+    padding-top: 1.0rem;
     padding-bottom: 2.5rem;
 }
 
-/* Header */
+/* Header Banner */
+.hud-header {
+    background: linear-gradient(135deg, #0b1329 0%, #0f172a 100%);
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .hud-title {
-    font-size: 2.3rem;
+    font-size: 1.85rem;
     font-weight: 850;
     letter-spacing: -0.5px;
     color: #f8fafc;
-    margin-bottom: 0px;
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .hud-subtitle {
     color: #94a3b8;
-    font-size: 0.95rem;
-    margin-top: 2px;
-    margin-bottom: 1.0rem;
+    font-size: 0.88rem;
+    margin-top: 4px;
+    margin-bottom: 0;
 }
 
-/* Panels */
+/* Cards & Containers */
 .hud-card {
     background: #0f172a;
     border: 1px solid #1e293b;
     border-radius: 14px;
-    padding: 18px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     margin-bottom: 1rem;
 }
 
 .section-label {
-    font-size: 1.05rem;
-    font-weight: 750;
+    font-size: 1.0rem;
+    font-weight: 800;
     color: #f1f5f9;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.6rem;
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: 0.2px;
 }
 
 /* Action Boxes */
 .act-box {
     text-align: center;
-    padding: 18px;
+    padding: 16px;
     border-radius: 12px;
-    font-size: 2.0rem;
+    font-size: 1.85rem;
     font-weight: 900;
     letter-spacing: 1px;
-    margin: 8px 0 14px 0;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    margin: 6px 0 12px 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
 }
 
 .act-continue { background: linear-gradient(135deg, #064e3b, #047857); color: #ecfdf5; border: 1px solid #10b981; }
@@ -157,21 +171,21 @@ div[data-testid="stMetric"] {
     background: #0d1522;
     border: 1px solid #1e293b;
     border-radius: 12px;
-    padding: 12px 14px;
+    padding: 10px 14px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 div[data-testid="stMetricLabel"] {
     color: #94a3b8;
-    font-size: 0.76rem;
-    font-weight: 700;
+    font-size: 0.74rem;
+    font-weight: 750;
     text-transform: uppercase;
     letter-spacing: 0.6px;
 }
 
 div[data-testid="stMetricValue"] {
     color: #f8fafc;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     font-weight: 800;
 }
 
@@ -194,7 +208,6 @@ section[data-testid="stSidebar"] {
 # ============================================================
 
 def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, ego_speed_kmh: float):
-
     """Renders the 2D Bird's-Eye View (BEV) road canvas inside an embedded HTML iframe."""
     svg_w = 460
     svg_h = 420
@@ -240,9 +253,9 @@ def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, eg
             h_x = center_lane_x
 
         color = "#ef4444" if decision.risk in ["HIGH", "CRITICAL"] else ("#f59e0b" if decision.risk == "MEDIUM" else "#3b82f6")
-        icon = "🚶" if "pedestrian" in h_type_str else ("🚙" if "vehicle" in h_type_str else ("🚴" if "cyclist" in h_type_str else ("🚧" if "obstacle" in h_type_str else "⚠️")))
+        icon = "🚶" if "pedestrian" in h_type_str else ("🐕" if "animal" in h_type_str else ("🚙" if "vehicle" in h_type_str else ("🚴" if "cyclist" in h_type_str else ("🚧" if "obstacle" in h_type_str else "⚠️"))))
 
-        hazard_markers += f'''
+        hazard_markers += f"""
         <g transform="translate({h_x}, {h_y})">
             <circle cx="0" cy="0" r="22" fill="{color}" opacity="0.25"/>
             <circle cx="0" cy="0" r="16" fill="#1e293b" stroke="{color}" stroke-width="2.5"/>
@@ -250,9 +263,9 @@ def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, eg
             <rect x="-24" y="-30" width="48" height="15" rx="4" fill="#0f172a" stroke="{color}" stroke-width="1"/>
             <text x="0" y="-19" font-size="9" fill="#f8fafc" font-weight="bold" text-anchor="middle">{h_dist:.1f}m</text>
         </g>
-        '''
+        """
 
-    svg_content = f'''
+    svg_content = f"""
     <svg width="100%" height="{svg_h}" viewBox="0 0 {svg_w} {svg_h}" xmlns="http://www.w3.org/2000/svg" style="background:#090d14; border-radius:14px; border:1px solid #1e293b;">
         <defs>
             <marker id="arrow-blue" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -304,7 +317,7 @@ def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, eg
             <text x="0" y="38" font-size="9" fill="#94a3b8" font-weight="bold" text-anchor="middle">HOST ({ego_speed_kmh:.0f} km/h)</text>
         </g>
     </svg>
-    '''
+    """
 
     full_html = f"""
     <!DOCTYPE html>
@@ -436,7 +449,6 @@ def render_sidebar_controls():
             sandbox_values["enable_lanes"] = st.checkbox("Enable OpenCV Lane Tracking", value=True)
             sandbox_values["enable_fusion"] = st.checkbox("🔀 Multi-Sensor Fusion (Radar/LiDAR)", value=False)
 
-
         elif active_mode == "🔬 Preset Scenario Explorer":
             st.subheader("📚 Scenario Catalog")
             sc_keys = SimulationEngine.list_scenarios()
@@ -467,10 +479,8 @@ def render_sidebar_controls():
         else:
             st.subheader("🎮 3D Road Simulator Settings")
             st.caption("Powered by `road.py` & `simulation.html`")
-            sim_h = st.slider("Canvas Viewport Height (px)", min_value=650, max_value=1200, value=920, step=50)
+            sim_h = st.slider("Canvas Viewport Height (px)", min_value=650, max_value=1200, value=850, step=50)
             sandbox_values["sim_height"] = sim_h
-
-            st.info("💡 **Tip:** You can also run the simulator standalone with `streamlit run road.py`")
 
         st.divider()
         st.subheader("📡 Subsystem Telemetry")
@@ -481,8 +491,6 @@ def render_sidebar_controls():
         st.markdown("🚗 **Road Simulator (`road.py`):** `LINKED`")
 
     return active_mode, playback_speed, sandbox_values
-
-
 
 
 # ============================================================
@@ -510,10 +518,6 @@ def get_hazard_label(hazard: HazardEvent) -> str:
     return str(h_type).replace("_", " ").title()
 
 
-def get_position_label(value: Any) -> str:
-    return str(getattr(value, "value", value or "unknown")).title()
-
-
 def build_history_entry(primary_hazard: HazardEvent, decision: Decision, step_id: Any) -> Dict[str, Any]:
     dist_str = f"{primary_hazard.distance:.1f} m" if primary_hazard.distance is not None else "--"
     h_type_str = getattr(primary_hazard.type, "value", str(primary_hazard.type))
@@ -535,9 +539,21 @@ def build_history_entry(primary_hazard: HazardEvent, decision: Decision, step_id
 
 
 def render_top_hud(ego_state: EgoState, decision: Decision, kinematics: Union[Dict[str, Any], KinematicsTelemetry]) -> None:
-
-    st.markdown('<div class="hud-title">🚗 Intelligent Navigation & Decision-Support System</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hud-subtitle">Explainable Autonomous Driving Assistance, 2D BEV Perception, & Real-Time Kinematics</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="hud-header">
+            <div>
+                <div class="hud-title">🚗 Intelligent Navigation & Autonomous Cockpit</div>
+                <div class="hud-subtitle">Explainable Multi-Modal Decision Support, 2D Bird's-Eye View Perception & Real-Time Kinematics</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <span class="badge-active">● FUSION ACTIVE</span>
+                <span class="badge-active">● XAI ENGINE READY</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     k1, k2, k3, k4, k5 = st.columns(5)
     with k1:
@@ -591,7 +607,6 @@ def render_sector_cards(current_hazards: List[HazardEvent]) -> None:
             st.success("🟢 Clear")
 
 
-
 def action_class_for(action: str) -> str:
     act_str = str(action).upper()
     if "BRAKE" in act_str:
@@ -606,7 +621,6 @@ def action_class_for(action: str) -> str:
 
 
 def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, ego_state: EgoState, kinematics: Union[Dict[str, Any], KinematicsTelemetry], step_desc: str) -> None:
-
     if step_desc:
         st.info(f"📍 **Drive Context:** {step_desc}")
 
@@ -619,12 +633,11 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
 
     with col_right:
         st.markdown('<div class="section-label">🧠 Brain Decision & Explainability Console</div>', unsafe_allow_html=True)
-        
-        # Action Box with Priority Indicator
+
         p_lvl = getattr(decision, "priority_level", 1)
-        p_names = {1: "Nominal", 2: "Defensive", 3: "Active Caution", 4: "Urgent Maneuver", 5: "Emergency Intervention"}
+        p_names = {1: "Nominal Cruising", 2: "Lateral Maneuver", 3: "Active Caution", 4: "Urgent Avoidance", 5: "Emergency Intervention"}
         p_badge = f'<span style="float: right; font-size: 0.75rem; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 6px;">Priority {p_lvl}/5: {p_names.get(p_lvl, "Standard")}</span>'
-        
+
         st.markdown(
             f'<div class="act-box {action_class_for(decision.action)}">'
             f'🚦 {decision.action.replace("_", " ")}'
@@ -633,7 +646,6 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
             unsafe_allow_html=True
         )
 
-        # Check for Swerve Conflict Resolution metadata from brain.py
         arb_meta = getattr(decision, "metadata", {}) or {}
         if arb_meta.get("arbitration") in ["blocked_swerve_right", "blocked_swerve_left"]:
             st.warning("⚠️ **Swerve Conflict Arbitration:** Evasive lane change blocked by adjacent sector hazard. Brain arbitrated to safe in-lane deceleration.")
@@ -651,7 +663,6 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
             decel_disp = f"{kinematics['required_decel_ms2']} m/s²" if kinematics['required_decel_ms2'] is not None else "0.0 m/s²"
             st.metric("Required Decel", decel_disp)
 
-        # Target Speed & Safety Margin
         if kinematics.get("safety_margin_m") is not None:
             margin = kinematics["safety_margin_m"]
             margin_txt = f"{margin:+.1f} m"
@@ -667,7 +678,6 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
         sf1, sf2, sf3 = st.columns(3)
         with sf1:
             st.session_state.fault_fog = st.checkbox("🌫️ Severe Fog (Degraded)", value=st.session_state.fault_fog)
-
         with sf2:
             st.session_state.fault_cam_blackout = st.checkbox("🔌 Camera Disconnect (Failed)", value=st.session_state.fault_cam_blackout)
         with sf3:
@@ -679,7 +689,20 @@ def render_analytics(history: List[Dict[str, Any]]) -> None:
     st.markdown('<div class="section-label">📊 Cumulative Performance & Blackbox Audit</div>', unsafe_allow_html=True)
 
     live_metrics = get_metrics()
-    p1, p2, p3, p4, p5 = st.columns(5)
+    score = live_metrics.get("safety_score", 100)
+    score_color = "#10b981" if score >= 85 else ("#f59e0b" if score >= 65 else "#ef4444")
+
+    p0, p1, p2, p3, p4, p5 = st.columns([1.2, 1.0, 1.0, 1.0, 1.0, 1.0])
+    with p0:
+        st.markdown(
+            f"""
+            <div style="background:#0d1522; border:1px solid #1e293b; border-radius:12px; padding:10px 14px; text-align:center;">
+                <div style="font-size:0.72rem; color:#94a3b8; font-weight:750; text-transform:uppercase;">Safety Score</div>
+                <div style="font-size:1.55rem; font-weight:850; color:{score_color};">{score}%</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with p1:
         st.metric("Total Distance", f"{live_metrics['trip_distance_km']:.2f} km")
     with p2:
@@ -750,12 +773,24 @@ active_mode, playback_speed, sandbox_values = render_sidebar_controls()
 
 
 # ============================================================
-# 6. MODE DISPATCH & COCKPIT / SIMULATOR RENDERING
+# 7. MODE DISPATCH & COCKPIT / SIMULATOR RENDERING
 # ============================================================
 
 if active_mode == "🎮 3D Road Simulator (road.py)":
-    st.markdown('<div class="hud-title">🚗 AI Road Safety Simulation Engine</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hud-subtitle">Interactive Real-Time Driving Simulation, Multi-Hazard Road Physics, & Perception Overlay (via road.py & simulation.html)</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="hud-header">
+            <div>
+                <div class="hud-title">🎮 3D WebGL Road Safety Simulator</div>
+                <div class="hud-subtitle">Interactive 60 FPS Physics Engine, Dynamic Scenario Generation, and Spatial Hazard Avoidance</div>
+            </div>
+            <div>
+                <span class="badge-active">● 3D ENGINE ONLINE</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     info_c1, info_c2, info_c3 = st.columns(3)
     with info_c1:
@@ -765,12 +800,24 @@ if active_mode == "🎮 3D Road Simulator (road.py)":
     with info_c3:
         st.warning("⚡ **Standalone Mode:** You can also launch directly via `streamlit run road.py`")
 
-    canvas_h = sandbox_values.get("sim_height", 920)
+    canvas_h = sandbox_values.get("sim_height", 850)
     render_road_simulation_component(height=canvas_h)
 
 elif active_mode == "👁️ Live Vision & YOLO Perception":
-    st.markdown('<div class="hud-title">👁️ Computer Vision & YOLO Perception Suite</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hud-subtitle">Real-Time Object Detection (YOLOv8), Monocular Distance Estimation, OpenCV Lane Tracking, and Explainable Driving Decisions</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="hud-header">
+            <div>
+                <div class="hud-title">👁️ Computer Vision & YOLO Perception Suite</div>
+                <div class="hud-subtitle">Real-Time Object Detection (YOLOv8), Monocular Distance Estimation, OpenCV Lane Tracking, and Explainable AI Decisions</div>
+            </div>
+            <div>
+                <span class="badge-active">● YOLOv8 ACTIVE</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     source_choice = sandbox_values.get("vision_source", "Preset Animated Driving Scenes")
     conf_val = sandbox_values.get("vision_conf", 0.35)
@@ -807,7 +854,6 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                 image_pil = Image.open(uploaded_file).convert("RGB")
                 frame_to_process = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
             else:
-                # Video file processing
                 tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
                 tfile.write(uploaded_file.read())
                 cap = cv2.VideoCapture(tfile.name)
@@ -839,7 +885,6 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
     if frame_to_process is not None:
         engine = get_cached_vision_engine(model_name="yolov8n.pt", enable_lanes=enable_lanes)
         annotated_frame, current_hazards, decision, lane_info = engine.process_frame(
-
             frame_to_process, ego_state=ego_state, conf_threshold=conf_val, override_boxes=override_boxes
         )
 
@@ -869,7 +914,6 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         # Render Top HUD
         render_top_hud(ego_state, decision, kinematics)
 
-
         # Central Split
         c_vis, c_bev = st.columns([1.25, 1.0])
         with c_vis:
@@ -898,6 +942,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         log_col1, log_col2 = st.columns([0.6, 0.4])
         with log_col1:
             if st.button("💾 Record Vision Detection to Blackbox Audit Log", use_container_width=True):
+                primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
                 for h in current_hazards:
                     record_event(
                         event=h,
@@ -940,9 +985,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         # Analytics / Blackbox History
         render_analytics(st.session_state.event_history)
 
-
 else:
-
     # ------------------------------------------------------------
     # SENSOR INGESTION & KINEMATICS EVALUATION
     # ------------------------------------------------------------
@@ -997,7 +1040,6 @@ else:
     apply_sensor_faults(current_hazards)
     decision, kinematics, _ = evaluate_scene(current_hazards, ego_state)
     primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
-
 
     if active_mode == "🚗 Live Trip Timeline":
         step_key = f"step_{st.session_state.simulation_index}_{step_id}"
