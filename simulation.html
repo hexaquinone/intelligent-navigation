@@ -303,10 +303,6 @@ button:active{
         🛡️ Prevention Scenarios
     </div>
 
-    <button onclick="startScenario('human')">
-        🧍 Pedestrian Crossing
-    </button>
-
     <button onclick="startScenario('animal')">
         🐕 Animal Crossing
     </button>
@@ -1722,122 +1718,6 @@ addTraffic(
 
 
 /* =========================================================
-   PEDESTRIAN
-========================================================= */
-
-let pedestrian=null;
-
-
-function createPedestrian(){
-
-    const person =
-        new THREE.Group();
-
-
-    const legs=[];
-
-    const legsMat =
-        new THREE.MeshStandardMaterial({
-            color:0x303a7a
-        });
-
-
-    [-.13,.13].forEach(x=>{
-
-        const leg =
-            new THREE.Mesh(
-                new THREE.CylinderGeometry(
-                    .09,
-                    .1,
-                    .65,
-                    10
-                ),
-                legsMat
-            );
-
-        leg.position.set(
-            x,
-            .35,
-            0
-        );
-
-        person.add(leg);
-
-        legs.push(leg);
-    });
-
-
-    const body =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                .24,
-                .3,
-                .85,
-                12
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x526bd1
-            })
-        );
-
-    body.position.y=.98;
-
-    person.add(body);
-
-
-    const head =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .28,
-                16,
-                16
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0xf0b48c
-            })
-        );
-
-    head.position.y=1.6;
-
-    person.add(head);
-
-
-    const hair =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                .29,
-                16,
-                16
-            ),
-            new THREE.MeshStandardMaterial({
-                color:0x33261f
-            })
-        );
-
-    hair.position.set(
-        0,
-        1.72,
-        0
-    );
-
-    hair.scale.set(
-        1,
-        .65,
-        1
-    );
-
-    person.add(hair);
-
-
-    person.userData.legs=legs;
-
-    scene.add(person);
-
-    return person;
-}
-
-
-/* =========================================================
    ANIMAL
 ========================================================= */
 
@@ -2403,28 +2283,6 @@ function objectSafeInLane(
     }
 
 
-    if(pedestrian){
-
-        if(
-            Math.abs(
-                pedestrian.position.x-lane
-            ) < 1.8
-        ){
-
-            const dz =
-                pedestrian.position.z-ourZ;
-
-            if(
-                dz < 0 &&
-                dz > -20
-            ){
-
-                return false;
-            }
-        }
-    }
-
-
     if(animal){
 
         if(
@@ -2845,70 +2703,6 @@ function updateTraffic(delta){
 
 
 /* =========================================================
-   PEDESTRIAN
-========================================================= */
-
-function updatePedestrian(delta){
-
-    if(!pedestrian){
-        return;
-    }
-
-
-    /*
-        Pedestrian movement is independent
-        from vehicle speed.
-    */
-
-    pedestrian.position.z +=
-        1.5*
-        delta;
-
-
-    pedestrian.position.x -=
-        delta*1.8;
-
-
-    /*
-        Walking animation.
-    */
-
-    const walk =
-        Math.sin(
-            scenarioTime*9
-        );
-
-
-    if(
-        pedestrian.userData.legs
-    ){
-
-        pedestrian.userData.legs[0]
-            .rotation.z=
-            walk*.35;
-
-        pedestrian.userData.legs[1]
-            .rotation.z=
-            -walk*.35;
-    }
-
-
-    pedestrian.position.y =
-        Math.abs(
-            Math.sin(
-                scenarioTime*9
-            )
-        )*.025;
-
-
-    pedestrian.rotation.z=
-        Math.sin(
-            scenarioTime*8
-        )*.04;
-}
-
-
-/* =========================================================
    ANIMAL
 ========================================================= */
 
@@ -3032,126 +2826,6 @@ function updateRain(delta){
         .attributes
         .position
         .needsUpdate=true;
-}
-
-
-/* =========================================================
-   HUMAN SCENARIO
-========================================================= */
-
-function updateHumanScenario(delta){
-
-    scenarioTime+=delta;
-
-    updatePedestrian(delta);
-
-
-    if(
-        scenarioTime<1.5
-    ){
-
-        targetSpeed=30;
-
-        setStatus(
-            "DETECTING",
-            "PEDESTRIAN",
-            "MEDIUM"
-        );
-
-        return;
-    }
-
-
-    /*
-        STOP instead of changing lanes.
-    */
-
-    if(
-        scenarioTime<3
-    ){
-
-        targetSpeed=0;
-
-        setStatus(
-            "BRAKING",
-            "PEDESTRIAN",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    /*
-        Keep stopped until pedestrian
-        has cleared the road.
-    */
-
-    if(
-        pedestrian &&
-        pedestrian.position.x>-7 &&
-        pedestrian.position.z<12
-    ){
-
-        targetSpeed=0;
-
-        setStatus(
-            "STOPPED",
-            "PEDESTRIAN CROSSING",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    /*
-        Pedestrian is clear.
-    */
-
-    if(
-        pedestrian &&
-        (
-            pedestrian.position.x<=-7 ||
-            pedestrian.position.z>=12
-        )
-    ){
-
-        targetSpeed=35;
-
-        setStatus(
-            "RESUMING",
-            "PEDESTRIAN CLEAR",
-            "LOW"
-        );
-
-        showMessage(
-            "✓ Pedestrian cleared — resuming safely"
-        );
-
-        pedestrian.position.x=-20;
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<20
-    ){
-
-        targetSpeed=35;
-
-        setStatus(
-            "DRIVING",
-            "PEDESTRIAN CLEAR",
-            "LOW"
-        );
-
-        return;
-    }
-
-
-    finishScenario();
 }
 
 
@@ -3709,34 +3383,6 @@ function startScenario(scenario){
 
 
     if(
-        scenario==="human"
-    ){
-
-        pedestrian=
-            createPedestrian();
-
-
-        pedestrian.position.set(
-            -3.8,
-            0,
-            -25
-        );
-
-
-        setStatus(
-            "DETECTING",
-            "PEDESTRIAN",
-            "MEDIUM"
-        );
-
-
-        showMessage(
-            "🧍 Pedestrian detected ahead"
-        );
-    }
-
-
-    else if(
         scenario==="animal"
     ){
 
@@ -3907,16 +3553,6 @@ function resetSimulation(){
 
 
     hideWeather();
-
-
-    if(pedestrian){
-
-        scene.remove(
-            pedestrian
-        );
-
-        pedestrian=null;
-    }
 
 
     if(animal){
@@ -4513,13 +4149,6 @@ function animate(){
     */
 
     if(
-        activeScenario==="human"
-    ){
-
-        updateHumanScenario(delta);
-    }
-
-    else if(
         activeScenario==="animal"
     ){
 
