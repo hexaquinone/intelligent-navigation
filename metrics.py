@@ -125,7 +125,7 @@ if __name__ == "__main__":
  # INTELLIGENT NAVIGATION SYSTEM 
  # Trip Metrics 
  # ========================================== 
- metrics = { 
+metrics = { 
     "total_events": 0, 
     "hazards_detected": 0, 
     "sensor_failures": 0, 
