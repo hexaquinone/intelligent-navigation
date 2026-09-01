@@ -1,16 +1,47 @@
+# ============================================================
+# INTELLIGENT NAVIGATION & DECISION-SUPPORT SYSTEM
+# Autonomous Vehicle Cockpit & Multi-Sensor Perception Suite
+# ============================================================
+
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import time
-import random
 from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+from brain import (
+    make_decision,
+    make_decisions,
+    HazardEvent,
+    HazardType,
+    Position,
+    SensorStatus,
+    RiskLevel,
+    Action,
+    EgoState,
+    Decision,
+    calculate_ttc
+)
+from simulation import (
+    SimulationEngine,
+    SCENARIOS,
+    TRIP_TIMELINE,
+    SENSOR_PROFILES
+)
+from metrics import (
+    record_event,
+    get_metrics,
+    reset_metrics
+)
 
 
 # ============================================================
-                       # PAGE CONFIGURATION
+# 1. PAGE CONFIGURATION
 # ============================================================
 
 st.set_page_config(
-    page_title="Intelligent Navigation",
+    page_title="Intelligent Navigation & Cockpit HUD",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -18,1605 +49,737 @@ st.set_page_config(
 
 
 # ============================================================
-# PROFESSIONAL UI STYLING
+# 2. CYBERNETIC COCKPIT CSS THEME
 # ============================================================
 
 st.markdown("""
 <style>
-
-/* =========================================================
-   GLOBAL APP
-   ========================================================= */
-
+/* Base Dark Theme */
 .stApp {
-    background-color: #0b0f14;
-    color: #e8edf2;
+    background-color: #06090e;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-
-
-/* =========================================================
-   MAIN CONTENT
-   ========================================================= */
 
 .block-container {
-    max-width: 1500px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    max-width: 1600px;
+    padding-top: 1.2rem;
+    padding-bottom: 2.5rem;
 }
 
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-.main-title {
-    font-size: 2.8rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-    color: #f5f7fa;
-    margin-bottom: 0;
+/* Header */
+.hud-title {
+    font-size: 2.3rem;
+    font-weight: 850;
+    letter-spacing: -0.5px;
+    color: #f8fafc;
+    margin-bottom: 0px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.subtitle {
-    color: #8d99a6;
-    font-size: 1rem;
-    margin-top: 0.25rem;
-    margin-bottom: 1.5rem;
+.hud-subtitle {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin-top: 2px;
+    margin-bottom: 1.0rem;
 }
 
-
-/* =========================================================
-   SECTION TITLES
-   ========================================================= */
-
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-top: 1.2rem;
-    margin-bottom: 0.8rem;
-}
-
-
-/* =========================================================
-   DIVIDERS
-   ========================================================= */
-
-hr {
-    border: none;
-    height: 1px;
-    background: #202833;
-    margin: 1.5rem 0;
-}
-
-
-/* =========================================================
-   METRIC CARDS
-   ========================================================= */
-
-div[data-testid="stMetric"] {
-    background: #111720;
-    border: 1px solid #202a35;
+/* Panels */
+.hud-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
     border-radius: 14px;
-    padding: 18px 20px;
-    min-height: 110px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    margin-bottom: 1rem;
+}
+
+.section-label {
+    font-size: 1.05rem;
+    font-weight: 750;
+    color: #f1f5f9;
+    margin-bottom: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Action Boxes */
+.act-box {
+    text-align: center;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 2.0rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin: 8px 0 14px 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.act-continue { background: linear-gradient(135deg, #064e3b, #047857); color: #ecfdf5; border: 1px solid #10b981; }
+.act-slow { background: linear-gradient(135deg, #78350f, #b45309); color: #fffbeb; border: 1px solid #f59e0b; }
+.act-brake { background: linear-gradient(135deg, #881337, #be123c); color: #fff1f2; border: 1px solid #f43f5e; }
+.act-stop { background: linear-gradient(135deg, #7f1d1d, #b91c1c); color: #fef2f2; border: 1px solid #ef4444; }
+.act-swerve { background: linear-gradient(135deg, #1e1b4b, #4338ca); color: #eef2ff; border: 1px solid #6366f1; }
+
+/* Metrics */
+div[data-testid="stMetric"] {
+    background: #0d1522;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 div[data-testid="stMetricLabel"] {
-    color: #8995a3;
-    font-size: 0.85rem;
-    font-weight: 600;
+    color: #94a3b8;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
 }
 
 div[data-testid="stMetricValue"] {
-    color: #f5f7fa;
-    font-size: 1.55rem;
-    font-weight: 750;
-}
-
-
-/* =========================================================
-   HAZARD CARD
-   ========================================================= */
-
-.hazard-box {
-    background: #111720;
-    border: 1px solid #2a3541;
-    border-radius: 16px;
-    padding: 24px;
-    min-height: 250px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.20);
-}
-
-
-/* =========================================================
-   DECISION CARD
-   ========================================================= */
-
-.decision-box {
-    background: #111720;
-    border: 1px solid #2a3541;
-    border-radius: 16px;
-    padding: 24px;
-    min-height: 250px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.20);
-}
-
-
-/* =========================================================
-   BIG ACTION
-   ========================================================= */
-
-.big-action {
-    font-size: 2.2rem;
+    color: #f8fafc;
+    font-size: 1.45rem;
     font-weight: 800;
-    text-align: center;
-    padding: 24px;
-    letter-spacing: 1px;
 }
 
-
-/* =========================================================
-   SIDEBAR
-   ========================================================= */
-
+/* Sidebar */
 section[data-testid="stSidebar"] {
-    background-color: #080c11;
-    border-right: 1px solid #202833;
+    background-color: #04070b;
+    border-right: 1px solid #1e293b;
 }
 
-section[data-testid="stSidebar"] h1,
-section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 {
-    color: #f5f7fa;
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-.stButton > button {
-    width: 100%;
-    border-radius: 10px;
-    border: 1px solid #303b48;
-    background-color: #151c25;
-    color: #f1f5f9;
-    font-weight: 650;
-    padding: 0.65rem 1rem;
-    transition: all 0.2s ease;
-}
-
-.stButton > button:hover {
-    border-color: #6b7785;
-    background-color: #1c2530;
-}
-
-
-/* =========================================================
-   DATAFRAME
-   ========================================================= */
-
-div[data-testid="stDataFrame"] {
-    border: 1px solid #202a35;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-
-/* =========================================================
-   ALERT BOXES
-   ========================================================= */
-
-div[data-testid="stAlert"] {
-    border-radius: 12px;
-}
-
-
-/* =========================================================
-   SELECTBOX / INPUTS
-   ========================================================= */
-
-div[data-baseweb="select"] > div {
-    background-color: #111720;
-    border-color: #303b48;
-    border-radius: 10px;
-}
-
-
-/* =========================================================
-   PROGRESS BAR
-   ========================================================= */
-
-div[data-testid="stProgress"] > div {
-    border-radius: 10px;
-}
-
-
-/* =========================================================
-   PIPELINE CARDS
-   ========================================================= */
-
-.pipeline-card {
-    background: #111720;
-    border: 1px solid #202a35;
-    border-radius: 14px;
-    padding: 18px;
-    text-align: center;
-    min-height: 100px;
-}
-
-.pipeline-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #f1f5f9;
-}
-
-.pipeline-description {
-    font-size: 0.75rem;
-    color: #7f8b98;
-    margin-top: 5px;
-}
-
-
-/* =========================================================
-   SIMULATION AREA
-   ========================================================= */
-
-.simulation-container {
-    background: #0e141b;
-    border: 1px solid #26313d;
-    border-radius: 18px;
-    padding: 25px;
-    margin: 10px 0 20px 0;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.25);
-}
-
-
-/* =========================================================
-   VEHICLE DISPLAY
-   ========================================================= */
-
-.vehicle-display {
-    text-align: center;
-    font-size: 4rem;
-    padding: 30px;
-}
-
-
-/* =========================================================
-   STATUS BADGE
-   ========================================================= */
-
-.status-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background-color: #16202a;
-    border: 1px solid #303c49;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.footer {
-    text-align: center;
-    color: #66717e;
-    font-size: 0.75rem;
-    padding: 25px 0 5px 0;
-}
-
+/* Badges */
+.badge-active { background: #064e3b; color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+.badge-degraded { background: #78350f; color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+.badge-failed { background: #7f1d1d; color: #f87171; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
 </style>
 """, unsafe_allow_html=True)
-# ============================================================
-# DISPLAY HELPERS
-# ============================================================
-
-hazard_icons = {
-    "pedestrian": "🚶",
-    "vehicle": "🚙",
-    "static_obstacle": "🌳",
-    "clear": "🟢",
-    "sensor_failure": "📡"
-}
-
-
-hazard_names = {
-    "pedestrian": "Pedestrian",
-    "vehicle": "Vehicle",
-    "static_obstacle": "Static Obstacle",
-    "clear": "Clear Environment",
-    "sensor_failure": "Sensor Failure"
-}
-# ============================================================
-# SIMULATION ENGINE
-# ============================================================
-
-SIMULATION_EVENTS = [
-
-    {
-        "id": 1,
-        "type": "clear",
-        "subtype": None,
-        "position": "front",
-        "distance": None,
-        "confidence": 1.0,
-        "sensor_status": "active"
-    },
-
-    {
-        "id": 2,
-        "type": "vehicle",
-        "subtype": None,
-        "position": "front",
-        "distance": 15,
-        "confidence": 0.94,
-        "sensor_status": "active"
-    },
-
-    {
-        "id": 3,
-        "type": "pedestrian",
-        "subtype": None,
-        "position": "front",
-        "distance": 6,
-        "confidence": 0.98,
-        "sensor_status": "active"
-    },
-
-    {
-        "id": 4,
-        "type": "static_obstacle",
-        "subtype": "tree",
-        "position": "left",
-        "distance": 10,
-        "confidence": 0.90,
-        "sensor_status": "active"
-    },
-
-    {
-        "id": 5,
-        "type": "static_obstacle",
-        "subtype": "building",
-        "position": "right",
-        "distance": 12,
-        "confidence": 0.92,
-        "sensor_status": "active"
-    },
-
-    {
-        "id": 6,
-        "type": "sensor_failure",
-        "subtype": None,
-        "position": None,
-        "distance": None,
-        "confidence": 0.0,
-        "sensor_status": "failed"
-    },
-
-    {
-        "id": 7,
-        "type": "clear",
-        "subtype": None,
-        "position": "front",
-        "distance": None,
-        "confidence": 1.0,
-        "sensor_status": "active"
-    }
-]
 
 
 # ============================================================
-# DECISION ENGINE
-# ============================================================
-#
-# TEMPORARY LOCAL VERSION
-#
-# Later Nano's actual decision engine can replace this.
-#
+# 3. KINEMATIC COMPUTATION & BEV ROAD VISUALIZER
 # ============================================================
 
-def generate_decision(event):
-
-    hazard_type = event["type"]
-
-    position = event["position"]
-
-    distance = event["distance"]
-
-
-    # --------------------------------------------------------
-    # CLEAR ENVIRONMENT
-    # --------------------------------------------------------
-
-    if hazard_type == "clear":
-
-        return {
-            "risk": "LOW",
-            "action": "CONTINUE",
-            "reason": "No hazards are currently detected."
-        }
-
-
-    # --------------------------------------------------------
-    # SENSOR FAILURE
-    # --------------------------------------------------------
-
-    if hazard_type == "sensor_failure":
-
-        return {
-            "risk": "UNCERTAIN",
-            "action": "SLOW_DOWN",
-            "reason": (
-                "Sensor data is unavailable, reducing "
-                "environmental awareness. The vehicle "
-                "slows down as a precaution."
-            )
-        }
-
-
-    # --------------------------------------------------------
-    # DISTANCE BASED RISK
-    # --------------------------------------------------------
-
-    if distance is not None:
-
-        if distance < 8:
-
-            risk = "HIGH"
-
-        elif distance <= 20:
-
-            risk = "MEDIUM"
-
-        else:
-
-            risk = "LOW"
-
-    else:
-
-        risk = "UNCERTAIN"
-
-
-    # --------------------------------------------------------
-    # FRONT HAZARD
-    # --------------------------------------------------------
-
-    if position == "front":
-
-        if risk == "HIGH":
-
-            action = "BRAKE"
-
-        elif risk == "MEDIUM":
-
-            action = "SLOW_DOWN"
-
-        else:
-
-            action = "CONTINUE"
-
-
-    # --------------------------------------------------------
-    # LEFT HAZARD
-    # --------------------------------------------------------
-
-    elif position == "left":
-
-        if risk == "HIGH":
-
-            action = "SLOW_DOWN"
-
-        else:
-
-            action = "MOVE_RIGHT"
-
-
-    # --------------------------------------------------------
-    # RIGHT HAZARD
-    # --------------------------------------------------------
-
-    elif position == "right":
-
-        if risk == "HIGH":
-
-            action = "SLOW_DOWN"
-
-        else:
-
-            action = "MOVE_LEFT"
-
-
-    else:
-
-        action = "SLOW_DOWN"
-
-
-    # --------------------------------------------------------
-    # HAZARD NAME
-    # --------------------------------------------------------
-
-    if hazard_type == "pedestrian":
-
-        hazard_name = "Pedestrian"
-
-    elif hazard_type == "vehicle":
-
-        hazard_name = "Vehicle"
-
-    elif hazard_type == "static_obstacle":
-
-        hazard_name = event["subtype"].title()
-
-    else:
-
-        hazard_name = hazard_type.replace(
-            "_",
-            " "
-        ).title()
-
-
-    # --------------------------------------------------------
-    # REASON
-    # --------------------------------------------------------
-
-    if distance is not None:
-
-        reason = (
-            f"{hazard_name} detected "
-            f"{position} at {distance}m. "
-            f"The system classifies this as "
-            f"{risk.lower()} risk."
-        )
-
-    else:
-
-        reason = (
-            f"{hazard_name} detected. "
-            f"The system recommends {action.replace('_', ' ').lower()}."
-        )
-
+def compute_kinematics(ego_speed_kmh: float, distance_m: Optional[float], closing_speed_kmh: Optional[float] = None) -> Dict[str, Any]:
+    """Computes physics-based stopping distance, required deceleration, and safety margin."""
+    v_ms = ego_speed_kmh / 3.6
+    t_reaction = 1.2  # driver & ADAS reaction time in seconds
+    mu = 0.75  # tire-road friction coefficient
+    g = 9.81
+
+    d_reaction = v_ms * t_reaction
+    d_braking = (v_ms ** 2) / (2 * mu * g)
+    total_stopping_dist = d_reaction + d_braking
+
+    req_decel = None
+    safety_margin = None
+
+    if distance_m is not None and distance_m > 0:
+        closing_v_ms = (closing_speed_kmh / 3.6) if closing_speed_kmh is not None else v_ms
+        if closing_v_ms > 0:
+            req_decel = round((closing_v_ms ** 2) / (2 * distance_m), 2)
+        safety_margin = round(distance_m - total_stopping_dist, 1)
 
     return {
-        "risk": risk,
-        "action": action,
-        "reason": reason
+        "speed_ms": round(v_ms, 1),
+        "reaction_dist_m": round(d_reaction, 1),
+        "braking_dist_m": round(d_braking, 1),
+        "total_stopping_dist_m": round(total_stopping_dist, 1),
+        "required_decel_ms2": req_decel,
+        "safety_margin_m": safety_margin
     }
 
 
+def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, ego_speed_kmh: float):
+    """Renders the 2D Bird's-Eye View (BEV) road canvas inside an embedded HTML iframe."""
+    svg_w = 460
+    svg_h = 420
+
+    lane_w = 110
+    road_left = 65
+    road_right = road_left + (3 * lane_w)
+
+    left_lane_x = road_left + (lane_w / 2)
+    center_lane_x = left_lane_x + lane_w
+    right_lane_x = center_lane_x + lane_w
+
+    ego_x = center_lane_x
+    ego_y = svg_h - 50
+
+    # Maneuver vector
+    arrow_markup = ""
+    act_str = str(decision.action).upper()
+    if "MOVE_RIGHT" in act_str:
+        arrow_markup = f'<path d="M {ego_x} {ego_y - 20} Q {ego_x + 30} {ego_y - 70} {right_lane_x} {ego_y - 120}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-dasharray="6,4" marker-end="url(#arrow-blue)"/>'
+    elif "MOVE_LEFT" in act_str:
+        arrow_markup = f'<path d="M {ego_x} {ego_y - 20} Q {ego_x - 30} {ego_y - 70} {left_lane_x} {ego_y - 120}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-dasharray="6,4" marker-end="url(#arrow-blue)"/>'
+    elif "STOP" in act_str or "BRAKE" in act_str:
+        arrow_markup = f'<line x1="{road_left + 15}" y1="{ego_y - 60}" x2="{road_right - 15}" y2="{ego_y - 60}" stroke="#ef4444" stroke-width="4" stroke-dasharray="8,4"/>'
+
+    # Hazard markers
+    hazard_markers = ""
+    for h in hazards:
+        h_type_str = h.type.value if hasattr(h.type, "value") else str(h.type).lower()
+        if "clear" in h_type_str or "sensor_failure" in h_type_str or "sensor_gap" in h_type_str:
+            continue
+
+        h_dist = h.distance if h.distance is not None else 25.0
+        norm_dist = min(max(h_dist, 3.0), 50.0) / 50.0
+        h_y = (ego_y - 30) - (norm_dist * (svg_h - 110))
+
+        pos_str = h.position.value if hasattr(h.position, "value") else str(h.position).lower()
+        if pos_str == "left":
+            h_x = left_lane_x
+        elif pos_str == "right":
+            h_x = right_lane_x
+        else:
+            h_x = center_lane_x
+
+        color = "#ef4444" if decision.risk in ["HIGH", "CRITICAL"] else ("#f59e0b" if decision.risk == "MEDIUM" else "#3b82f6")
+        icon = "🚶" if "pedestrian" in h_type_str else ("🚙" if "vehicle" in h_type_str else ("🚴" if "cyclist" in h_type_str else ("🚧" if "obstacle" in h_type_str else "⚠️")))
+
+        hazard_markers += f'''
+        <g transform="translate({h_x}, {h_y})">
+            <circle cx="0" cy="0" r="22" fill="{color}" opacity="0.25"/>
+            <circle cx="0" cy="0" r="16" fill="#1e293b" stroke="{color}" stroke-width="2.5"/>
+            <text x="0" y="5" font-size="14" text-anchor="middle">{icon}</text>
+            <rect x="-24" y="-30" width="48" height="15" rx="4" fill="#0f172a" stroke="{color}" stroke-width="1"/>
+            <text x="0" y="-19" font-size="9" fill="#f8fafc" font-weight="bold" text-anchor="middle">{h_dist:.1f}m</text>
+        </g>
+        '''
+
+    svg_content = f'''
+    <svg width="100%" height="{svg_h}" viewBox="0 0 {svg_w} {svg_h}" xmlns="http://www.w3.org/2000/svg" style="background:#090d14; border-radius:14px; border:1px solid #1e293b;">
+        <defs>
+            <marker id="arrow-blue" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+            </marker>
+        </defs>
+
+        <!-- Asphalt Road Surface -->
+        <rect x="{road_left}" y="10" width="{road_right - road_left}" height="{svg_h - 20}" rx="6" fill="#151d28" stroke="#334155" stroke-width="2"/>
+
+        <!-- Distance Rings -->
+        <line x1="{road_left}" y1="80" x2="{road_right}" y2="80" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="{road_left - 8}" y="83" font-size="10" fill="#64748b" text-anchor="end">40m</text>
+        <line x1="{road_left}" y1="180" x2="{road_right}" y2="180" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="{road_left - 8}" y="183" font-size="10" fill="#64748b" text-anchor="end">20m</text>
+        <line x1="{road_left}" y1="260" x2="{road_right}" y2="260" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,4" opacity="0.6"/>
+        <text x="{road_left - 8}" y="263" font-size="10" fill="#f59e0b" text-anchor="end">10m</text>
+        <line x1="{road_left}" y1="310" x2="{road_right}" y2="310" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text x="{road_left - 8}" y="313" font-size="10" fill="#ef4444" text-anchor="end">5m</text>
+
+        <!-- Lane Lines -->
+        <line x1="{road_left + lane_w}" y1="10" x2="{road_left + lane_w}" y2="{svg_h - 10}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="14,10"/>
+        <line x1="{road_left + 2 * lane_w}" y1="10" x2="{road_left + 2 * lane_w}" y2="{svg_h - 10}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="14,10"/>
+
+        <!-- Lane Headers -->
+        <text x="{left_lane_x}" y="30" font-size="10" fill="#475569" font-weight="bold" text-anchor="middle">LEFT</text>
+        <text x="{center_lane_x}" y="30" font-size="10" fill="#475569" font-weight="bold" text-anchor="middle">CENTER</text>
+        <text x="{right_lane_x}" y="30" font-size="10" fill="#475569" font-weight="bold" text-anchor="middle">RIGHT</text>
+
+        <!-- Headlight Beam Glow -->
+        <polygon points="{ego_x - 14},{ego_y - 25} {ego_x - 85},{ego_y - 200} {ego_x + 85},{ego_y - 200} {ego_x + 14},{ego_y - 25}" fill="url(#beam-glow)" opacity="0.15"/>
+        <linearGradient id="beam-glow" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+        </linearGradient>
+
+        <!-- Vectors & Markers -->
+        {arrow_markup}
+        {hazard_markers}
+
+        <!-- Ego Host Car -->
+        <g transform="translate({ego_x}, {ego_y})">
+            <rect x="-18" y="-32" width="36" height="56" rx="8" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+            <path d="M -12 -12 L 12 -12 L 9 0 L -9 0 Z" fill="#0369a1"/>
+            <circle cx="-12" cy="-30" r="3" fill="#fef08a"/>
+            <circle cx="12" cy="-30" r="3" fill="#fef08a"/>
+            <rect x="-15" y="20" width="8" height="3" fill="#ef4444"/>
+            <rect x="7" y="20" width="8" height="3" fill="#ef4444"/>
+            <text x="0" y="38" font-size="9" fill="#94a3b8" font-weight="bold" text-anchor="middle">HOST ({ego_speed_kmh:.0f} km/h)</text>
+        </g>
+    </svg>
+    '''
+
+    full_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="utf-8">
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }}
+    </style>
+    </head>
+    <body>
+        {svg_content}
+    </body>
+    </html>
+    """
+    components.html(full_html, height=430, scrolling=False)
+
+
 # ============================================================
-# SESSION STATE
+# 4. SESSION STATE MANAGEMENT
 # ============================================================
+
+if "sim_mode" not in st.session_state:
+    st.session_state.sim_mode = "🚗 Live Trip Timeline"
 
 if "simulation_running" not in st.session_state:
-
     st.session_state.simulation_running = False
 
-
 if "simulation_index" not in st.session_state:
-
     st.session_state.simulation_index = 0
 
-
 if "event_history" not in st.session_state:
-
     st.session_state.event_history = []
 
+if "processed_steps" not in st.session_state:
+    st.session_state.processed_steps = set()
 
-if "trip_started" not in st.session_state:
+if "selected_scenario" not in st.session_state:
+    st.session_state.selected_scenario = list(SCENARIOS.keys())[0]
 
-    st.session_state.trip_started = False
-
-
-# ============================================================
-# CURRENT EVENT
-# ============================================================
-
-event = SIMULATION_EVENTS[
-    st.session_state.simulation_index
-]
-
-
-decision = generate_decision(event)
-# ============================================================
-# RECORD CURRENT EVENT
-# ============================================================
-
-current_event_id = event["id"]
-
-
-if (
-    len(st.session_state.event_history) == 0
-    or
-    st.session_state.event_history[-1]["ID"]
-    != current_event_id
-):
-
-    history_entry = {
-
-        "ID":
-            event["id"],
-
-        "Event":
-            event["id"],
-
-        "Time":
-            datetime.now().strftime("%H:%M:%S"),
-
-        "Hazard":
-            (
-                hazard_names.get(
-                    event["type"],
-                    event["type"]
-                )
-            ),
-
-        "Position":
-            (
-                event["position"].title()
-                if event["position"]
-                else "--"
-            ),
-
-        "Distance":
-            (
-                f"{event['distance']} m"
-                if event["distance"] is not None
-                else "--"
-            ),
-
-        "Confidence":
-            f"{event['confidence'] * 100:.0f}%",
-
-        "Risk":
-            decision["risk"],
-
-        "Action":
-            decision["action"]
-
-    }
-
-
-    st.session_state.event_history.append(
-        history_entry
-    )
-
-
+# Sensor Fault Toggles
+if "fault_fog" not in st.session_state:
+    st.session_state.fault_fog = False
+if "fault_cam_blackout" not in st.session_state:
+    st.session_state.fault_cam_blackout = False
+if "fault_lidar_noise" not in st.session_state:
+    st.session_state.fault_lidar_noise = False
 
 
 # ============================================================
-                  # TRIP METRICS
-# ============================================================
-#
-# Temporary values.
-# Later these can come from the simulation.
-#
-# ============================================================
-
-trip_distance = 4.8
-hazard_count = 3
-warning_count = 2
-brake_count = 1
-average_confidence = 0.92
-
-
-# ============================================================
-# HAZARD DISPLAY HELPERS
-# ============================================================
-
-hazard_icons = {
-
-    "pedestrian": "🚶",
-
-    "vehicle": "🚙",
-
-    "static_obstacle": "🌳",
-
-    "clear": "🟢",
-
-    "sensor_failure": "📡"
-
-}
-
-
-hazard_names = {
-
-    "pedestrian": "Pedestrian",
-
-    "vehicle": "Vehicle",
-
-    "static_obstacle": "Static Obstacle",
-
-    "clear": "Clear Environment",
-
-    "sensor_failure": "Sensor Failure"
-
-}
-
-
-# ============================================================
-                          # HEADER
-# ============================================================
-
-st.markdown(
-    '<div class="main-title">🚗 Intelligent Navigation</div>',
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    '<div class="subtitle">'
-    'Real-Time Decision-Support & Hazard Awareness System'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-st.divider()
-
-
-# ============================================================
-                            # SIDEBAR
+# 5. SIDEBAR & OPERATIONAL MODE SELECTION
 # ============================================================
 
 with st.sidebar:
+    st.markdown("### ⚙️ Command Control Center")
 
-    st.header("⚙️ Control Panel")
-
-    monitoring = st.toggle(
-        "Enable monitoring",
-        value=True
+    active_mode = st.radio(
+        "Operational Mode",
+        [
+            "🚗 Live Trip Timeline",
+            "🔬 Preset Scenario Explorer",
+            "🛠️ Interactive What-If Sandbox"
+        ],
+        key="sim_mode"
     )
-
-    st.subheader("System")
-
-    st.write("🌍 Environmental Awareness")
-
-    if event is not None:
-        st.success("CONNECTED")
-    else:
-        st.warning("WAITING")
-
-
-    st.write("🧠 Decision Engine")
-
-    if decision is not None:
-        st.success("CONNECTED")
-    else:
-        st.warning("WAITING")
-
-
-    st.write("🖥️ Dashboard")
-
-    st.success("ACTIVE")
-
 
     st.divider()
 
-    st.subheader("Trip")
+    # Timeline Controls
+    if active_mode == "🚗 Live Trip Timeline":
+        st.subheader("🎮 Drive Timeline Controls")
 
-    st.metric(
-        "Distance",
-        f"{trip_distance:.1f} km"
-    )
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("▶️ Start Drive", use_container_width=True):
+                st.session_state.simulation_running = True
+        with c2:
+            if st.button("⏸️ Pause", use_container_width=True):
+                st.session_state.simulation_running = False
 
+        c3, c4 = st.columns(2)
+        with c3:
+            if st.button("⏭️ Next Step", use_container_width=True):
+                st.session_state.simulation_running = False
+                if st.session_state.simulation_index < len(TRIP_TIMELINE) - 1:
+                    st.session_state.simulation_index += 1
+                else:
+                    st.session_state.simulation_index = 0
+                st.rerun()
+        with c4:
+            if st.button("🔄 Reset Drive", use_container_width=True):
+                st.session_state.simulation_running = False
+                st.session_state.simulation_index = 0
+                st.session_state.event_history = []
+                st.session_state.processed_steps = set()
+                reset_metrics()
+                st.rerun()
+
+        current_step_idx = st.slider(
+            "Timeline Position",
+            min_value=0,
+            max_value=len(TRIP_TIMELINE) - 1,
+            value=st.session_state.simulation_index,
+            format="Step %d"
+        )
+        if current_step_idx != st.session_state.simulation_index:
+            st.session_state.simulation_index = current_step_idx
+            st.session_state.simulation_running = False
+            st.rerun()
+
+        playback_speed = st.slider("Playback Speed (sec)", min_value=1.0, max_value=5.0, value=3.0, step=0.5)
+
+    # Scenario Explorer
+    elif active_mode == "🔬 Preset Scenario Explorer":
+        st.subheader("📚 Scenario Catalog")
+        sc_keys = SimulationEngine.list_scenarios()
+        selected_sc = st.selectbox(
+            "Select Scenario",
+            options=sc_keys,
+            format_func=lambda k: SCENARIOS[k]["title"]
+        )
+        st.session_state.selected_scenario = selected_sc
+
+    # Sandbox
+    else:
+        st.subheader("🛠️ Hazard Injector")
+        sb_speed = st.slider("Host Speed (km/h)", 0.0, 130.0, 45.0, 5.0)
+        sb_type = st.selectbox("Primary Hazard", ["pedestrian", "vehicle", "static_obstacle", "cyclist", "clear"])
+        sb_dist = st.slider("Distance (m)", 2.0, 60.0, 14.0, 1.0)
+        sb_pos = st.selectbox("Position", ["front", "left", "right"])
+        sb_rel_speed = st.slider("Closing Speed (km/h)", 0.0, 80.0, 20.0, 5.0)
+
+        enable_pinch = st.checkbox("Dual Hazard (Swerve Conflict Matrix)", value=False)
+        if enable_pinch:
+            sec_type = st.selectbox("Secondary Hazard", ["cyclist", "static_obstacle", "vehicle"])
+            sec_pos = "right" if sb_pos == "left" else "left"
+            sec_dist = st.slider("Secondary Distance (m)", 3.0, 30.0, 10.0, 1.0)
 
     st.divider()
-
-    st.caption(
-        "Detect → Understand → Assess → Decide → Explain"
-    )
-
-    st.header("⚙️ Control Panel")
-    # ========================================================
-    # SIMULATION CONTROLS
-    # ========================================================
-
-    st.subheader("🎮 Simulation")
-
-    start_simulation = st.button(
-        "▶️ Start Trip",
-        use_container_width=True
-    )
-
-    pause_simulation = st.button(
-        "⏸️ Pause",
-        use_container_width=True
-    )
-
-    reset_simulation = st.button(
-        "🔄 Reset",
-        use_container_width=True
-    )
-
-
-    if start_simulation:
-
-        st.session_state.simulation_running = True
-        st.session_state.trip_started = True
-
-
-    if pause_simulation:
-
-        st.session_state.simulation_running = False
-
-
-    if reset_simulation:
-
-        st.session_state.simulation_running = False
-
-        st.session_state.simulation_index = 0
-
-        st.session_state.event_history = []
-
-        st.session_state.trip_started = False
-
-        st.rerun()
-
-
-    st.write(
-        f"Event {st.session_state.simulation_index + 1}"
-        f" / {len(SIMULATION_EVENTS)}"
-    )
-
+    st.subheader("📡 Subsystem Telemetry")
+    st.markdown("🟢 **Perception Fusion:** `ONLINE`")
+    st.markdown("🧠 **Brain Engine:** `ACTIVE`")
+    st.markdown("📊 **Blackbox Audit:** `LOGGING`")
 
 
 # ============================================================
-                    # TOP STATUS CARDS
+# 6. DATA INGESTION & SENSOR OVERLAYS
 # ============================================================
 
-col1, col2, col3, col4 = st.columns(4)
+current_hazards: List[HazardEvent] = []
+ego_state = EgoState(speed_kmh=40.0)
+step_desc = ""
+step_id: Any = 1
 
+if active_mode == "🚗 Live Trip Timeline":
+    timeline = SimulationEngine.get_trip_timeline()
+    curr_step = timeline[st.session_state.simulation_index]
+    step_id = curr_step.get("timestep", st.session_state.simulation_index + 1)
+    step_desc = curr_step.get("description", "")
+    ego_state = EgoState(speed_kmh=curr_step.get("ego_speed", 40.0))
 
-# ------------------------------------------------------------
-                    # SYSTEM STATUS
-# ------------------------------------------------------------
+    for ev in curr_step.get("events", []):
+        current_hazards.append(HazardEvent.from_dict(ev))
 
-with col1:
+elif active_mode == "🔬 Preset Scenario Explorer":
+    sc_data = SimulationEngine.get_scenario(st.session_state.selected_scenario)
+    ego_state = sc_data["ego_state"]
+    step_desc = sc_data["description"]
+    current_hazards = sc_data["events"]
+    step_id = st.session_state.selected_scenario
 
-    if monitoring:
-
-        st.metric(
-            "System Status",
-            "🟢 ACTIVE"
+else: # Sandbox
+    ego_state = EgoState(speed_kmh=sb_speed)
+    step_desc = f"Interactive Sandbox: {sb_type} at {sb_dist}m ({sb_pos})."
+    h1 = HazardEvent(
+        id=901,
+        type=HazardType.from_value(sb_type),
+        subtype=sb_type,
+        position=Position.from_value(sb_pos),
+        distance=sb_dist if sb_type != "clear" else None,
+        confidence=0.96,
+        sensor_status=SensorStatus.ACTIVE,
+        relative_speed_kmh=sb_rel_speed if sb_type != "clear" else None
+    )
+    current_hazards = [h1]
+    if enable_pinch:
+        h2 = HazardEvent(
+            id=902,
+            type=HazardType.from_value(sec_type),
+            subtype=sec_type,
+            position=Position.from_value(sec_pos),
+            distance=sec_dist,
+            confidence=0.94,
+            sensor_status=SensorStatus.ACTIVE,
+            relative_speed_kmh=10.0
         )
+        current_hazards.append(h2)
+    step_id = "Sandbox"
 
-    else:
+# Apply Sensor Fault Injections
+if st.session_state.fault_cam_blackout:
+    for h in current_hazards:
+        if h.sensor == "camera":
+            h.sensor_status = SensorStatus.FAILED
+            h.confidence = 0.0
+            h.type = HazardType.SENSOR_FAILURE
 
-        st.metric(
-            "System Status",
-            "⚪ PAUSED"
-        )
-
-
-# ------------------------------------------------------------
-                     # CURRENT RISK
-# ------------------------------------------------------------
-
-with col2:
-
-    risk = decision["risk"]
-
-    if risk == "LOW":
-
-        display_risk = "🟢 LOW"
-
-    elif risk == "MEDIUM":
-
-        display_risk = "🟡 MEDIUM"
-
-    elif risk == "HIGH":
-
-        display_risk = "🔴 HIGH"
-
-    else:
-
-        display_risk = "⚪ UNCERTAIN"
+if st.session_state.fault_fog:
+    for h in current_hazards:
+        h.sensor_status = SensorStatus.DEGRADED
+        h.confidence = round(h.confidence * 0.4, 2)
 
 
-    st.metric(
-        "Current Risk",
-        display_risk
-    )
+# Compute Brain Decision
+if len(current_hazards) == 1:
+    decision: Decision = make_decision(current_hazards[0], ego_state)
+else:
+    decision: Decision = make_decisions(current_hazards, ego_state)
+
+primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
+kinematics = compute_kinematics(ego_state.speed_kmh, primary_hazard.distance, primary_hazard.relative_speed_kmh)
 
 
-# ------------------------------------------------------------
-                  # RECOMMENDED ACTION
-# ------------------------------------------------------------
+# Record Trip Telemetry for Timeline
+if active_mode == "🚗 Live Trip Timeline":
+    step_key = f"step_{st.session_state.simulation_index}_{step_id}"
+    if step_key not in st.session_state.processed_steps:
+        st.session_state.processed_steps.add(step_key)
 
-with col3:
-
-    action = decision["action"]
-
-    action_display = action.replace(
-        "_",
-        " "
-    )
-
-    st.metric(
-        "Recommended Action",
-        action_display
-    )
-
-
-# ------------------------------------------------------------
-                          # CONFIDENCE
-# ------------------------------------------------------------
-
-with col4:
-
-    confidence = event["confidence"]
-
-    st.metric(
-        "Detection Confidence",
-        f"{confidence * 100:.0f}%"
-    )
-
-
-# ============================================================
-                 # VEHICLE ENVIRONMENT VIEW
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">🗺️ Vehicle Environment</div>',
-    unsafe_allow_html=True
-)
-
-st.caption(
-    "Current hazard position relative to the vehicle"
-)
-
-
-left_col, front_col, right_col = st.columns(3)
-
-
-# ============================================================
-                          # LEFT
-# ============================================================
-
-with left_col:
-
-    st.subheader("⬅️ LEFT")
-
-    if event["position"] == "left":
-
-        icon = hazard_icons.get(
-            event["type"],
-            "⚠️"
-        )
-
-        name = hazard_names.get(
-            event["type"],
-            event["type"]
-        )
-
-        st.warning(
-            f"{icon} {name}"
-        )
-
-        if event["distance"] is not None:
-
-            st.write(
-                f"Distance: **{event['distance']} m**"
+        for h in current_hazards:
+            record_event(
+                event=h,
+                risk=decision.risk,
+                action=decision.action,
+                speed_kmh=ego_state.speed_kmh,
+                dt_seconds=3.0
             )
 
-    else:
+        dist_str = f"{primary_hazard.distance:.1f} m" if primary_hazard.distance is not None else "--"
+        h_type_str = primary_hazard.type.value if hasattr(primary_hazard.type, "value") else str(primary_hazard.type)
+        pos_str = primary_hazard.position.value if hasattr(primary_hazard.position, "value") else str(primary_hazard.position)
 
-        st.success("Clear")
-
-
-# ============================================================
-                           # FRONT
-# ============================================================
-
-with front_col:
-
-    st.subheader("⬆️ FRONT")
-
-    if event["position"] == "front":
-
-        icon = hazard_icons.get(
-            event["type"],
-            "⚠️"
-        )
-
-        name = hazard_names.get(
-            event["type"],
-            event["type"]
-        )
-
-        st.warning(
-            f"{icon} {name}"
-        )
-
-        if event["distance"] is not None:
-
-            st.write(
-                f"Distance: **{event['distance']} m**"
-            )
-
-    else:
-
-        st.success("Clear")
+        hist_entry = {
+            "Step": step_id,
+            "Time": datetime.now().strftime("%H:%M:%S"),
+            "Hazard": h_type_str.replace("_", " ").title(),
+            "Position": pos_str.title(),
+            "Distance": dist_str,
+            "Confidence": f"{primary_hazard.confidence * 100:.0f}%",
+            "Risk": decision.risk,
+            "Action": decision.action.replace("_", " "),
+            "TTC": f"{decision.ttc_seconds}s" if decision.ttc_seconds else "--",
+            "Target Speed": f"{decision.target_speed_kmh:.0f} km/h" if decision.target_speed_kmh is not None else "--",
+            "Reason": decision.reason
+        }
+        st.session_state.event_history.append(hist_entry)
 
 
 # ============================================================
-                          # RIGHT
+# 7. MAIN COCKPIT HUD
 # ============================================================
 
-with right_col:
+st.markdown('<div class="hud-title">🚗 Intelligent Navigation & Decision-Support System</div>', unsafe_allow_html=True)
+st.markdown('<div class="hud-subtitle">Explainable Autonomous Driving Assistance, 2D BEV Perception, & Real-Time Kinematics</div>', unsafe_allow_html=True)
 
-    st.subheader("➡️ RIGHT")
-
-    if event["position"] == "right":
-
-        icon = hazard_icons.get(
-            event["type"],
-            "⚠️"
-        )
-
-        name = hazard_names.get(
-            event["type"],
-            event["type"]
-        )
-
-        st.warning(
-            f"{icon} {name}"
-        )
-
-        if event["distance"] is not None:
-
-            st.write(
-                f"Distance: **{event['distance']} m**"
-            )
-
-    else:
-
-        st.success("Clear")
-
-
-# ============================================================
-              # CURRENT HAZARD + DECISION
-# ============================================================
+# Top Telemetry HUD Strip
+k1, k2, k3, k4, k5 = st.columns(5)
+with k1:
+    st.metric("Host Speed", f"{ego_state.speed_kmh:.0f} km/h")
+with k2:
+    tgt = f"{decision.target_speed_kmh:.0f} km/h" if decision.target_speed_kmh is not None else f"{ego_state.speed_kmh:.0f} km/h"
+    st.metric("Target Speed", tgt)
+with k3:
+    risk_color = "🔴" if decision.risk in ["HIGH", "CRITICAL"] else ("🟡" if decision.risk == "MEDIUM" else "🟢")
+    st.metric("Risk Level", f"{risk_color} {decision.risk}")
+with k4:
+    ttc_label = f"⚡ {decision.ttc_seconds}s" if decision.ttc_seconds else "🛡️ Safe"
+    st.metric("Time-To-Collision", ttc_label)
+with k5:
+    st.metric("Stopping Distance", f"{kinematics['total_stopping_dist_m']} m")
 
 st.divider()
 
 
-hazard_col, decision_col = st.columns(2)
-
-
 # ============================================================
-                      # CURRENT HAZARD
+# 8. CENTRAL SPLIT COCKPIT (BEV MAP + DECISION ENGINE)
 # ============================================================
 
-with hazard_col:
+if step_desc:
+    st.info(f"📍 **Drive Context:** {step_desc}")
+
+col_left, col_right = st.columns([1.05, 1.0])
+
+with col_left:
+    st.markdown('<div class="section-label">🗺️ Bird\'s-Eye View (BEV) Road Perception</div>', unsafe_allow_html=True)
+    # Render component safely in HTML iframe
+    render_bev_road_component(current_hazards, decision, ego_state.speed_kmh)
+
+    # Spatial Awareness Columns
+    s_left, s_front, s_right = st.columns(3)
+
+    left_hazards = [h for h in current_hazards if (h.position == Position.LEFT or str(h.position).lower() == "left")]
+    front_hazards = [h for h in current_hazards if (h.position == Position.FRONT or str(h.position).lower() == "front")]
+    right_hazards = [h for h in current_hazards if (h.position == Position.RIGHT or str(h.position).lower() == "right")]
+
+    with s_left:
+        st.markdown("##### ⬅️ Left Sector")
+        if left_hazards:
+            for lh in left_hazards:
+                dist_txt = f"{lh.distance:.1f}m" if lh.distance is not None else "N/A"
+                lh_name = lh.subtype.title() if lh.subtype else (lh.type.value if hasattr(lh.type, "value") else str(lh.type).title())
+                st.warning(f"⚠️ **{lh_name}** ({dist_txt})")
+        else:
+            st.success("🟢 Clear")
+
+    with s_front:
+        st.markdown("##### ⬆️ Front Sector")
+        if front_hazards:
+            for fh in front_hazards:
+                fh_type_str = fh.type.value if hasattr(fh.type, "value") else str(fh.type).lower()
+                if "clear" in fh_type_str:
+                    st.success("🟢 Clear")
+                else:
+                    dist_txt = f"{fh.distance:.1f}m" if fh.distance is not None else "N/A"
+                    fh_name = fh.subtype.title() if fh.subtype else fh_type_str.title()
+                    st.error(f"⚠️ **{fh_name}** ({dist_txt})")
+        elif any(h.type in [HazardType.SENSOR_FAILURE, "sensor_failure"] for h in current_hazards):
+            st.error("📡 Sensor Gap")
+        else:
+            st.success("🟢 Clear")
+
+    with s_right:
+        st.markdown("##### ➡️ Right Sector")
+        if right_hazards:
+            for rh in right_hazards:
+                dist_txt = f"{rh.distance:.1f}m" if rh.distance is not None else "N/A"
+                rh_name = rh.subtype.title() if rh.subtype else (rh.type.value if hasattr(rh.type, "value") else str(rh.type).title())
+                st.warning(f"⚠️ **{rh_name}** ({dist_txt})")
+        else:
+            st.success("🟢 Clear")
+
+
+with col_right:
+    st.markdown('<div class="section-label">🧠 Brain Decision & Explainability Console</div>', unsafe_allow_html=True)
+
+    act_str = str(decision.action).upper()
+    act_cls = "act-continue"
+    if "BRAKE" in act_str:
+        act_cls = "act-brake"
+    elif "STOP" in act_str:
+        act_cls = "act-stop"
+    elif "SLOW" in act_str:
+        act_cls = "act-slow"
+    elif "MOVE" in act_str:
+        act_cls = "act-swerve"
 
     st.markdown(
-        '<div class="section-title">🚨 Current Hazard</div>',
-        unsafe_allow_html=True
-    )
-
-
-    icon = hazard_icons.get(
-        event["type"],
-        "⚠️"
-    )
-
-
-    name = hazard_names.get(
-        event["type"],
-        event["type"]
-    )
-
-
-    st.markdown(
-        '<div class="hazard-box">',
-        unsafe_allow_html=True
-    )
-
-
-    st.subheader(
-        f"{icon} {name}"
-    )
-
-
-    if event["subtype"] is not None:
-
-        st.write(
-            f"Subtype: **{event['subtype'].title()}**"
-        )
-
-
-    st.write(
-        f"📍 Position: **{event['position'].title()}**"
-    )
-
-
-    if event["distance"] is not None:
-
-        st.write(
-            f"📏 Distance: **{event['distance']} m**"
-        )
-
-    else:
-
-        st.write(
-            "📏 Distance: **N/A**"
-        )
-
-
-    st.write(
-        f"🎯 Confidence: **{event['confidence'] * 100:.0f}%**"
-    )
-
-
-    if event["sensor_status"] == "active":
-
-        st.success("📡 Sensor Active")
-
-    else:
-
-        st.error("📡 Sensor Failed")
-
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-# ============================================================
-                         # DECISION
-# ============================================================
-
-with decision_col:
-
-    st.markdown(
-        '<div class="section-title">🧠 Decision Engine</div>',
-        unsafe_allow_html=True
-    )
-
-
-    st.markdown(
-        '<div class="decision-box">',
-        unsafe_allow_html=True
-    )
-
-
-    risk = decision["risk"]
-
-
-    if risk == "LOW":
-
-        st.success(
-            f"RISK: {risk}"
-        )
-
-    elif risk == "MEDIUM":
-
-        st.warning(
-            f"RISK: {risk}"
-        )
-
-    elif risk == "HIGH":
-
-        st.error(
-            f"RISK: {risk}"
-        )
-
-    else:
-
-        st.info(
-            f"RISK: {risk}"
-        )
-
-
-    st.markdown(
-        f'<div class="big-action">'
-        f'🚦 {decision["action"].replace("_", " ")}'
+        f'<div class="act-box {act_cls}">'
+        f'🚦 {decision.action.replace("_", " ")}'
         f'</div>',
         unsafe_allow_html=True
     )
 
+    st.markdown("#### 💡 Explainable AI Rationale (Why?):")
+    st.info(decision.reason)
 
-    st.write("### Why?")
+    st.markdown("#### 📐 Kinematic Safety Telemetry:")
+    kn1, kn2, kn3 = st.columns(3)
+    with kn1:
+        st.metric("Reaction Distance", f"{kinematics['reaction_dist_m']} m")
+    with kn2:
+        st.metric("Braking Distance", f"{kinematics['braking_dist_m']} m")
+    with kn3:
+        decel_disp = f"{kinematics['required_decel_ms2']} m/s²" if kinematics['required_decel_ms2'] else "0.0 m/s²"
+        st.metric("Required Decel", decel_disp)
 
+    st.divider()
 
-    st.write(
-        decision["reason"]
-    )
-
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
+    # Sensor Fusion & Fault Injectors
+    st.markdown("#### 🔬 Sensor Diagnostics & Fault Injection:")
+    sf1, sf2, sf3 = st.columns(3)
+    with sf1:
+        st.session_state.fault_fog = st.checkbox("🌫️ Severe Fog (Degraded)", value=st.session_state.fault_fog)
+    with sf2:
+        st.session_state.fault_cam_blackout = st.checkbox("🔌 Camera Disconnect (Failed)", value=st.session_state.fault_cam_blackout)
+    with sf3:
+        st.session_state.fault_lidar_noise = st.checkbox("🌧️ LiDAR Glare", value=st.session_state.fault_lidar_noise)
 
 
 # ============================================================
-                       # SENSOR STATUS
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    '<div class="section-title">📡 Sensor Status</div>',
-    unsafe_allow_html=True
-)
-
-
-sensor_col1, sensor_col2, sensor_col3 = st.columns(3)
-
-
-with sensor_col1:
-
-    if event["sensor_status"] == "active":
-
-        st.success(
-            "🟢 Environmental Sensor — ACTIVE"
-        )
-
-    else:
-
-        st.error(
-            "🔴 Environmental Sensor — FAILED"
-        )
-
-
-with sensor_col2:
-
-    st.metric(
-        "Detection Confidence",
-        f"{event['confidence'] * 100:.1f}%"
-    )
-
-
-with sensor_col3:
-
-    st.metric(
-        "Event ID",
-        event["id"]
-    )
-# ============================================================
-# LIVE ANALYTICS
+# 9. PERFORMANCE KPIS, CHARTS & BLACKBOX AUDIT LOG
 # ============================================================
 
 st.divider()
+st.markdown('<div class="section-label">📊 Cumulative Performance & Blackbox Audit</div>', unsafe_allow_html=True)
 
-st.markdown(
-    '<div class="section-title">📈 Live Trip Analytics</div>',
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# PREPARE GRAPH DATA
-# ============================================================
+live_metrics = get_metrics()
+p1, p2, p3, p4, p5 = st.columns(5)
+with p1:
+    st.metric("Total Distance", f"{live_metrics['trip_distance_km']:.2f} km")
+with p2:
+    st.metric("Hazards Detected", live_metrics["hazards_detected"])
+with p3:
+    st.metric("Warnings Issued", live_metrics["warnings_count"])
+with p4:
+    st.metric("Brake Actions", live_metrics["brake_events"])
+with p5:
+    st.metric("Avg Confidence", f"{live_metrics['average_confidence'] * 100:.0f}%")
 
 history = st.session_state.event_history
 
-
 if len(history) > 0:
-
     graph_df = pd.DataFrame(history)
 
+    risk_num_map = {"UNCERTAIN": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+    graph_df["Risk Numeric"] = graph_df["Risk"].map(risk_num_map).fillna(0)
+    graph_df["Distance Numeric"] = pd.to_numeric(graph_df["Distance"].str.replace(" m", "").replace("--", None), errors="coerce")
 
-    # --------------------------------------------------------
-    # GRAPH 1 — RISK OVER TIME
-    # --------------------------------------------------------
+    ch1, ch2 = st.columns(2)
+    with ch1:
+        st.subheader("⚠️ Risk Timeline")
+        st.line_chart(graph_df[["Step", "Risk Numeric"]].set_index("Step"), y="Risk Numeric", color="#ef4444")
+        st.caption("0: Uncertain | 1: Low | 2: Medium | 3: High | 4: Critical")
 
-    risk_mapping = {
+    with ch2:
+        st.subheader("📏 Hazard Distance Timeline (m)")
+        dist_data = graph_df[["Step", "Distance Numeric"]].dropna().set_index("Step")
+        if not dist_data.empty:
+            st.line_chart(dist_data, y="Distance Numeric", color="#3b82f6")
 
-        "LOW": 1,
+    st.subheader("📋 Blackbox Decision Audit History")
+    filter_col, dl_col = st.columns([0.7, 0.3])
+    with filter_col:
+        risk_filter = st.selectbox("Filter Risk", ["ALL", "HIGH & CRITICAL", "MEDIUM", "LOW", "UNCERTAIN"])
 
-        "MEDIUM": 2,
+    display_table = graph_df.copy()
+    if risk_filter == "HIGH & CRITICAL":
+        display_table = display_table[display_table["Risk"].isin(["HIGH", "CRITICAL"])]
+    elif risk_filter != "ALL":
+        display_table = display_table[display_table["Risk"] == risk_filter]
 
-        "HIGH": 3,
+    st.dataframe(display_table, use_container_width=True, hide_index=True)
 
-        "UNCERTAIN": 0
-    }
-
-
-    graph_df["Risk Level"] = graph_df[
-        "Risk"
-    ].map(risk_mapping)
-
-
-    # --------------------------------------------------------
-    # GRAPH 2 — DISTANCE
-    # --------------------------------------------------------
-
-    graph_df["Distance Numeric"] = pd.to_numeric(
-        graph_df["Distance"],
-        errors="coerce"
-    )
-
-
-    # --------------------------------------------------------
-    # GRAPH 3 — CONFIDENCE
-    # --------------------------------------------------------
-
-    graph_df["Confidence Numeric"] = (
-        graph_df["Confidence"]
-        .str.replace("%", "")
-        .astype(float)
-    )
-
-
-    # --------------------------------------------------------
-    # GRAPH LAYOUT
-    # --------------------------------------------------------
-
-    graph1, graph2 = st.columns(2)
-
-
-    # ========================================================
-    # RISK GRAPH
-    # ========================================================
-
-    with graph1:
-
-        st.subheader(
-            "⚠️ Risk Level Over Time"
+    with dl_col:
+        csv_data = display_table.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Export Telemetry (CSV)",
+            data=csv_data,
+            file_name=f"telemetry_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            use_container_width=True
         )
-
-        risk_chart = graph_df[
-            ["Event", "Risk Level"]
-        ].set_index("Event")
-
-
-        st.line_chart(
-            risk_chart,
-            y="Risk Level"
-        )
-
-
-        st.caption(
-            "0 = Uncertain | 1 = Low | "
-            "2 = Medium | 3 = High"
-        )
-
-
-    # ========================================================
-    # DISTANCE GRAPH
-    # ========================================================
-
-    with graph2:
-
-        st.subheader(
-            "📏 Hazard Distance"
-        )
-
-        distance_chart = graph_df[
-            ["Event", "Distance Numeric"]
-        ].dropna().set_index("Event")
-
-
-        if len(distance_chart) > 0:
-
-            st.line_chart(
-                distance_chart,
-                y="Distance Numeric"
-            )
-
-        else:
-
-            st.info(
-                "No measurable hazard distance yet."
-            )
-
-
-    # ========================================================
-    # CONFIDENCE GRAPH
-    # ========================================================
-
-    st.subheader(
-        "🎯 Sensor Confidence"
-    )
-
-
-    confidence_chart = graph_df[
-        ["Event", "Confidence Numeric"]
-    ].set_index("Event")
-
-
-    st.line_chart(
-        confidence_chart,
-        y="Confidence Numeric"
-    )
-
 
 else:
-
-    st.info(
-        "Start the trip simulation to generate live analytics."
-    )
-
-# ============================================================
-                      # TRIP PERFORMANCE
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    '<div class="section-title">📊 Trip Performance</div>',
-    unsafe_allow_html=True
-)
-
-
-metric1, metric2, metric3, metric4, metric5 = st.columns(5)
-
-
-with metric1:
-
-    st.metric(
-        "Distance",
-        f"{trip_distance:.1f} km"
-    )
-
-
-with metric2:
-
-    st.metric(
-        "Hazards Detected",
-        hazard_count
-    )
-
-
-with metric3:
-
-    st.metric(
-        "Warnings",
-        warning_count
-    )
-
-
-with metric4:
-
-    st.metric(
-        "Brake Events",
-        brake_count
-    )
-
-
-with metric5:
-
-    st.metric(
-        "Avg Confidence",
-        f"{average_confidence * 100:.0f}%"
-    )
+    st.info("💡 Start the trip timeline or inject hazards to populate telemetry analytics and blackbox logs.")
 
 
 # ============================================================
-# EVENT HISTORY
+# 10. AUTOMATIC TIMELINE PLAYBACK LOOP
 # ============================================================
 
-st.divider()
-
-st.markdown(
-    '<div class="section-title">📋 Event History</div>',
-    unsafe_allow_html=True
-)
-
-
-if len(st.session_state.event_history) > 0:
-
-    history_display = pd.DataFrame(
-        st.session_state.event_history
-    )
-
-
-    # Remove internal ID column
-
-    history_display = history_display.drop(
-        columns=["ID"],
-        errors="ignore"
-    )
-
-
-    st.dataframe(
-        history_display,
-        use_container_width=True,
-        hide_index=True
-    )
-
-else:
-
-    st.info(
-        "No events recorded yet."
-    )
-
-# ============================================================
-                      # SYSTEM PIPELINE
-# ============================================================
-
-st.divider()
-
-
-st.markdown(
-    '<div class="section-title">🔄 Decision Pipeline</div>',
-    unsafe_allow_html=True
-)
-
-
-pipe1, pipe2, pipe3, pipe4, pipe5 = st.columns(5)
-
-
-with pipe1:
-
-    st.info(
-        "🌍\n\nEnvironmental\nAwareness"
-    )
-
-
-with pipe2:
-
-    st.info(
-        "⚠️\n\nHazard\nEvent"
-    )
-
-
-with pipe3:
-
-    st.info(
-        "🧠\n\nRisk\nAssessment"
-    )
-
-
-with pipe4:
-
-    st.info(
-        "🚦\n\nDecision\nEngine"
-    )
-
-
-with pipe5:
-
-    st.success(
-        "🖥️\n\nDashboard\nOutput"
-    )
-
-
-# ============================================================
-                        # FOOTER
-# ============================================================
-
-st.divider()
-
-st.caption(
-    "Intelligent Navigation & Decision-Support System | "
-    "Detect → Understand → Assess → Decide → Explain"
-)
-# ============================================================
-# AUTOMATIC SIMULATION LOOP
-# ============================================================
-
-if st.session_state.simulation_running:
-
-    # Wait between events
-
-    time.sleep(3)
-
-
-    # Move to next event
-
-    if (
-        st.session_state.simulation_index
-        < len(SIMULATION_EVENTS) - 1
-    ):
-
+if active_mode == "🚗 Live Trip Timeline" and st.session_state.simulation_running:
+    time.sleep(playback_speed)
+    if st.session_state.simulation_index < len(TRIP_TIMELINE) - 1:
         st.session_state.simulation_index += 1
-
     else:
-
-        # Trip finished
-
         st.session_state.simulation_running = False
-
-
     st.rerun()
