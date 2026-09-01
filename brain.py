@@ -487,6 +487,170 @@ def make_decisions(
     return primary_decision
 
 
+# ------------------------------------------
+# 9. INTEGRATED VISION & SENSOR FUSION ENGINE
+# ------------------------------------------
+
+def process_vision_frame(
+    frame: Any,
+    ego_state: Optional[Union[Dict[str, Any], EgoState]] = None,
+    conf_threshold: float = 0.35
+) -> Any:
+    """
+    High-level brain API: Ingests a raw camera frame, image file, or numpy array,
+    runs Computer Vision perception (YOLO + OpenCV), and returns synthesized Decision
+    and annotated AR HUD telemetry.
+    """
+    from vision import VisionPerceptionEngine
+    if ego_state is None:
+        ego = EgoState(speed_kmh=40.0, lane="center")
+    elif isinstance(ego_state, dict):
+        ego = EgoState(
+            speed_kmh=ego_state.get("speed_kmh", 40.0),
+            lane=ego_state.get("lane", "center"),
+            sensor_status=SensorStatus.from_value(ego_state.get("sensor_status", "active"))
+        )
+    else:
+        ego = ego_state
+
+    engine = VisionPerceptionEngine()
+    return engine.process_frame(frame, ego_state=ego, conf_threshold=conf_threshold)
+
+
+def fuse_sensor_streams(
+    vision_hazards: List[HazardEvent],
+    radar_hazards: Optional[List[HazardEvent]] = None,
+    lidar_hazards: Optional[List[HazardEvent]] = None,
+    ego_state: Optional[EgoState] = None
+) -> Decision:
+    """
+    Fuses multi-modal perception streams (Camera/YOLO + Radar + LiDAR):
+    - Correlates vision semantic classifications with radar/LiDAR ranging.
+    - Boosts confidence for cross-validated targets.
+    - Synthesizes risk-optimal driving recommendations.
+    """
+    if ego_state is None:
+        ego_state = EgoState()
+
+    fused_hazards: List[HazardEvent] = []
+    other_hazards = (radar_hazards or []) + (lidar_hazards or [])
+
+    # Cross-correlate vision targets with range sensors
+    matched_other_indices = set()
+
+    for v_hz in vision_hazards:
+        v_type_str = getattr(v_hz.type, "value", str(v_hz.type)).lower()
+        if "clear" in v_type_str:
+            continue
+
+        best_match_dist = v_hz.distance
+        best_match_speed = v_hz.relative_speed_kmh
+        boosted_conf = v_hz.confidence
+
+        for o_idx, o_hz in enumerate(other_hazards):
+            if o_idx in matched_other_indices:
+                continue
+            # Same position sector
+            if o_hz.position == v_hz.position:
+                # Match within 15m distance threshold
+                if v_hz.distance is not None and o_hz.distance is not None and abs(v_hz.distance - o_hz.distance) < 15.0:
+                    matched_other_indices.add(o_idx)
+                    # Precision ranging from LiDAR/Radar takes precedence
+                    best_match_dist = min(v_hz.distance, o_hz.distance)
+                    if o_hz.relative_speed_kmh is not None:
+                        best_match_speed = o_hz.relative_speed_kmh
+                    # Multi-sensor confidence boost
+                    boosted_conf = min(0.99, boosted_conf + 0.15)
+                    break
+
+        fused_hazards.append(HazardEvent(
+            id=v_hz.id,
+            type=v_hz.type,
+            subtype=v_hz.subtype,
+            position=v_hz.position,
+            distance=best_match_dist,
+            confidence=round(boosted_conf, 2),
+            sensor="sensor_fusion",
+            sensor_status=SensorStatus.ACTIVE,
+            relative_speed_kmh=best_match_speed
+        ))
+
+    # Add unmatched radar/lidar obstacles (e.g. non-visual obstacles)
+    for o_idx, o_hz in enumerate(other_hazards):
+        if o_idx not in matched_other_indices:
+            fused_hazards.append(o_hz)
+
+    if not fused_hazards:
+        fused_hazards.append(HazardEvent(type=HazardType.CLEAR, position=Position.FRONT))
+
+    return make_decisions(fused_hazards, ego_state)
+
+
+def evaluate_lane_departure_safety(
+    lane_info: Any,
+    surrounding_hazards: List[HazardEvent],
+    ego_state: Optional[EgoState] = None
+) -> Optional[Decision]:
+    """
+    Evaluates safety of lane keeping / lane centering when a lane drift warning is detected:
+    - If vehicle veers LEFT, checks if RIGHT sector is safe to recenter.
+    - If vehicle veers RIGHT, checks if LEFT sector is safe to recenter.
+    """
+    if not getattr(lane_info, "departure_warning", False):
+        return None
+
+    if ego_state is None:
+        ego_state = EgoState()
+
+    offset = getattr(lane_info, "offset_from_center_px", 0.0)
+    # Veering left means center is to the right
+    veering_direction = "LEFT" if offset < 0 else "RIGHT"
+
+    left_hazards = [h for h in surrounding_hazards if h.position == Position.LEFT and (h.distance or 99) < 15.0]
+    right_hazards = [h for h in surrounding_hazards if h.position == Position.RIGHT and (h.distance or 99) < 15.0]
+
+    if veering_direction == "LEFT":
+        # Safe to recenter right?
+        if not right_hazards:
+            return Decision(
+                risk=RiskLevel.MEDIUM.value,
+                action=Action.MOVE_RIGHT.value,
+                reason="Lane drift detected: vehicle veering left. Correcting trajectory toward right lane center.",
+                priority_level=3,
+                target_speed_kmh=ego_state.speed_kmh * 0.85,
+                metadata={"lane_offset_px": offset, "assist": "lane_keeping"}
+            )
+        else:
+            return Decision(
+                risk=RiskLevel.HIGH.value,
+                action=Action.SLOW_DOWN.value,
+                reason="Lane drift detected (veering left), but right sector is occupied. Slowing down to maintain control.",
+                priority_level=4,
+                target_speed_kmh=max(15.0, ego_state.speed_kmh * 0.6),
+                metadata={"lane_offset_px": offset, "assist": "lane_keeping_blocked"}
+            )
+    else:
+        # Veering right: safe to recenter left?
+        if not left_hazards:
+            return Decision(
+                risk=RiskLevel.MEDIUM.value,
+                action=Action.MOVE_LEFT.value,
+                reason="Lane drift detected: vehicle veering right. Correcting trajectory toward left lane center.",
+                priority_level=3,
+                target_speed_kmh=ego_state.speed_kmh * 0.85,
+                metadata={"lane_offset_px": offset, "assist": "lane_keeping"}
+            )
+        else:
+            return Decision(
+                risk=RiskLevel.HIGH.value,
+                action=Action.SLOW_DOWN.value,
+                reason="Lane drift detected (veering right), but left sector is occupied. Slowing down to maintain control.",
+                priority_level=4,
+                target_speed_kmh=max(15.0, ego_state.speed_kmh * 0.6),
+                metadata={"lane_offset_px": offset, "assist": "lane_keeping_blocked"}
+            )
+
+
 # ==========================================
 # TESTING ENTRY POINT
 # ==========================================
