@@ -1,72 +1,56 @@
-from simulation import get_all_events
-from brain import make_decision
-from metrics import update_metrics
+from simulation import SimulationEngine
+from metrices import record_event, get_metrics
 
 
-def run_simulation():
+def run_trip():
 
-    events = get_all_events()
+    print("=" * 60)
+    print("INTELLIGENT NAVIGATION SYSTEM")
+    print("=" * 60)
 
-    results = []
+    results = SimulationEngine.run_trip_simulation()
 
-    for event in events:
+    for step in results:
 
-        # Brain analyses the sensor event
-        decision = make_decision(event)
+        print("\n" + "-" * 60)
 
-        # Update metrics
-        update_metrics(event, decision)
+        print(f"Timestep: {step['timestep']}")
+        print(f"Description: {step['description']}")
+        print(f"Ego Speed: {step['ego_speed_kmh']} km/h")
 
-        # Store combined result
-        results.append({
-            "event": event,
-            "decision": decision
-        })
+        # Show hazards
+        for hazard in step["hazards"]:
 
-    return results
+            print(f"\nHazard: {hazard['type']}")
+            print(f"Position: {hazard['position']}")
+            print(f"Distance: {hazard['distance']}")
+            print(f"Confidence: {hazard['confidence']}")
+            print(f"Sensor: {hazard['sensor_status']}")
+
+            # Send event to metrics
+            record_event(
+                hazard,
+                risk=step["decision"]["risk"]
+            )
+
+        # Show AI decision
+        decision = step["decision"]
+
+        print("\nAI DECISION")
+        print(f"Risk: {decision['risk']}")
+        print(f"Action: {decision['action']}")
+        print(f"Reason: {decision['reason']}")
+
+    # Final metrics
+    print("\n" + "=" * 60)
+    print("TRIP METRICS")
+    print("=" * 60)
+
+    metrics = get_metrics()
+
+    for key, value in metrics.items():
+        print(f"{key}: {value}")
 
 
 if __name__ == "__main__":
-
-    results = run_simulation()
-
-    for result in results:
-
-        print("\nEVENT:")
-        print(result["event"])
-
-        print("\nDECISION:")
-        print(result["decision"])
-
-        from simulation import get_all_events
-        from brain import make_decision 
-        from metrices import record_event, get_metrics 
-        def run_trip(): 
-            events = get_all_events() 
-            print("=" * 60) 
-            print("INTELLIGENT NAVIGATION SYSTEM") 
-            print("=" * 60) 
-            for event in events: 
-                # Get event from simulation 
-                print(f"\nTime: {event['time']} sec") 
-                print(f"Detection: {event['type']}") 
-                print(f"Position: {event['position']}") 
-                print(f"Distance: {event['distance']}") 
-                print(f"Weather: {event['weather']}") 
-                print(f"Visibility: {event['visibility']}%") 
-                # Send event to decision engine decision = make_decision(event) 
-                # Show decision 
-                print(f"Risk: {decision['risk']}") 
-                print(f"Action: {decision['action']}") 
-                print(f"Reason: {decision['reason']}") 
-                # Send event + risk to metrics 
-                record_event( event, risk=decision["risk"] ) 
-                # Show final metrics 
-                print("\n" + "=" * 60) 
-                print("TRIP METRICS") 
-                print("=" * 60) 
-                final_metrics = get_metrics() 
-                for key, value in final_metrics.items():
-                     print(f"{key}: {value}") 
-                if __name__ == "__main__": 
-                    run_trip()
+    run_trip()
