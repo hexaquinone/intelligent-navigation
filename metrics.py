@@ -119,3 +119,42 @@ if __name__ == "__main__":
 
     print("Sample Metrics Snapshot:")
     print(get_metrics())
+
+
+# ==========================================
+ # INTELLIGENT NAVIGATION SYSTEM 
+ # Trip Metrics 
+ # ========================================== 
+ metrics = { 
+    "total_events": 0, 
+    "hazards_detected": 0, 
+    "sensor_failures": 0, 
+    "high_risk_events": 0, 
+    "warnings_count": 0, 
+    "brake_events": 0, 
+    } 
+def record_event(event, risk=None, action=None):
+    metrics["total_events"] += 1
+    # Count hazards 
+    if event["type"] not in ["clear", "sensor_failure", "sensor_gap"]: 
+        metrics["hazards_detected"] += 1
+    # Count sensor failures 
+    if event.get("sensor_status") == "failed": 
+        metrics["sensor_failures"] += 1  
+    # Count high-risk decisions 
+    if risk in ["HIGH", "CRITICAL"]: 
+        metrics["high_risk_events"] += 1 
+    # Count warnings / slow-down decisions 
+    if action in ["SLOW_DOWN", "MOVE_LEFT", "MOVE_RIGHT"]: 
+         metrics["warnings_count"] += 1 
+    # Count braking / stopping decisions 
+    if action in ["BRAKE", "STOP", "EMERGENCY_STOP"]: 
+        metrics["brake_events"] += 1 
+    def get_metrics(): 
+        return metrics 
+    def reset_metrics(): 
+        """Reset metrics before starting a new trip.""" 
+        for key in metrics: 
+            metrics[key] = 0 
+    if __name__ == "__main__": 
+        print(get_metrics())

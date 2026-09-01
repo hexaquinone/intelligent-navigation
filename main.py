@@ -29,8 +29,9 @@ def run_trip():
             # Send event to metrics
             record_event(
                 hazard,
-                risk=step["decision"]["risk"]
-            )
+                risk=step["decision"]["risk"],
+                action=step["decision"]["action"]
+                )
 
         # Show AI decision
         decision = step["decision"]
