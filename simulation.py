@@ -81,3 +81,13 @@ scenario = [
         "sensor_status": "active"
     }
 ]
+def get_event(index):
+    return scenario[index]
+
+if __name__ == "__main__":
+    for i in range(len(scenario)):
+        print(f"Event {i + 1}:")
+        print(get_event(i))
+        print()
+
+    
