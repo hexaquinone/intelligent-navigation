@@ -1,5 +1,3 @@
-<!-- simulation.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -402,8 +400,7 @@ button:active{
 
 const scene = new THREE.Scene();
 
-scene.background =
-    new THREE.Color(0x91d8ff);
+scene.background = new THREE.Color(0x91d8ff);
 
 
 /* =========================================================
@@ -496,7 +493,7 @@ scene.add(sunlight);
 
 
 /* =========================================================
-   SKY SUN
+   SUN
 ========================================================= */
 
 const sunMesh =
@@ -666,24 +663,23 @@ for(
 
 
 /* =========================================================
-   LANE POSITIONS
+   LANES
 ========================================================= */
 
 const LEFT=-3;
 const RIGHT=3;
 
-const LANES=[LEFT,RIGHT];
+const LANES=[
+    LEFT,
+    RIGHT
+];
 
 
 /* =========================================================
    TREE CREATOR
 ========================================================= */
 
-function createTree(
-    x,
-    z,
-    scale=1
-){
+function createTree(x,z,scale=1){
 
     const tree =
         new THREE.Group();
@@ -807,34 +803,29 @@ for(
     z-=13
 ){
 
-    const leftTree =
+    trees.push(
         createTree(
             -8.5-Math.random()*2,
             z,
             .75+Math.random()*.45
-        );
+        )
+    );
 
-    const rightTree =
+    trees.push(
         createTree(
             8.5+Math.random()*2,
             z-5,
             .75+Math.random()*.45
-        );
-
-    trees.push(leftTree);
-    trees.push(rightTree);
+        )
+    );
 }
 
 
 /* =========================================================
-   BUSH CREATOR
+   BUSH
 ========================================================= */
 
-function createBush(
-    x,
-    z,
-    scale=1
-){
+function createBush(x,z,scale=1){
 
     const bush =
         new THREE.Mesh(
@@ -864,6 +855,8 @@ function createBush(
     bush.castShadow=true;
 
     scene.add(bush);
+
+    return bush;
 }
 
 
@@ -871,22 +864,28 @@ function createBush(
    BUSHES
 ========================================================= */
 
+const bushes=[];
+
 for(
     let z=-8;
     z>-320;
     z-=9
 ){
 
-    createBush(
-        -7.2,
-        z,
-        .55+Math.random()*.5
+    bushes.push(
+        createBush(
+            -7.2,
+            z,
+            .55+Math.random()*.5
+        )
     );
 
-    createBush(
-        7.2,
-        z-3,
-        .55+Math.random()*.5
+    bushes.push(
+        createBush(
+            7.2,
+            z-3,
+            .55+Math.random()*.5
+        )
     );
 }
 
@@ -895,10 +894,9 @@ for(
    FLOWERS
 ========================================================= */
 
-function createFlower(
-    x,
-    z
-){
+const flowers=[];
+
+function createFlower(x,z){
 
     const flower =
         new THREE.Mesh(
@@ -919,6 +917,8 @@ function createFlower(
     );
 
     scene.add(flower);
+
+    return flower;
 }
 
 
@@ -928,14 +928,18 @@ for(
     z-=4
 ){
 
-    createFlower(
-        -6.65-Math.random()*.4,
-        z
+    flowers.push(
+        createFlower(
+            -6.65-Math.random()*.4,
+            z
+        )
     );
 
-    createFlower(
-        6.65+Math.random()*.4,
-        z-1.5
+    flowers.push(
+        createFlower(
+            6.65+Math.random()*.4,
+            z-1.5
+        )
     );
 }
 
@@ -970,28 +974,26 @@ function createCloud(
     ];
 
 
-    parts.forEach(
-        p=>{
+    parts.forEach(p=>{
 
-            const puff =
-                new THREE.Mesh(
-                    new THREE.SphereGeometry(
-                        p[3],
-                        16,
-                        12
-                    ),
-                    material
-                );
-
-            puff.position.set(
-                p[0],
-                p[1],
-                p[2]
+        const puff =
+            new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    p[3],
+                    16,
+                    12
+                ),
+                material
             );
 
-            cloud.add(puff);
-        }
-    );
+        puff.position.set(
+            p[0],
+            p[1],
+            p[2]
+        );
+
+        cloud.add(puff);
+    });
 
 
     cloud.position.set(
@@ -1028,60 +1030,293 @@ clouds.push(
 
 
 /* =========================================================
-   MOUNTAINS
+   CITY BUILDINGS
 ========================================================= */
 
-function createMountain(
-    x,
-    z,
-    height,
-    radius
-){
+function createBuilding(x, z, width, depth, height){
 
-    const mountain =
+    const building = new THREE.Group();
+
+    /* BUILDING BODY */
+
+    const body =
         new THREE.Mesh(
-            new THREE.ConeGeometry(
-                radius,
+            new THREE.BoxGeometry(
+                width,
                 height,
-                7
+                depth
             ),
             new THREE.MeshStandardMaterial({
-                color:0x789a80,
-                roughness:1
+                color: 0x7d8791,
+                roughness: .85
             })
         );
 
-    mountain.position.set(
+    body.position.y = height / 2;
+
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    building.add(body);
+
+
+    /* WINDOWS */
+
+    const windowMat =
+        new THREE.MeshStandardMaterial({
+            color: 0xbdebf5,
+            emissive: 0x416b75,
+            emissiveIntensity: .35,
+            roughness: .2
+        });
+
+
+    const windowWidth = .32;
+    const windowHeight = .45;
+
+    const spacingX = .75;
+    const spacingY = .95;
+
+
+    const columns =
+        Math.max(
+            1,
+            Math.floor(
+                (width - .6) / spacingX
+            )
+        );
+
+    const rows =
+        Math.max(
+            1,
+            Math.floor(
+                (height - .8) / spacingY
+            )
+        );
+
+
+    /* FRONT WINDOWS */
+
+    for(let row = 0; row < rows; row++){
+
+        for(let col = 0; col < columns; col++){
+
+            const windowMesh =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        windowWidth,
+                        windowHeight,
+                        .04
+                    ),
+                    windowMat
+                );
+
+            const startX =
+                -((columns - 1) *
+                spacingX) / 2;
+
+            windowMesh.position.set(
+                startX +
+                col * spacingX,
+
+                .65 +
+                row * spacingY,
+
+                depth / 2 + .025
+            );
+
+            building.add(windowMesh);
+        }
+    }
+
+
+    /* BACK WINDOWS */
+
+    for(let row = 0; row < rows; row++){
+
+        for(let col = 0; col < columns; col++){
+
+            const windowMesh =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        windowWidth,
+                        windowHeight,
+                        .04
+                    ),
+                    windowMat
+                );
+
+            const startX =
+                -((columns - 1) *
+                spacingX) / 2;
+
+            windowMesh.position.set(
+                startX +
+                col * spacingX,
+
+                .65 +
+                row * spacingY,
+
+                -depth / 2 - .025
+            );
+
+            building.add(windowMesh);
+        }
+    }
+
+
+    /* SIDE WINDOWS */
+
+    const sideColumns =
+        Math.max(
+            1,
+            Math.floor(
+                (depth - .6) / spacingX
+            )
+        );
+
+
+    for(let row = 0; row < rows; row++){
+
+        for(let col = 0; col < sideColumns; col++){
+
+            const startZ =
+                -((sideColumns - 1) *
+                spacingX) / 2;
+
+
+            /* LEFT SIDE */
+
+            const leftWindow =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        .04,
+                        windowHeight,
+                        windowWidth
+                    ),
+                    windowMat
+                );
+
+            leftWindow.position.set(
+                -width / 2 - .025,
+
+                .65 +
+                row * spacingY,
+
+                startZ +
+                col * spacingX
+            );
+
+            building.add(leftWindow);
+
+
+            /* RIGHT SIDE */
+
+            const rightWindow =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        .04,
+                        windowHeight,
+                        windowWidth
+                    ),
+                    windowMat
+                );
+
+            rightWindow.position.set(
+                width / 2 + .025,
+
+                .65 +
+                row * spacingY,
+
+                startZ +
+                col * spacingX
+            );
+
+            building.add(rightWindow);
+        }
+    }
+
+
+    /* ROOF */
+
+    const roof =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                width + .15,
+                .18,
+                depth + .15
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x555d65,
+                roughness: .9
+            })
+        );
+
+    roof.position.y =
+        height + .09;
+
+    roof.castShadow = true;
+
+    building.add(roof);
+
+
+    building.position.set(
         x,
-        height/2-.15,
+        0,
         z
     );
 
-    scene.add(mountain);
+    scene.add(building);
+
+    return building;
 }
 
+
+/* =========================================================
+   BUILDINGS
+========================================================= */
+
+const buildings = [];
+
+
+/* LEFT BUILDINGS */
 
 for(
-    let z=-40;
-    z>-320;
-    z-=45
+    let z = -30;
+    z > -340;
+    z -= 35
 ){
 
-    createMountain(
-        -22,
-        z,
-        15+Math.random()*8,
-        10+Math.random()*5
-    );
-
-    createMountain(
-        23,
-        z-20,
-        14+Math.random()*9,
-        10+Math.random()*5
+    buildings.push(
+        createBuilding(
+            -14,
+            z,
+            5.5,
+            11,
+            9 + Math.random() * 8
+        )
     );
 }
 
+
+/* RIGHT BUILDINGS */
+
+for(
+    let z = -45;
+    z > -340;
+    z -= 40
+){
+
+    buildings.push(
+        createBuilding(
+            14,
+            z,
+            5.5,
+            11,
+            10 + Math.random() * 9
+        )
+    );
+}
 
 /* =========================================================
    STREET LIGHTS
@@ -1090,10 +1325,7 @@ for(
 const streetLights=[];
 
 
-function createStreetLight(
-    x,
-    z
-){
+function createStreetLight(x,z){
 
     const group =
         new THREE.Group();
@@ -1132,7 +1364,7 @@ function createStreetLight(
         );
 
     arm.position.set(
-        x<0?.35:-.35,
+        x<0 ? .35 : -.35,
         4,
         0
     );
@@ -1155,7 +1387,7 @@ function createStreetLight(
         );
 
     lamp.position.set(
-        x<0?.7:-.7,
+        x<0 ? .7 : -.7,
         3.92,
         0
     );
@@ -1182,11 +1414,17 @@ for(
 ){
 
     streetLights.push(
-        createStreetLight(-6.9,z)
+        createStreetLight(
+            -6.9,
+            z
+        )
     );
 
     streetLights.push(
-        createStreetLight(6.9,z-15)
+        createStreetLight(
+            6.9,
+            z-15
+        )
     );
 }
 
@@ -1313,29 +1551,27 @@ function createCar(
         [.94,.38,-1.05],
         [-.94,.38,1.05],
         [.94,.38,1.05]
-    ].forEach(
-        p=>{
+    ].forEach(p=>{
 
-            const wheel =
-                new THREE.Mesh(
-                    wheelGeo,
-                    wheelMat
-                );
-
-            wheel.rotation.z=
-                Math.PI/2;
-
-            wheel.position.set(
-                p[0],
-                p[1],
-                p[2]
+        const wheel =
+            new THREE.Mesh(
+                wheelGeo,
+                wheelMat
             );
 
-            wheel.castShadow=true;
+        wheel.rotation.z=
+            Math.PI/2;
 
-            car.add(wheel);
-        }
-    );
+        wheel.position.set(
+            p[0],
+            p[1],
+            p[2]
+        );
+
+        wheel.castShadow=true;
+
+        car.add(wheel);
+    });
 
 
     /* HEADLIGHTS */
@@ -1348,28 +1584,26 @@ function createCar(
         });
 
 
-    [-.53,.53].forEach(
-        x=>{
+    [-.53,.53].forEach(x=>{
 
-            const light =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        .3,
-                        .14,
-                        .08
-                    ),
-                    headMat
-                );
-
-            light.position.set(
-                x,
-                .68,
-                -1.65
+        const light =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .3,
+                    .14,
+                    .08
+                ),
+                headMat
             );
 
-            car.add(light);
-        }
-    );
+        light.position.set(
+            x,
+            .68,
+            -1.65
+        );
+
+        car.add(light);
+    });
 
 
     /* BRAKE LIGHTS */
@@ -1382,28 +1616,26 @@ function createCar(
         });
 
 
-    [-.53,.53].forEach(
-        x=>{
+    [-.53,.53].forEach(x=>{
 
-            const light =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        .28,
-                        .13,
-                        .08
-                    ),
-                    brakeMat
-                );
-
-            light.position.set(
-                x,
-                .67,
-                1.65
+        const light =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .28,
+                    .13,
+                    .08
+                ),
+                brakeMat
             );
 
-            car.add(light);
-        }
-    );
+        light.position.set(
+            x,
+            .67,
+            1.65
+        );
+
+        car.add(light);
+    });
 
 
     /* PLAYER SENSOR RING */
@@ -1500,11 +1732,6 @@ function addTraffic(
 }
 
 
-/*
-    Traffic is spread out so that
-    avoidance has enough space.
-*/
-
 addTraffic(
     LEFT,
     -70,
@@ -1560,29 +1787,27 @@ function createPedestrian(){
         });
 
 
-    [-.13,.13].forEach(
-        x=>{
+    [-.13,.13].forEach(x=>{
 
-            const leg =
-                new THREE.Mesh(
-                    new THREE.CylinderGeometry(
-                        .09,
-                        .1,
-                        .65,
-                        10
-                    ),
-                    legsMat
-                );
-
-            leg.position.set(
-                x,
-                .35,
-                0
+        const leg =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .09,
+                    .1,
+                    .65,
+                    10
+                ),
+                legsMat
             );
 
-            person.add(leg);
-        }
-    );
+        leg.position.set(
+            x,
+            .35,
+            0
+        );
+
+        person.add(leg);
+    });
 
 
     const body =
@@ -1717,28 +1942,26 @@ function createAnimal(){
         });
 
 
-    [-.23,.23].forEach(
-        x=>{
+    [-.23,.23].forEach(x=>{
 
-            const ear =
-                new THREE.Mesh(
-                    new THREE.ConeGeometry(
-                        .15,
-                        .4,
-                        8
-                    ),
-                    earMat
-                );
-
-            ear.position.set(
-                x,
-                1.05,
-                -.73
+        const ear =
+            new THREE.Mesh(
+                new THREE.ConeGeometry(
+                    .15,
+                    .4,
+                    8
+                ),
+                earMat
             );
 
-            dog.add(ear);
-        }
-    );
+        ear.position.set(
+            x,
+            1.05,
+            -.73
+        );
+
+        dog.add(ear);
+    });
 
 
     for(
@@ -1968,9 +2191,7 @@ let eventFinished=false;
 ========================================================= */
 
 const FRONT_DISTANCE=22;
-
 const REAR_DISTANCE=18;
-
 const SIDE_MARGIN=1.8;
 
 
@@ -1980,7 +2201,7 @@ const SIDE_MARGIN=1.8;
 
 function setRisk(level){
 
-    const el=
+    const el =
         document.getElementById("risk");
 
     el.textContent=level;
@@ -2037,7 +2258,7 @@ function updateLaneUI(){
 
     document.getElementById(
         "lane"
-    ).textContent=
+    ).textContent =
         currentLane===LEFT
         ? "LEFT LANE"
         : "RIGHT LANE";
@@ -2046,7 +2267,7 @@ function updateLaneUI(){
 
 function showMessage(text){
 
-    const el=
+    const el =
         document.getElementById(
             "message"
         );
@@ -2055,16 +2276,12 @@ function showMessage(text){
 
     el.classList.add("show");
 
-    clearTimeout(
-        el.timer
-    );
+    clearTimeout(el.timer);
 
-    el.timer=
+    el.timer =
         setTimeout(
             ()=>{
-                el.classList.remove(
-                    "show"
-                );
+                el.classList.remove("show");
             },
             2800
         );
@@ -2072,35 +2289,25 @@ function showMessage(text){
 
 
 /* =========================================================
-   WEATHER UI
+   WEATHER
 ========================================================= */
 
 function showWeather(type){
 
-    const box=
-        document.getElementById(
-            "weather"
-        );
+    const box =
+        document.getElementById("weather");
 
-    const icon=
-        document.getElementById(
-            "weatherIcon"
-        );
+    const icon =
+        document.getElementById("weatherIcon");
 
-    const title=
-        document.getElementById(
-            "weatherTitle"
-        );
+    const title =
+        document.getElementById("weatherTitle");
 
-    const text=
-        document.getElementById(
-            "weatherText"
-        );
+    const text =
+        document.getElementById("weatherText");
 
-    const speed=
-        document.getElementById(
-            "weatherSpeed"
-        );
+    const speed =
+        document.getElementById("weatherSpeed");
 
 
     box.classList.add("show");
@@ -2133,7 +2340,6 @@ function showWeather(type){
 
         speed.textContent=
             "AI RESPONSE • HIGH CAUTION";
-
     }
 }
 
@@ -2141,15 +2347,13 @@ function showWeather(type){
 function hideWeather(){
 
     document
-        .getElementById(
-            "weather"
-        )
+        .getElementById("weather")
         .classList.remove("show");
 }
 
 
 /* =========================================================
-   VEHICLE COLLISION CHECK
+   VEHICLE SAFETY
 ========================================================= */
 
 function vehicleSafeInLane(
@@ -2157,9 +2361,7 @@ function vehicleSafeInLane(
     ourZ
 ){
 
-    for(
-        const car of traffic
-    ){
+    for(const car of traffic){
 
         if(
             Math.abs(
@@ -2170,36 +2372,31 @@ function vehicleSafeInLane(
         }
 
 
-        const dz=
+        const dz =
             car.mesh.position.z-ourZ;
 
 
         /*
-            Vehicle ahead.
+            Since the smart car is at z=0,
+            negative Z means ahead.
         */
 
         if(
-            dz > -7 &&
-            dz < FRONT_DISTANCE
+            dz < 0 &&
+            dz > -FRONT_DISTANCE
         ){
-
             return false;
         }
 
 
         /*
-            Vehicle behind.
-
-            This prevents the smart car
-            from moving directly in front
-            of a fast approaching car.
+            Positive Z means behind us.
         */
 
         if(
-            dz <= -7 &&
-            dz > -REAR_DISTANCE
+            dz > 0 &&
+            dz < REAR_DISTANCE
         ){
-
             return false;
         }
     }
@@ -2210,7 +2407,7 @@ function vehicleSafeInLane(
 
 
 /* =========================================================
-   OBJECT SAFETY CHECK
+   OBJECT SAFETY
 ========================================================= */
 
 function objectSafeInLane(
@@ -2229,12 +2426,12 @@ function objectSafeInLane(
             ) < 1.7
         ){
 
-            const dz=
+            const dz =
                 obstacle.position.z-ourZ;
 
             if(
-                dz>-7 &&
-                dz<FRONT_DISTANCE
+                dz < 0 &&
+                dz > -FRONT_DISTANCE
             ){
 
                 return false;
@@ -2248,15 +2445,15 @@ function objectSafeInLane(
         if(
             Math.abs(
                 pedestrian.position.x-lane
-            )<1.8
+            ) < 1.8
         ){
 
-            const dz=
+            const dz =
                 pedestrian.position.z-ourZ;
 
             if(
-                dz>-5 &&
-                dz<18
+                dz < 0 &&
+                dz > -20
             ){
 
                 return false;
@@ -2270,15 +2467,15 @@ function objectSafeInLane(
         if(
             Math.abs(
                 animal.position.x-lane
-            )<1.8
+            ) < 1.8
         ){
 
-            const dz=
+            const dz =
                 animal.position.z-ourZ;
 
             if(
-                dz>-5 &&
-                dz<18
+                dz < 0 &&
+                dz > -20
             ){
 
                 return false;
@@ -2295,13 +2492,10 @@ function objectSafeInLane(
    COMPLETE SAFETY CHECK
 ========================================================= */
 
-function laneIsSafe(
-    lane
-){
+function laneIsSafe(lane){
 
-    const ourZ=
+    const ourZ =
         smartCar.position.z;
-
 
     return (
         vehicleSafeInLane(
@@ -2321,45 +2515,51 @@ function laneIsSafe(
    PREDICTIVE SAFETY
 ========================================================= */
 
-function laneWillRemainSafe(
-    lane
-){
+function laneWillRemainSafe(lane){
 
-    const ourZ=
+    const ourZ =
         smartCar.position.z;
 
 
-    for(
-        const car of traffic
-    ){
+    for(const car of traffic){
 
         if(
             Math.abs(
                 car.mesh.position.x-lane
-            )>SIDE_MARGIN
+            ) > SIDE_MARGIN
         ){
             continue;
         }
 
 
         /*
-            Estimate where the
-            other car will be during
-            our lane change.
+            Predict where the traffic vehicle
+            will be shortly.
         */
 
         const predicted =
             car.mesh.position.z +
-            car.speed*0.12*2.5;
+            car.speed *
+            0.12 *
+            1.2;
 
 
-        const dz=
+        const dz =
             predicted-ourZ;
 
 
         if(
-            dz>-8 &&
-            dz<28
+            dz < 0 &&
+            dz > -28
+        ){
+
+            return false;
+        }
+
+
+        if(
+            dz > 0 &&
+            dz < 14
         ){
 
             return false;
@@ -2377,17 +2577,11 @@ function laneWillRemainSafe(
 
 function findSafeLane(){
 
-    const otherLane=
+    const otherLane =
         currentLane===RIGHT
         ? LEFT
         : RIGHT;
 
-
-    /*
-        The destination lane is checked
-        before the manoeuvre AND
-        continuously during it.
-    */
 
     if(
         laneWillRemainSafe(
@@ -2404,7 +2598,7 @@ function findSafeLane(){
 
 
 /* =========================================================
-   START LANE CHANGE
+   BEGIN LANE CHANGE
 ========================================================= */
 
 function beginLaneChange(){
@@ -2419,19 +2613,17 @@ function beginLaneChange(){
     }
 
 
-    const safeLane=
+    const safeLane =
         findSafeLane();
 
 
-    if(
-        safeLane===null
-    ){
+    if(safeLane===null){
 
         return false;
     }
 
 
-    targetLane=
+    targetLane =
         safeLane;
 
     laneChanging=true;
@@ -2443,12 +2635,10 @@ function beginLaneChange(){
 
 
 /* =========================================================
-   EXECUTE LANE CHANGE
+   UPDATE LANE CHANGE
 ========================================================= */
 
-function updateLaneChange(
-    delta
-){
+function updateLaneChange(delta){
 
     if(!laneChanging){
         return;
@@ -2456,25 +2646,19 @@ function updateLaneChange(
 
 
     /*
-        CRITICAL:
-
-        Check the destination lane
-        AGAIN every frame.
-
-        If another vehicle approaches,
-        the lane change stops immediately.
+        Only stop the manoeuvre if the destination
+        lane becomes genuinely dangerous.
     */
 
     if(
-        !laneWillRemainSafe(
-            targetLane
-        )
+        !laneIsSafe(targetLane)
     ){
 
         laneChanging=false;
+
         targetLane=null;
 
-        targetSpeed=5;
+        targetSpeed=3;
 
         setStatus(
             "BRAKING",
@@ -2490,20 +2674,20 @@ function updateLaneChange(
     }
 
 
-    const dx=
+    const dx =
         targetLane-
         smartCar.position.x;
 
 
     smartCar.position.x +=
-        dx*
+        dx *
         Math.min(
             delta*3.2,
             1
         );
 
 
-    smartCar.rotation.z=
+    smartCar.rotation.z =
         -dx*.035;
 
 
@@ -2511,10 +2695,10 @@ function updateLaneChange(
         Math.abs(dx)<.06
     ){
 
-        smartCar.position.x=
+        smartCar.position.x =
             targetLane;
 
-        currentLane=
+        currentLane =
             targetLane;
 
         laneChanging=false;
@@ -2523,13 +2707,15 @@ function updateLaneChange(
 
         smartCar.rotation.z=0;
 
+        avoidanceLocked=false;
+
         updateLaneUI();
     }
 }
 
 
 /* =========================================================
-   SAFE RETURN
+   RETURN TO ORIGINAL LANE
 ========================================================= */
 
 function tryReturnToOriginal(){
@@ -2543,9 +2729,7 @@ function tryReturnToOriginal(){
 
 
     if(
-        !laneIsSafe(
-            originalLane
-        )
+        !laneIsSafe(originalLane)
     ){
 
         targetSpeed=18;
@@ -2555,9 +2739,7 @@ function tryReturnToOriginal(){
 
 
     if(
-        !laneWillRemainSafe(
-            originalLane
-        )
+        !laneWillRemainSafe(originalLane)
     ){
 
         targetSpeed=18;
@@ -2566,10 +2748,12 @@ function tryReturnToOriginal(){
     }
 
 
-    targetLane=
+    targetLane =
         originalLane;
 
     laneChanging=true;
+
+    avoidanceLocked=true;
 
     return true;
 }
@@ -2584,16 +2768,16 @@ function updateSpeed(delta){
     currentSpeed +=
         (
             targetSpeed-currentSpeed
-        )*
+        ) *
         Math.min(
-            delta*2.5,
+            delta*3,
             1
         );
 
 
     document.getElementById(
         "speed"
-    ).textContent=
+    ).textContent =
         Math.max(
             0,
             Math.round(currentSpeed)
@@ -2607,79 +2791,78 @@ function updateSpeed(delta){
 
 function updateTraffic(delta){
 
-    traffic.forEach(
-        car=>{
+    traffic.forEach(car=>{
 
-            car.mesh.position.z +=
-                car.speed*
-                delta*
-                .12;
+        /*
+            Positive Z moves traffic toward
+            the smart car.
+        */
 
-
-            /*
-                Keep cars continuously moving.
-            */
-
-            if(
-                car.mesh.position.z>100
-            ){
-
-                /*
-                    Recycle far ahead.
-
-                    Never spawn immediately
-                    beside the smart car.
-                */
-
-                let farthest=-50;
-
-                traffic.forEach(
-                    other=>{
-                        if(
-                            other!==car
-                        ){
-                            farthest=
-                                Math.min(
-                                    farthest,
-                                    other.mesh.position.z
-                                );
-                        }
-                    }
-                );
+        car.mesh.position.z +=
+            car.speed *
+            delta *
+            0.12;
 
 
-                car.mesh.position.z=
-                    farthest-
-                    45-
-                    Math.random()*35;
+        /*
+            Once a vehicle has passed the
+            smart car, recycle it far ahead.
+        */
+
+        if(
+            car.mesh.position.z > 35
+        ){
+
+            let farthest=-60;
 
 
-                car.lane=
-                    LANES[
-                        Math.floor(
-                            Math.random()*LANES.length
-                        )
-                    ];
+            traffic.forEach(other=>{
 
-                car.mesh.position.x=
-                    car.lane;
+                if(other!==car){
 
-                car.speed=
-                    16+
-                    Math.random()*5;
-            }
+                    farthest =
+                        Math.min(
+                            farthest,
+                            other.mesh.position.z
+                        );
+                }
+            });
+
+
+            car.mesh.position.z =
+                farthest -
+                45 -
+                Math.random()*35;
+
+
+            car.lane =
+                LANES[
+                    Math.floor(
+                        Math.random()*LANES.length
+                    )
+                ];
+
+
+            car.mesh.position.x =
+                car.lane;
+
+
+            car.speed =
+                16+
+                Math.random()*5;
+
+            car.baseSpeed =
+                car.speed;
         }
-    );
+    });
 }
 
 
 /* =========================================================
-   SCENARIO OBJECT MOVEMENT
+   PEDESTRIAN
 ========================================================= */
 
-function updatePedestrian(
-    delta
-){
+function updatePedestrian(delta){
 
     if(!pedestrian){
         return;
@@ -2687,43 +2870,49 @@ function updatePedestrian(
 
 
     /*
-        Pedestrian keeps walking.
-        It NEVER stops for the car.
+        Pedestrian moves toward the car
+        while crossing the road.
     */
+
+    pedestrian.position.z +=
+        currentSpeed *
+        delta *
+        0.12;
+
 
     pedestrian.position.x +=
-        delta*1.15;
+        delta*1.8;
 
 
-    /*
-        Small walking animation.
-    */
-
-    pedestrian.rotation.z=
+    pedestrian.rotation.z =
         Math.sin(
             scenarioTime*8
         )*.04;
 }
 
 
-function updateAnimal(
-    delta
-){
+/* =========================================================
+   ANIMAL
+========================================================= */
+
+function updateAnimal(delta){
 
     if(!animal){
         return;
     }
 
 
-    /*
-        Animal keeps moving.
-    */
+    animal.position.z +=
+        currentSpeed *
+        delta *
+        0.12;
+
 
     animal.position.x -=
-        delta*1.25;
+        delta*1.8;
 
 
-    animal.rotation.y=
+    animal.rotation.y =
         Math.sin(
             scenarioTime*7
         )*.08;
@@ -2744,7 +2933,7 @@ function updateRain(delta){
     }
 
 
-    const pos=
+    const pos =
         rain.geometry
         .attributes
         .position
@@ -2757,11 +2946,11 @@ function updateRain(delta){
         i+=3
     ){
 
-        pos[i+1]-=
+        pos[i+1] -=
             delta*27;
 
 
-        pos[i+2]+=
+        pos[i+2] +=
             delta*3;
 
 
@@ -2793,12 +2982,10 @@ function updateRain(delta){
 
 function updateHumanScenario(delta){
 
+    scenarioTime += delta;
+
     updatePedestrian(delta);
 
-
-    /*
-        Detection phase
-    */
 
     if(
         scenarioTime<1.5
@@ -2816,15 +3003,11 @@ function updateHumanScenario(delta){
     }
 
 
-    /*
-        Brake before deciding.
-    */
-
     if(
         scenarioTime<3
     ){
 
-        targetSpeed=14;
+        targetSpeed=10;
 
         setStatus(
             "BRAKING",
@@ -2836,12 +3019,8 @@ function updateHumanScenario(delta){
     }
 
 
-    /*
-        Attempt avoidance.
-    */
-
     if(
-        scenarioTime<5.5
+        scenarioTime<6
     ){
 
         if(
@@ -2856,7 +3035,6 @@ function updateHumanScenario(delta){
                 showMessage(
                     "↪ Pedestrian detected — safe lane confirmed"
                 );
-
             }
         }
 
@@ -2865,7 +3043,7 @@ function updateHumanScenario(delta){
 
             updateLaneChange(delta);
 
-            targetSpeed=21;
+            targetSpeed=20;
 
             setStatus(
                 "EVASIVE",
@@ -2879,7 +3057,7 @@ function updateHumanScenario(delta){
             !laneIsSafe(currentLane)
         ){
 
-            targetSpeed=3;
+            targetSpeed=0;
 
             setStatus(
                 "STOPPED",
@@ -2893,26 +3071,15 @@ function updateHumanScenario(delta){
     }
 
 
-    /*
-        Continue past pedestrian.
-    */
-
     if(
-        scenarioTime<10
+        scenarioTime<11
     ){
-
-        /*
-            Keep checking the lane.
-
-            If another car enters,
-            brake instead of colliding.
-        */
 
         if(
             !laneIsSafe(currentLane)
         ){
 
-            targetSpeed=6;
+            targetSpeed=5;
 
             setStatus(
                 "BRAKING",
@@ -2924,7 +3091,7 @@ function updateHumanScenario(delta){
 
         else{
 
-            targetSpeed=28;
+            targetSpeed=30;
 
             setStatus(
                 "AVOIDING",
@@ -2937,24 +3104,17 @@ function updateHumanScenario(delta){
     }
 
 
-    /*
-        Return only when original lane
-        is completely safe.
-    */
-
     if(
-        scenarioTime<15
+        scenarioTime<16
     ){
 
-        if(
-            !laneChanging
-        ){
+        if(!laneChanging){
 
             if(
                 tryReturnToOriginal()
             ){
 
-                targetSpeed=34;
+                targetSpeed=35;
 
                 setStatus(
                     "RESUMING",
@@ -2963,6 +3123,7 @@ function updateHumanScenario(delta){
                 );
 
             }
+
             else{
 
                 targetSpeed=22;
@@ -2995,6 +3156,8 @@ function updateHumanScenario(delta){
 
 function updateAnimalScenario(delta){
 
+    scenarioTime += delta;
+
     updateAnimal(delta);
 
 
@@ -3018,7 +3181,7 @@ function updateAnimalScenario(delta){
         scenarioTime<3
     ){
 
-        targetSpeed=14;
+        targetSpeed=10;
 
         setStatus(
             "BRAKING",
@@ -3031,7 +3194,7 @@ function updateAnimalScenario(delta){
 
 
     if(
-        scenarioTime<5.5
+        scenarioTime<6
     ){
 
         if(
@@ -3054,7 +3217,7 @@ function updateAnimalScenario(delta){
 
             updateLaneChange(delta);
 
-            targetSpeed=21;
+            targetSpeed=20;
 
             setStatus(
                 "EVASIVE",
@@ -3068,7 +3231,7 @@ function updateAnimalScenario(delta){
             !laneIsSafe(currentLane)
         ){
 
-            targetSpeed=3;
+            targetSpeed=0;
 
             setStatus(
                 "STOPPED",
@@ -3083,14 +3246,14 @@ function updateAnimalScenario(delta){
 
 
     if(
-        scenarioTime<10
+        scenarioTime<11
     ){
 
         if(
             !laneIsSafe(currentLane)
         ){
 
-            targetSpeed=6;
+            targetSpeed=5;
 
             setStatus(
                 "BRAKING",
@@ -3102,7 +3265,7 @@ function updateAnimalScenario(delta){
 
         else{
 
-            targetSpeed=28;
+            targetSpeed=30;
 
             setStatus(
                 "AVOIDING",
@@ -3116,18 +3279,16 @@ function updateAnimalScenario(delta){
 
 
     if(
-        scenarioTime<15
+        scenarioTime<16
     ){
 
-        if(
-            !laneChanging
-        ){
+        if(!laneChanging){
 
             if(
                 tryReturnToOriginal()
             ){
 
-                targetSpeed=34;
+                targetSpeed=35;
 
                 setStatus(
                     "RESUMING",
@@ -3136,6 +3297,7 @@ function updateAnimalScenario(delta){
                 );
 
             }
+
             else{
 
                 targetSpeed=22;
@@ -3168,14 +3330,23 @@ function updateAnimalScenario(delta){
 
 function updateObstacleScenario(delta){
 
+    scenarioTime += delta;
+
+
     if(!obstacle){
         return;
     }
 
 
     /*
-        Obstacle stays in the road.
+        Obstacle moves toward smart car.
     */
+
+    obstacle.position.z +=
+        currentSpeed *
+        delta *
+        0.12;
+
 
     if(
         scenarioTime<2
@@ -3254,7 +3425,6 @@ function updateObstacleScenario(delta){
                 "NO SAFE LANE",
                 "HIGH"
             );
-
         }
 
         return;
@@ -3298,9 +3468,7 @@ function updateObstacleScenario(delta){
         scenarioTime<16
     ){
 
-        if(
-            !laneChanging
-        ){
+        if(!laneChanging){
 
             if(
                 tryReturnToOriginal()
@@ -3315,6 +3483,7 @@ function updateObstacleScenario(delta){
                 );
 
             }
+
             else{
 
                 targetSpeed=22;
@@ -3347,9 +3516,8 @@ function updateObstacleScenario(delta){
 
 function updateCollisionScenario(delta){
 
-    /*
-        A car approaches in our lane.
-    */
+    scenarioTime += delta;
+
 
     if(
         scenarioTime<2
@@ -3371,16 +3539,12 @@ function updateCollisionScenario(delta){
         scenarioTime<3.5
     ){
 
-        targetSpeed=4;
+        targetSpeed=3;
 
         setStatus(
             "EMERGENCY BRAKE",
             "COLLISION",
             "HIGH"
-        );
-
-        showMessage(
-            "🚨 Forward collision predicted — emergency braking"
         );
 
         return;
@@ -3423,7 +3587,7 @@ function updateCollisionScenario(delta){
 
         else{
 
-            targetSpeed=2;
+            targetSpeed=0;
 
             setStatus(
                 "STOPPED",
@@ -3473,9 +3637,7 @@ function updateCollisionScenario(delta){
         scenarioTime<16
     ){
 
-        if(
-            !laneChanging
-        ){
+        if(!laneChanging){
 
             if(
                 tryReturnToOriginal()
@@ -3488,7 +3650,9 @@ function updateCollisionScenario(delta){
                     "SAFE ROAD",
                     "LOW"
                 );
+
             }
+
             else{
 
                 targetSpeed=22;
@@ -3558,6 +3722,7 @@ function finishScenario(){
         return;
     }
 
+
     eventFinished=true;
 
     avoidanceLocked=false;
@@ -3568,11 +3733,13 @@ function finishScenario(){
 
     targetSpeed=40;
 
+
     setStatus(
         "DRIVING",
         "CLEAR",
         "FINE"
     );
+
 
     showMessage(
         "✓ Hazard cleared — normal driving resumed"
@@ -3584,9 +3751,7 @@ function finishScenario(){
    START SCENARIO
 ========================================================= */
 
-function startScenario(
-    scenario
-){
+function startScenario(scenario){
 
     resetSimulation();
 
@@ -3601,20 +3766,23 @@ function startScenario(
         scenario==="human"
     ){
 
-        pedestrian=
+        pedestrian =
             createPedestrian();
 
+
         pedestrian.position.set(
+            -3.8,
             0,
-            0,
-            -31
+            -25
         );
+
 
         setStatus(
             "DETECTING",
             "PEDESTRIAN",
             "MEDIUM"
         );
+
 
         showMessage(
             "🧍 Pedestrian detected ahead"
@@ -3626,20 +3794,23 @@ function startScenario(
         scenario==="animal"
     ){
 
-        animal=
+        animal =
             createAnimal();
 
+
         animal.position.set(
+            3.8,
             0,
-            0,
-            -31
+            -25
         );
+
 
         setStatus(
             "DETECTING",
             "ANIMAL",
             "MEDIUM"
         );
+
 
         showMessage(
             "🐕 Animal detected ahead"
@@ -3653,17 +3824,20 @@ function startScenario(
 
         obstacle.visible=true;
 
+
         obstacle.position.set(
             RIGHT,
             0,
-            -32
+            -25
         );
+
 
         setStatus(
             "DETECTING",
             "OBSTRUCTION",
             "MEDIUM"
         );
+
 
         showMessage(
             "🚧 Road obstruction detected"
@@ -3675,28 +3849,35 @@ function startScenario(
         scenario==="collision"
     ){
 
-        /*
-            Put a vehicle ahead of us.
-        */
-
-        const danger=
+        const danger =
             traffic[1];
 
-        danger.lane=RIGHT;
+
+        danger.lane =
+            RIGHT;
+
 
         danger.mesh.position.set(
             RIGHT,
             0,
-            -32
+            -30
         );
 
-        danger.speed=-14;
+
+        /*
+            Positive speed moves the
+            danger vehicle toward z=0.
+        */
+
+        danger.speed=22;
+
 
         setStatus(
             "PREDICTING",
             "COLLISION",
             "HIGH"
         );
+
 
         showMessage(
             "🚨 Collision trajectory detected"
@@ -3710,12 +3891,15 @@ function startScenario(
 
         rain.visible=true;
 
-        scene.background=
+
+        scene.background =
             new THREE.Color(
                 0x7595aa
             );
 
+
         showWeather("rain");
+
 
         setStatus(
             "CAUTIOUS",
@@ -3733,12 +3917,15 @@ function startScenario(
 
         rain.material.opacity=.95;
 
-        scene.background=
+
+        scene.background =
             new THREE.Color(
                 0x414d5b
             );
 
+
         showWeather("storm");
+
 
         setStatus(
             "CAUTION",
@@ -3801,12 +3988,13 @@ function resetSimulation(){
 
     obstacle.visible=false;
 
+
     rain.visible=false;
 
     rain.material.opacity=.8;
 
 
-    scene.background=
+    scene.background =
         new THREE.Color(
             0x91d8ff
         );
@@ -3818,16 +4006,13 @@ function resetSimulation(){
         0
     );
 
+
     smartCar.rotation.set(
         0,
         0,
         0
     );
 
-
-    /*
-        Reset traffic positions.
-    */
 
     const resetPositions=[
         -70,
@@ -3847,19 +4032,31 @@ function resetSimulation(){
     ];
 
 
+    const resetLanes=[
+        LEFT,
+        RIGHT,
+        LEFT,
+        RIGHT,
+        LEFT
+    ];
+
+
     traffic.forEach(
         (car,i)=>{
 
-            car.mesh.position.z=
+            car.mesh.position.z =
                 resetPositions[i];
 
-            car.mesh.position.x=
-                car.lane;
+            car.mesh.position.x =
+                resetLanes[i];
 
-            car.speed=
+            car.lane =
+                resetLanes[i];
+
+            car.speed =
                 resetSpeeds[i];
 
-            car.baseSpeed=
+            car.baseSpeed =
                 resetSpeeds[i];
         }
     );
@@ -3871,6 +4068,7 @@ function resetSimulation(){
         "FINE"
     );
 
+
     updateLaneUI();
 }
 
@@ -3879,92 +4077,134 @@ function resetSimulation(){
    ENVIRONMENT MOVEMENT
 ========================================================= */
 
+function moveObjectForward(
+    object,
+    speed,
+    delta,
+    recycleDistance
+){
+
+    object.position.z +=
+        speed *
+        delta *
+        0.12;
+
+
+    if(
+        object.position.z >
+        recycleDistance
+    ){
+
+        object.position.z -=
+            350;
+    }
+}
+
+
+/* =========================================================
+   ENVIRONMENT
+========================================================= */
+
 function updateEnvironment(delta){
 
     /*
-        Trees move toward camera.
+        Trees
     */
 
-    trees.forEach(
-        tree=>{
+    trees.forEach(tree=>{
 
-            tree.position.z +=
-                currentSpeed*
-                delta*
-                .12;
-
-            if(
-                tree.position.z>30
-            ){
-
-                tree.position.z-=350;
-            }
-        }
-    );
+        moveObjectForward(
+            tree,
+            currentSpeed,
+            delta,
+            30
+        );
+    });
 
 
     /*
-        Street lights.
+        Bushes
     */
 
-    streetLights.forEach(
-        light=>{
+    bushes.forEach(bush=>{
 
-            light.position.z +=
-                currentSpeed*
-                delta*
-                .12;
+        moveObjectForward(
+            bush,
+            currentSpeed,
+            delta,
+            30
+        );
+    });
 
-            if(
-                light.position.z>35
-            ){
 
-                light.position.z-=330;
-            }
+    /*
+        Flowers
+    */
+
+    flowers.forEach(flower=>{
+
+        moveObjectForward(
+            flower,
+            currentSpeed,
+            delta,
+            30
+        );
+    });
+
+
+    /*
+        Street lights
+    */
+
+    streetLights.forEach(light=>{
+
+        moveObjectForward(
+            light,
+            currentSpeed,
+            delta,
+            35
+        );
+    });
+
+
+    /*
+        Center road markings
+    */
+
+    centerMarkers.forEach(marker=>{
+
+        marker.position.z +=
+            currentSpeed *
+            delta *
+            0.12;
+
+
+        if(
+            marker.position.z>30
+        ){
+
+            marker.position.z -=500;
         }
-    );
+    });
 
 
     /*
         Clouds move slowly.
     */
 
-    clouds.forEach(
-        cloud=>{
+    clouds.forEach(cloud=>{
 
-            cloud.position.x +=
-                delta*.08;
+        cloud.position.x +=
+            delta*.08;
 
-            if(
-                cloud.position.x>40
-            ){
 
-                cloud.position.x=-40;
-            }
+        if(
+            cloud.position.x>40
+        ){
+
+            cloud.position.x=-40;
         }
-    );
-
-
-    /*
-        Lane markings.
-    */
-
-    centerMarkers.forEach(
-        marker=>{
-
-            marker.position.z +=
-                currentSpeed*
-                delta*
-                .12;
-
-            if(
-                marker.position.z>30
-            ){
-
-                marker.position.z-=500;
-            }
-        }
-    );
+    });
 }
 
 
@@ -3992,6 +4232,7 @@ renderer.domElement.addEventListener(
         dragging=true;
 
         lastMouseX=e.clientX;
+
         lastMouseY=e.clientY;
     }
 );
@@ -4015,21 +4256,22 @@ window.addEventListener(
         }
 
 
-        const dx=
+        const dx =
             e.clientX-lastMouseX;
 
-        const dy=
+        const dy =
             e.clientY-lastMouseY;
 
 
-        cameraAngle-=
+        cameraAngle -=
             dx*.005;
 
-        cameraHeight-=
+
+        cameraHeight -=
             dy*.025;
 
 
-        cameraHeight=
+        cameraHeight =
             Math.max(
                 4.5,
                 Math.min(
@@ -4040,6 +4282,7 @@ window.addEventListener(
 
 
         lastMouseX=e.clientX;
+
         lastMouseY=e.clientY;
     }
 );
@@ -4049,11 +4292,11 @@ renderer.domElement.addEventListener(
     "wheel",
     e=>{
 
-        cameraDistance+=
+        cameraDistance +=
             e.deltaY*.012;
 
 
-        cameraDistance=
+        cameraDistance =
             Math.max(
                 11,
                 Math.min(
@@ -4069,7 +4312,7 @@ renderer.domElement.addEventListener(
    MAIN ANIMATION
 ========================================================= */
 
-let previousTime=
+let previousTime =
     performance.now();
 
 
@@ -4080,11 +4323,11 @@ function animate(){
     );
 
 
-    const now=
+    const now =
         performance.now();
 
 
-    const delta=
+    const delta =
         Math.min(
             (now-previousTime)/1000,
             .05
@@ -4095,7 +4338,7 @@ function animate(){
 
 
     /*
-        Traffic is ALWAYS moving.
+        Traffic continuously moves.
     */
 
     updateTraffic(delta);
@@ -4109,14 +4352,14 @@ function animate(){
 
 
     /*
-        Weather.
+        Rain.
     */
 
     updateRain(delta);
 
 
     /*
-        Scenario.
+        Scenario logic.
     */
 
     if(
@@ -4164,54 +4407,37 @@ function animate(){
 
 
     /*
-        Move player forward.
-
-        The road/environment moves too,
-        creating continuous driving.
+        IMPORTANT:
+        The smart car stays fixed at z=0.
+        The world moves toward it.
     */
 
-    smartCar.position.z -=
-        currentSpeed*
-        delta*
-        .12;
+    smartCar.position.z=0;
 
 
     /*
-        Keep player in the visible zone.
+        Camera follows lateral movement.
     */
 
-    if(
-        smartCar.position.z<-35
-    ){
-
-        smartCar.position.z=0;
-    }
-
-
-    /*
-        Camera follows vehicle.
-    */
-
-    camera.position.x=
-        smartCar.position.x+
-        Math.sin(cameraAngle)*
+    camera.position.x =
+        smartCar.position.x +
+        Math.sin(cameraAngle) *
         cameraDistance;
 
 
-    camera.position.y=
+    camera.position.y =
         cameraHeight;
 
 
-    camera.position.z=
-        smartCar.position.z+
-        Math.cos(cameraAngle)*
+    camera.position.z =
+        Math.cos(cameraAngle) *
         cameraDistance;
 
 
     camera.lookAt(
         smartCar.position.x,
         .7,
-        smartCar.position.z-6
+        -6
     );
 
 
@@ -4230,11 +4456,13 @@ window.addEventListener(
     "resize",
     ()=>{
 
-        camera.aspect=
+        camera.aspect =
             window.innerWidth/
             window.innerHeight;
 
+
         camera.updateProjectionMatrix();
+
 
         renderer.setSize(
             window.innerWidth,
