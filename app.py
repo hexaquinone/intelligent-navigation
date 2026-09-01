@@ -8,12 +8,16 @@ import streamlit.components.v1 as components
 import pandas as pd
 import time
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
+
 
 from brain import (
     make_decision,
     make_decisions,
     fuse_sensor_streams,
+    evaluate_scene,
+    compute_kinematics,
+    get_sector_occupancy,
     HazardEvent,
     HazardType,
     Position,
@@ -22,8 +26,11 @@ from brain import (
     Action,
     EgoState,
     Decision,
+    KinematicsTelemetry,
+    SectorOccupancy,
     calculate_ttc
 )
+
 from simulation import (
     SimulationEngine,
     SCENARIOS,
@@ -51,7 +58,7 @@ from PIL import Image
 
 
 # ============================================================
-# 1. PAGE CONFIGURATION
+# 1. PAGE CONFIGURATION & CACHED ENGINES
 # ============================================================
 
 st.set_page_config(
@@ -60,6 +67,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+@st.cache_resource
+def get_cached_vision_engine(model_name: str = "yolov8n.pt", enable_lanes: bool = True) -> VisionPerceptionEngine:
+    """Caches the YOLOv8 perception engine in memory to avoid redundant reloads."""
+    return VisionPerceptionEngine(model_name=model_name, enable_lanes=enable_lanes)
+
 
 
 # ============================================================
@@ -176,40 +190,11 @@ section[data-testid="stSidebar"] {
 
 
 # ============================================================
-# 3. KINEMATIC COMPUTATION & BEV ROAD VISUALIZER
+# 3. 2D BIRD'S-EYE VIEW (BEV) ROAD MAP GENERATOR
 # ============================================================
 
-def compute_kinematics(ego_speed_kmh: float, distance_m: Optional[float], closing_speed_kmh: Optional[float] = None) -> Dict[str, Any]:
-    """Computes physics-based stopping distance, required deceleration, and safety margin."""
-    v_ms = ego_speed_kmh / 3.6
-    t_reaction = 1.2  # driver & ADAS reaction time in seconds
-    mu = 0.75  # tire-road friction coefficient
-    g = 9.81
-
-    d_reaction = v_ms * t_reaction
-    d_braking = (v_ms ** 2) / (2 * mu * g)
-    total_stopping_dist = d_reaction + d_braking
-
-    req_decel = None
-    safety_margin = None
-
-    if distance_m is not None and distance_m > 0:
-        closing_v_ms = (closing_speed_kmh / 3.6) if closing_speed_kmh is not None else v_ms
-        if closing_v_ms > 0:
-            req_decel = round((closing_v_ms ** 2) / (2 * distance_m), 2)
-        safety_margin = round(distance_m - total_stopping_dist, 1)
-
-    return {
-        "speed_ms": round(v_ms, 1),
-        "reaction_dist_m": round(d_reaction, 1),
-        "braking_dist_m": round(d_braking, 1),
-        "total_stopping_dist_m": round(total_stopping_dist, 1),
-        "required_decel_ms2": req_decel,
-        "safety_margin_m": safety_margin
-    }
-
-
 def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, ego_speed_kmh: float):
+
     """Renders the 2D Bird's-Eye View (BEV) road canvas inside an embedded HTML iframe."""
     svg_w = 460
     svg_h = 420
@@ -549,7 +534,8 @@ def build_history_entry(primary_hazard: HazardEvent, decision: Decision, step_id
     }
 
 
-def render_top_hud(ego_state: EgoState, decision: Decision, kinematics: Dict[str, Any]) -> None:
+def render_top_hud(ego_state: EgoState, decision: Decision, kinematics: Union[Dict[str, Any], KinematicsTelemetry]) -> None:
+
     st.markdown('<div class="hud-title">🚗 Intelligent Navigation & Decision-Support System</div>', unsafe_allow_html=True)
     st.markdown('<div class="hud-subtitle">Explainable Autonomous Driving Assistance, 2D BEV Perception, & Real-Time Kinematics</div>', unsafe_allow_html=True)
 
@@ -573,15 +559,12 @@ def render_top_hud(ego_state: EgoState, decision: Decision, kinematics: Dict[str
 
 def render_sector_cards(current_hazards: List[HazardEvent]) -> None:
     s_left, s_front, s_right = st.columns(3)
-
-    left_hazards = [h for h in current_hazards if (h.position == Position.LEFT or str(h.position).lower() == "left")]
-    front_hazards = [h for h in current_hazards if (h.position == Position.FRONT or str(h.position).lower() == "front")]
-    right_hazards = [h for h in current_hazards if (h.position == Position.RIGHT or str(h.position).lower() == "right")]
+    sectors = get_sector_occupancy(current_hazards)
 
     with s_left:
         st.markdown("##### ⬅️ Left Sector")
-        if left_hazards:
-            for lh in left_hazards:
+        if not sectors.is_left_clear:
+            for lh in sectors.left_hazards:
                 dist_txt = f"{lh.distance:.1f}m" if lh.distance is not None else "N/A"
                 st.warning(f"⚠️ **{get_hazard_label(lh)}** ({dist_txt})")
         else:
@@ -589,14 +572,10 @@ def render_sector_cards(current_hazards: List[HazardEvent]) -> None:
 
     with s_front:
         st.markdown("##### ⬆️ Front Sector")
-        if front_hazards:
-            for fh in front_hazards:
-                fh_type_str = getattr(fh.type, "value", str(fh.type)).lower()
-                if "clear" in fh_type_str:
-                    st.success("🟢 Clear")
-                else:
-                    dist_txt = f"{fh.distance:.1f}m" if fh.distance is not None else "N/A"
-                    st.error(f"⚠️ **{get_hazard_label(fh)}** ({dist_txt})")
+        if not sectors.is_front_clear:
+            for fh in sectors.front_hazards:
+                dist_txt = f"{fh.distance:.1f}m" if fh.distance is not None else "N/A"
+                st.error(f"⚠️ **{get_hazard_label(fh)}** ({dist_txt})")
         elif any(getattr(h.type, "value", str(h.type)).lower() == "sensor_failure" for h in current_hazards):
             st.error("📡 Sensor Gap")
         else:
@@ -604,12 +583,13 @@ def render_sector_cards(current_hazards: List[HazardEvent]) -> None:
 
     with s_right:
         st.markdown("##### ➡️ Right Sector")
-        if right_hazards:
-            for rh in right_hazards:
+        if not sectors.is_right_clear:
+            for rh in sectors.right_hazards:
                 dist_txt = f"{rh.distance:.1f}m" if rh.distance is not None else "N/A"
                 st.warning(f"⚠️ **{get_hazard_label(rh)}** ({dist_txt})")
         else:
             st.success("🟢 Clear")
+
 
 
 def action_class_for(action: str) -> str:
@@ -625,7 +605,8 @@ def action_class_for(action: str) -> str:
     return "act-continue"
 
 
-def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, ego_state: EgoState, kinematics: Dict[str, Any], step_desc: str) -> None:
+def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, ego_state: EgoState, kinematics: Union[Dict[str, Any], KinematicsTelemetry], step_desc: str) -> None:
+
     if step_desc:
         st.info(f"📍 **Drive Context:** {step_desc}")
 
@@ -638,12 +619,24 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
 
     with col_right:
         st.markdown('<div class="section-label">🧠 Brain Decision & Explainability Console</div>', unsafe_allow_html=True)
+        
+        # Action Box with Priority Indicator
+        p_lvl = getattr(decision, "priority_level", 1)
+        p_names = {1: "Nominal", 2: "Defensive", 3: "Active Caution", 4: "Urgent Maneuver", 5: "Emergency Intervention"}
+        p_badge = f'<span style="float: right; font-size: 0.75rem; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 6px;">Priority {p_lvl}/5: {p_names.get(p_lvl, "Standard")}</span>'
+        
         st.markdown(
             f'<div class="act-box {action_class_for(decision.action)}">'
             f'🚦 {decision.action.replace("_", " ")}'
+            f'{p_badge}'
             f'</div>',
             unsafe_allow_html=True
         )
+
+        # Check for Swerve Conflict Resolution metadata from brain.py
+        arb_meta = getattr(decision, "metadata", {}) or {}
+        if arb_meta.get("arbitration") in ["blocked_swerve_right", "blocked_swerve_left"]:
+            st.warning("⚠️ **Swerve Conflict Arbitration:** Evasive lane change blocked by adjacent sector hazard. Brain arbitrated to safe in-lane deceleration.")
 
         st.markdown("#### 💡 Explainable AI Rationale (Why?):")
         st.info(decision.reason)
@@ -658,11 +651,23 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
             decel_disp = f"{kinematics['required_decel_ms2']} m/s²" if kinematics['required_decel_ms2'] is not None else "0.0 m/s²"
             st.metric("Required Decel", decel_disp)
 
+        # Target Speed & Safety Margin
+        if kinematics.get("safety_margin_m") is not None:
+            margin = kinematics["safety_margin_m"]
+            margin_txt = f"{margin:+.1f} m"
+            if margin > 5.0:
+                st.caption(f"🛡️ **Safety Stopping Margin:** `{margin_txt}` (Adequate Buffer)")
+            elif margin >= 0:
+                st.caption(f"⚠️ **Safety Stopping Margin:** `{margin_txt}` (Tight Threshold)")
+            else:
+                st.caption(f"🚨 **Safety Stopping Margin:** `{margin_txt}` (Negative Margin - Emergency Intervention Triggered)")
+
         st.divider()
         st.markdown("#### 🔬 Sensor Diagnostics & Fault Injection:")
         sf1, sf2, sf3 = st.columns(3)
         with sf1:
             st.session_state.fault_fog = st.checkbox("🌫️ Severe Fog (Degraded)", value=st.session_state.fault_fog)
+
         with sf2:
             st.session_state.fault_cam_blackout = st.checkbox("🔌 Camera Disconnect (Failed)", value=st.session_state.fault_cam_blackout)
         with sf3:
@@ -832,12 +837,13 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             frame_to_process = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
 
     if frame_to_process is not None:
-        engine = VisionPerceptionEngine(model_name="yolov8n.pt", enable_lanes=enable_lanes)
+        engine = get_cached_vision_engine(model_name="yolov8n.pt", enable_lanes=enable_lanes)
         annotated_frame, current_hazards, decision, lane_info = engine.process_frame(
+
             frame_to_process, ego_state=ego_state, conf_threshold=conf_val, override_boxes=override_boxes
         )
 
-        # Multi-modal Sensor Fusion if enabled
+        radar_sim = None
         if enable_fusion and current_hazards:
             radar_sim = [
                 HazardEvent(
@@ -852,13 +858,17 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                 )
                 for h in current_hazards if h.type != HazardType.CLEAR
             ]
-            decision = fuse_sensor_streams(current_hazards, radar_hazards=radar_sim, ego_state=ego_state)
 
-        primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
-        kinematics = compute_kinematics(ego_state.speed_kmh, primary_hazard.distance, primary_hazard.relative_speed_kmh)
+        decision, kinematics, _ = evaluate_scene(
+            hazards=current_hazards,
+            ego_state=ego_state,
+            lane_info=lane_info,
+            radar_hazards=radar_sim
+        )
 
         # Render Top HUD
         render_top_hud(ego_state, decision, kinematics)
+
 
         # Central Split
         c_vis, c_bev = st.columns([1.25, 1.0])
@@ -985,14 +995,9 @@ else:
         step_id = "Sandbox"
 
     apply_sensor_faults(current_hazards)
-
-    if len(current_hazards) == 1:
-        decision: Decision = make_decision(current_hazards[0], ego_state)
-    else:
-        decision: Decision = make_decisions(current_hazards, ego_state)
-
+    decision, kinematics, _ = evaluate_scene(current_hazards, ego_state)
     primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
-    kinematics = compute_kinematics(ego_state.speed_kmh, primary_hazard.distance, primary_hazard.relative_speed_kmh)
+
 
     if active_mode == "🚗 Live Trip Timeline":
         step_key = f"step_{st.session_state.simulation_index}_{step_id}"

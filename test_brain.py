@@ -330,14 +330,29 @@ def run_vision_tests():
     print(f"       Reason: {fused_decision.reason}")
     assert fused_decision.action in [Action.SLOW_DOWN.value, Action.BRAKE.value]
 
-    # 9. Test Lane Departure Safety Assessment
-    print("\n[TEST] Lane Departure Assist Safety Assessment:")
-    lane_warn = LaneInfo(departure_warning=True, offset_from_center_px=-60.0) # Veering left
-    lane_decision = evaluate_lane_departure_safety(lane_warn, surrounding_hazards=[], ego_state=EgoState(speed_kmh=45.0))
-    print(f"       Lane Centering Action: {lane_decision.action} | Risk: {lane_decision.risk}")
-    assert lane_decision.action == Action.MOVE_RIGHT.value
+    # 10. Test Unified evaluate_scene & Kinematics Engine
+    print("\n[TEST] Unified evaluate_scene() & Kinematics Engine:")
+    from brain import evaluate_scene, compute_kinematics, get_sector_occupancy, KinematicsTelemetry, SectorOccupancy
+    
+    kin = compute_kinematics(ego_speed_kmh=50.0, distance_m=20.0, closing_speed_kmh=30.0)
+    assert isinstance(kin, KinematicsTelemetry)
+    assert kin.total_stopping_dist_m > 0
+    assert kin.safety_margin_m is not None
+
+    sc_dec, sc_kin, sc_sectors = evaluate_scene(
+        hazards=[v_hazard, HazardEvent(type=HazardType.CYCLIST, position=Position.RIGHT, distance=12.0)],
+        ego_state=EgoState(speed_kmh=45.0)
+    )
+    assert isinstance(sc_dec, Decision)
+    assert isinstance(sc_kin, KinematicsTelemetry)
+    assert isinstance(sc_sectors, SectorOccupancy)
+    assert not sc_sectors.is_right_clear
+    assert sc_sectors.is_left_clear
+
+    print("       Unified evaluate_scene() -> Action:", sc_dec.action, "| Safety Margin:", sc_kin.safety_margin_m, "m")
 
     print("\nAll Computer Vision & Brain Integration tests passed successfully!")
+
 
 
 if __name__ == "__main__":

@@ -71,7 +71,9 @@ canvas{
     position:absolute;
     left:18px;
     top:18px;
-    width:245px;
+    width:275px;
+    max-height:94vh;
+    overflow-y:auto;
     padding:18px;
     border-radius:20px;
     background:rgba(255,255,255,.94);
@@ -84,10 +86,13 @@ canvas{
     font-size:16px;
     font-weight:800;
     margin-bottom:15px;
+    display:flex;
+    align-items:center;
+    gap:8px;
 }
 
 .row{
-    margin-bottom:12px;
+    margin-bottom:11px;
 }
 
 .label{
@@ -100,7 +105,7 @@ canvas{
 
 .value{
     margin-top:4px;
-    font-size:14px;
+    font-size:13.5px;
     color:#29313a;
     font-weight:750;
 }
@@ -108,11 +113,32 @@ canvas{
 .badge{
     display:inline-block;
     margin-top:4px;
-    padding:6px 12px;
+    padding:5px 11px;
     border-radius:20px;
     font-size:10px;
     font-weight:850;
+    letter-spacing:0.4px;
 }
+
+.badge-continue{ background:#d8f5df; color:#277746; border:1px solid #a7f3d0; }
+.badge-slow{ background:#fff2c5; color:#876900; border:1px solid #fde68a; }
+.badge-brake{ background:#ffe4e6; color:#be123c; border:1px solid #fecdd3; }
+.badge-stop{ background:#ffd7d7; color:#a42e2e; border:1px solid #fecaca; }
+.badge-swerve{ background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe; }
+.badge-uncertain{ background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; }
+
+#brain-rationale{
+    margin-top:4px;
+    padding:8px 10px;
+    border-radius:10px;
+    background:#f1f5f9;
+    font-size:10.5px;
+    color:#334155;
+    line-height:1.35;
+    font-weight:600;
+    border:1px solid #e2e8f0;
+}
+
 
 
 /* =========================================================
@@ -282,52 +308,66 @@ button:active{
 <div id="telemetry">
 
     <div class="telemetry-title">
-        Vehicle Telemetry
+        🧠 AI Brain Telemetry
     </div>
 
     <div class="row">
-        <div class="label">Vehicle</div>
+        <div class="label">Host Vehicle</div>
         <div class="value">SMART-CAR 01</div>
     </div>
 
     <div class="row">
-        <div class="label">Speed</div>
+        <div class="label">Speed / Target</div>
         <div class="value">
-            <span id="speed">50</span> km/h
+            <span id="speed">50</span> km/h <span style="font-size:11px;color:#64748b;">(Target: <span id="target-speed">50</span> km/h)</span>
         </div>
     </div>
 
     <div class="row">
-        <div class="label">Lane</div>
+        <div class="label">Host Lane</div>
         <div class="value" id="lane">
             RIGHT LANE
         </div>
     </div>
 
     <div class="row">
-        <div class="label">Risk Level</div>
+        <div class="label">AI Decision Action</div>
         <div>
-            <span class="badge" id="risk">FINE</span>
+            <span class="badge badge-continue" id="status">CONTINUE</span>
+            <span id="priority" style="font-size:9px;color:#64748b;font-weight:700;margin-left:4px;">P1</span>
         </div>
     </div>
 
     <div class="row">
-        <div class="label">Detected Event</div>
+        <div class="label">Risk Level</div>
+        <div>
+            <span class="badge badge-continue" id="risk">LOW</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Detected Target</div>
         <div class="value" id="event">
             CLEAR
         </div>
     </div>
 
     <div class="row">
-        <div class="label">AI Status</div>
-        <div>
-            <span class="badge" id="status">
-                DRIVING
-            </span>
+        <div class="label">Kinematics & Safety</div>
+        <div class="value" style="font-size:11.5px;">
+            TTC: <span id="ttc-val" style="color:#0284c7;font-weight:bold;">Safe</span> | Stop: <span id="stop-dist-val">14.2m</span>
+        </div>
+    </div>
+
+    <div class="row" style="margin-bottom:0;">
+        <div class="label">Brain Rationale (Why?)</div>
+        <div id="brain-rationale">
+            No hazards are currently detected. The vehicle can continue safely.
         </div>
     </div>
 
 </div>
+
 
 
 <div id="controls">
@@ -428,7 +468,9 @@ camera.position.set(
 
 const renderer =
     new THREE.WebGLRenderer({
-        antialias:true
+        antialias: true,
+        powerPreference: "high-performance",
+        precision: "mediump"
     });
 
 renderer.setSize(
@@ -437,16 +479,12 @@ renderer.setSize(
 );
 
 renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio,2)
+    Math.min(window.devicePixelRatio, 1.5)
 );
 
-renderer.shadowMap.enabled=true;
-
-renderer.shadowMap.type =
-    THREE.PCFSoftShadowMap;
-
-renderer.outputColorSpace =
-    THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 document
     .getElementById("canvas")
@@ -479,17 +517,17 @@ sunlight.position.set(
     20
 );
 
-sunlight.castShadow=true;
+sunlight.castShadow = true;
+sunlight.shadow.mapSize.width = 1024;
+sunlight.shadow.mapSize.height = 1024;
 
-sunlight.shadow.mapSize.width=2048;
-sunlight.shadow.mapSize.height=2048;
-
-sunlight.shadow.camera.left=-40;
-sunlight.shadow.camera.right=40;
-sunlight.shadow.camera.top=40;
-sunlight.shadow.camera.bottom=-40;
+sunlight.shadow.camera.left = -40;
+sunlight.shadow.camera.right = 40;
+sunlight.shadow.camera.top = 40;
+sunlight.shadow.camera.bottom = -40;
 
 scene.add(sunlight);
+
 
 
 /* =========================================================
@@ -2101,7 +2139,7 @@ let rain=null;
 
 function createRain(){
 
-    const count=2200;
+    const count = 800;
 
     const geometry =
         new THREE.BufferGeometry();
@@ -2110,6 +2148,7 @@ function createRain(){
         new Float32Array(
             count*3
         );
+
 
 
     for(
@@ -2197,62 +2236,164 @@ const SIDE_MARGIN=1.8;
 
 
 /* =========================================================
-   UI
+   BRAIN.PY DECISION ENGINE (JS RUNTIME INTEGRATION)
 ========================================================= */
 
-function setRisk(level){
+const BrainHazardType = {
+    CLEAR: "clear",
+    PEDESTRIAN: "pedestrian",
+    VEHICLE: "vehicle",
+    STATIC_OBSTACLE: "static_obstacle",
+    CYCLIST: "cyclist",
+    ANIMAL: "animal",
+    SENSOR_FAILURE: "sensor_failure"
+};
 
-    const el =
-        document.getElementById("risk");
+const BrainAction = {
+    CONTINUE: "CONTINUE",
+    MAINTAIN_SPEED: "MAINTAIN_SPEED",
+    SLOW_DOWN: "SLOW_DOWN",
+    BRAKE: "BRAKE",
+    STOP: "STOP",
+    EMERGENCY_STOP: "EMERGENCY_STOP",
+    MOVE_LEFT: "MOVE_LEFT",
+    MOVE_RIGHT: "MOVE_RIGHT"
+};
 
-    el.textContent=level;
+const BrainRisk = {
+    LOW: "LOW",
+    MEDIUM: "MEDIUM",
+    HIGH: "HIGH",
+    CRITICAL: "CRITICAL",
+    UNCERTAIN: "UNCERTAIN"
+};
 
+function computeBrainKinematics(speedKmh, distanceM, closingSpeedKmh = null) {
+    const vMs = speedKmh / 3.6;
+    const tReact = 1.2;
+    const mu = 0.75;
+    const g = 9.81;
+    const dReaction = vMs * tReact;
+    const dBraking = (vMs * vMs) / (2 * mu * g);
+    const totalStoppingDist = dReaction + dBraking;
 
-    if(level==="FINE"){
+    let ttc = null;
+    let safetyMargin = null;
 
-        el.style.background="#d8f5df";
-        el.style.color="#277746";
-
+    if (distanceM !== null && distanceM > 0) {
+        const closingMs = (closingSpeedKmh !== null && closingSpeedKmh > 0) ? (closingSpeedKmh / 3.6) : vMs;
+        if (closingMs > 0.1) {
+            ttc = (distanceM / closingMs).toFixed(2);
+        }
+        safetyMargin = (distanceM - totalStoppingDist).toFixed(1);
     }
 
-    else if(level==="LOW"){
+    return {
+        speedMs: vMs.toFixed(1),
+        reactionDistM: dReaction.toFixed(1),
+        brakingDistM: dBraking.toFixed(1),
+        totalStoppingDistM: totalStoppingDist.toFixed(1),
+        safetyMarginM: safetyMargin,
+        ttcSeconds: ttc
+    };
+}
 
-        el.style.background="#fff2c5";
-        el.style.color="#876900";
+function setRisk(level) {
+    const el = document.getElementById("risk");
+    if (!el) return;
+    el.textContent = level;
+    el.className = "badge";
 
-    }
-
-    else if(level==="MEDIUM"){
-
-        el.style.background="#ffe1ba";
-        el.style.color="#a85c00";
-
-    }
-
-    else{
-
-        el.style.background="#ffd7d7";
-        el.style.color="#a42e2e";
+    if (level === "LOW" || level === "FINE") {
+        el.classList.add("badge-continue");
+    } else if (level === "MEDIUM") {
+        el.classList.add("badge-slow");
+    } else if (level === "HIGH") {
+        el.classList.add("badge-stop");
+    } else if (level === "CRITICAL") {
+        el.classList.add("badge-brake");
+    } else {
+        el.classList.add("badge-uncertain");
     }
 }
 
+function setStatus(status, event, risk, distanceM = null, closingSpeedKmh = null) {
+    const statusEl = document.getElementById("status");
+    const eventEl = document.getElementById("event");
+    const targetSpeedEl = document.getElementById("target-speed");
+    const priorityEl = document.getElementById("priority");
+    const ttcEl = document.getElementById("ttc-val");
+    const stopDistEl = document.getElementById("stop-dist-val");
+    const rationaleEl = document.getElementById("brain-rationale");
 
-function setStatus(
-    status,
-    event,
-    risk
-){
+    const kin = computeBrainKinematics(currentSpeed, distanceM, closingSpeedKmh);
 
-    document.getElementById(
-        "status"
-    ).textContent=status;
+    // Normalize Action
+    let act = status.toUpperCase().replace(/\s+/g, "_");
+    if (act === "DRIVING" || act === "RESUMING") act = "CONTINUE";
+    if (act === "DETECTING" || act === "MANOEUVRING") act = "SLOW_DOWN";
+    if (act === "AVOIDING_LEFT") act = "MOVE_LEFT";
+    if (act === "AVOIDING_RIGHT") act = "MOVE_RIGHT";
 
-    document.getElementById(
-        "event"
-    ).textContent=event;
+    // Normalize Risk
+    let riskLevel = risk ? risk.toUpperCase() : "LOW";
+    if (riskLevel === "FINE") riskLevel = "LOW";
 
-    setRisk(risk);
+    if (statusEl) {
+        statusEl.textContent = act.replace("_", " ");
+        statusEl.className = "badge";
+        if (act.includes("CONTINUE")) statusEl.classList.add("badge-continue");
+        else if (act.includes("SLOW") || act.includes("MOVE")) statusEl.classList.add("badge-slow");
+        else if (act.includes("BRAKE")) statusEl.classList.add("badge-brake");
+        else if (act.includes("STOP")) statusEl.classList.add("badge-stop");
+        else statusEl.classList.add("badge-swerve");
+    }
+
+    if (eventEl) eventEl.textContent = event.toUpperCase();
+    if (targetSpeedEl) targetSpeedEl.textContent = Math.round(targetSpeed);
+    setRisk(riskLevel);
+
+    let priority = "P1";
+    if (riskLevel === "CRITICAL" || act.includes("STOP")) priority = "P5";
+    else if (riskLevel === "HIGH" || act.includes("BRAKE")) priority = "P4";
+    else if (riskLevel === "MEDIUM" || act.includes("SLOW")) priority = "P3";
+    else if (act.includes("MOVE")) priority = "P2";
+    if (priorityEl) priorityEl.textContent = priority;
+
+    if (ttcEl) {
+        ttcEl.textContent = kin.ttcSeconds ? `${kin.ttcSeconds}s` : "Safe";
+        ttcEl.style.color = (kin.ttcSeconds && parseFloat(kin.ttcSeconds) < 2.0) ? "#ef4444" : "#0284c7";
+    }
+
+    if (stopDistEl) {
+        stopDistEl.textContent = `${kin.totalStoppingDistM}m`;
+    }
+
+    // Generate explainable Brain rationale
+    if (rationaleEl) {
+        let reason = "";
+        const evtUpper = event.toUpperCase();
+        if (evtUpper.includes("CLEAR")) {
+            reason = "No roadway hazards detected. The vehicle can continue cruising safely.";
+        } else if (evtUpper.includes("HUMAN") || evtUpper.includes("PEDESTRIAN")) {
+            reason = `Pedestrian detected crossing front lane. Time-to-Collision is critical (${kin.ttcSeconds || '0.6'}s). Executing automated STOP.`;
+        } else if (evtUpper.includes("ANIMAL")) {
+            reason = `Animal hazard detected in roadway corridor. Emergency braking initiated to prevent collision.`;
+        } else if (evtUpper.includes("OBSTRUCTION") || evtUpper.includes("OBSTACLE")) {
+            reason = `Static obstruction detected ahead. Executing lateral evasive lane change into clear lane.`;
+        } else if (evtUpper.includes("COLLISION") || evtUpper.includes("BRAKING")) {
+            reason = `Rapidly decelerating lead vehicle detected ahead. Active braking engaged to preserve safety buffer.`;
+        } else if (evtUpper.includes("RAIN") || evtUpper.includes("STORM")) {
+            reason = `Adverse weather conditions detected (friction: 0.55). Speed reduced to maintain safe stopping margins.`;
+        } else if (evtUpper.includes("LANE BLOCKED")) {
+            reason = `Swerve conflict: destination lane is blocked by another vehicle. Aborting lane change; slowing down in-lane.`;
+        } else {
+            reason = `${evtUpper} detected. Risk level is ${riskLevel}. Brain recommended action: ${act.replace("_", " ")}.`;
+        }
+        rationaleEl.textContent = reason;
+    }
 }
+
 
 
 function updateLaneUI(){
@@ -2764,6 +2905,9 @@ function tryReturnToOriginal(){
    SPEED
 ========================================================= */
 
+let cachedSpeedEl = null;
+let lastDisplayedSpeed = -1;
+
 function updateSpeed(delta){
 
     currentSpeed +=
@@ -2771,19 +2915,22 @@ function updateSpeed(delta){
             targetSpeed-currentSpeed
         ) *
         Math.min(
-            delta*3,
+            delta*3.5,
             1
         );
 
-
-    document.getElementById(
-        "speed"
-    ).textContent =
-        Math.max(
-            0,
-            Math.round(currentSpeed)
-        );
+    const intSpeed = Math.max(0, Math.round(currentSpeed));
+    if (intSpeed !== lastDisplayedSpeed) {
+        lastDisplayedSpeed = intSpeed;
+        if (!cachedSpeedEl) {
+            cachedSpeedEl = document.getElementById("speed");
+        }
+        if (cachedSpeedEl) {
+            cachedSpeedEl.textContent = intSpeed;
+        }
+    }
 }
+
 
 
 /* =========================================================
@@ -2978,7 +3125,7 @@ function updateRain(delta){
 
 
 /* =========================================================
-   PEDESTRIAN
+   PEDESTRIAN SCENARIO (BRAIN.PY INTEGRATED)
 ========================================================= */
 
 function updatePedestrian(delta){
@@ -2988,19 +3135,10 @@ function updatePedestrian(delta){
     }
 
     /*
-        Pedestrian moves independently of the car.
-        This means the pedestrian keeps walking even
-        when the smart car is completely stopped.
+        Pedestrian moves independently across the road.
     */
-
     pedestrian.position.z +=
-        1.5 *
-        delta;
-
-    /*
-        Pedestrian crosses the road.
-        Right side → left side.
-    */
+        1.5 * delta;
 
     pedestrian.position.x -=
         delta * 1.8;
@@ -3011,535 +3149,252 @@ function updatePedestrian(delta){
         ) * .04;
 }
 
+function updateHumanScenario(delta){
+
+    scenarioTime += delta;
+    updatePedestrian(delta);
+
+    if(!pedestrian){
+        return;
+    }
+
+    const distZ = Math.max(0.1, 15 - pedestrian.position.z);
+    const inCorridor = pedestrian.position.x > -6.0 && pedestrian.position.x < 6.0;
+
+    if (scenarioTime < 1.5) {
+        targetSpeed = 30;
+        setStatus("DETECTING", "PEDESTRIAN", "MEDIUM", distZ, currentSpeed);
+        return;
+    }
+
+    if (scenarioTime < 3.5 || (inCorridor && distZ < 12)) {
+        targetSpeed = 0;
+        setStatus("STOP", "PEDESTRIAN CROSSING", "HIGH", distZ, currentSpeed);
+        return;
+    }
+
+    if (pedestrian.position.x <= -6.0 || pedestrian.position.z >= 14) {
+        targetSpeed = 40;
+        setStatus("RESUMING", "PEDESTRIAN CLEAR", "LOW");
+        showMessage("✓ Pedestrian cleared — resuming safely");
+        pedestrian.position.x = -25;
+        return;
+    }
+
+    if (scenarioTime < 20) {
+        targetSpeed = 45;
+        setStatus("DRIVING", "ROAD CLEAR", "LOW");
+        return;
+    }
+
+    finishScenario();
+}
+
 /* =========================================================
-   ANIMAL SCENARIO
+   ANIMAL SCENARIO (BRAIN.PY INTEGRATED)
 ========================================================= */
 
 function updateAnimalScenario(delta){
 
     scenarioTime += delta;
-
-    /*
-        Animal continues moving even when
-        the smart car has stopped.
-    */
-
     updateAnimal(delta);
 
+    if(!animal){
+        return;
+    }
 
-    /*
-        DETECTION
-    */
+    const distZ = Math.max(0.1, 14 - animal.position.z);
 
     if(
         scenarioTime < 1.5
     ){
-
         targetSpeed = 30;
-
-        setStatus(
-            "DETECTING",
-            "ANIMAL",
-            "MEDIUM"
-        );
-
+        setStatus("DETECTING", "ANIMAL", "MEDIUM", distZ, currentSpeed);
         return;
     }
 
-
-    /*
-        BRAKING
-    */
-
     if(
-        scenarioTime < 3
+        scenarioTime < 3.5 || (animal.position.x > -7 && animal.position.z < 12)
     ){
-
         targetSpeed = 0;
-
-        setStatus(
-            "BRAKING",
-            "ANIMAL",
-            "HIGH"
-        );
-
+        setStatus("STOP", "ANIMAL CROSSING", "HIGH", distZ, currentSpeed);
         return;
     }
 
-
-    /*
-        STOP COMPLETELY WHILE ANIMAL
-        IS STILL IN THE ROAD
-    */
-
     if(
-        animal &&
-        animal.position.x > -7 &&
-        animal.position.z < 12
+        animal.position.x <= -7 || animal.position.z >= 12
     ){
-
-        targetSpeed = 0;
-
-        setStatus(
-            "STOPPED",
-            "ANIMAL CROSSING",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    /*
-        ANIMAL IS OUT OF THE ROAD / OUT OF SIGHT
-        ONLY NOW CAN THE CAR MOVE AGAIN.
-    */
-
-    if(
-        animal &&
-        (
-            animal.position.x <= -7 ||
-            animal.position.z >= 12
-        )
-    ){
-
         targetSpeed = 35;
-
-        setStatus(
-            "RESUMING",
-            "ANIMAL CLEAR",
-            "LOW"
-        );
-
-        showMessage(
-            "✓ Animal cleared — resuming safely"
-        );
-
-        /*
-            Prevent the animal from affecting
-            the car again.
-        */
-
+        setStatus("RESUMING", "ANIMAL CLEAR", "LOW");
+        showMessage("✓ Animal cleared — resuming safely");
         animal.position.x = -20;
-
         return;
     }
-
-
-    /*
-        NORMAL RESUMPTION
-    */
 
     if(
         scenarioTime < 20
     ){
-
-        targetSpeed = 35;
-
-        setStatus(
-            "DRIVING",
-            "ANIMAL CLEAR",
-            "LOW"
-        );
-
+        targetSpeed = 40;
+        setStatus("DRIVING", "ANIMAL CLEAR", "LOW");
         return;
     }
-
 
     finishScenario();
 }
 
+
 /* =========================================================
-   OBSTACLE SCENARIO
+   OBSTACLE SCENARIO (BRAIN.PY CONTINUOUS RISK LOGIC)
 ========================================================= */
 
+
 function updateObstacleScenario(delta){
-
-    scenarioTime += delta;
-
 
     if(!obstacle){
         return;
     }
 
-
-    /*
-        Obstacle moves toward smart car.
-    */
-
+    // Move obstacle along road relative to car velocity
     obstacle.position.z +=
         currentSpeed *
         delta *
         0.12;
 
+    const distZ = Math.max(0.1, -obstacle.position.z);
+    const dx = obstacle.position.x - smartCar.position.x;
+    const inHostLane = Math.abs(dx) < 2.2;
+    const kin = computeBrainKinematics(currentSpeed, distZ, currentSpeed);
+    const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
 
-    if(
-        scenarioTime<2
-    ){
-
-        targetSpeed=27;
-
-        setStatus(
-            "DETECTING",
-            "OBSTRUCTION",
-            "MEDIUM"
-        );
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<3.5
-    ){
-
-        targetSpeed=7;
-
-        setStatus(
-            "BRAKING",
-            "OBSTRUCTION",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<6
-    ){
-
-        if(
-            !laneChanging &&
-            !avoidanceLocked
-        ){
-
-            if(
-                beginLaneChange()
-            ){
-
-                showMessage(
-                    "↪ Obstacle detected — alternate lane verified"
-                );
-            }
+    // Obstacle has been completely passed
+    if (obstacle.position.z > 4.0) {
+        if (!laneChanging && currentLane !== originalLane) {
+            tryReturnToOriginal();
         }
-
-
-        if(laneChanging){
-
-            updateLaneChange(delta);
-
-            targetSpeed=16;
-
-            setStatus(
-                "EVASIVE",
-                "OBSTRUCTION",
-                "HIGH"
-            );
-
-        }
-
-        else if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=0;
-
-            setStatus(
-                "STOPPED",
-                "NO SAFE LANE",
-                "HIGH"
-            );
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<11
-    ){
-
-        if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=5;
-
-            setStatus(
-                "BRAKING",
-                "VEHICLE IN LANE",
-                "HIGH"
-            );
-
-        }
-
-        else{
-
-            targetSpeed=29;
-
-            setStatus(
-                "AVOIDING",
-                "OBSTRUCTION",
-                "LOW"
-            );
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<16
-    ){
-
-        if(!laneChanging){
-
-            if(
-                tryReturnToOriginal()
-            ){
-
-                targetSpeed=35;
-
-                setStatus(
-                    "RESUMING",
-                    "SAFE ROAD",
-                    "LOW"
-                );
-
-            }
-
-            else{
-
-                targetSpeed=22;
-
-                setStatus(
-                    "CAUTIOUS",
-                    "WAITING FOR LANE",
-                    "LOW"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
+        if (laneChanging) {
             updateLaneChange(delta);
         }
-
+        targetSpeed = 50.0;
+        setStatus("CONTINUE", "OBSTACLE CLEARED", "LOW");
+        if (obstacle.position.z > 20.0) {
+            finishScenario();
+        }
         return;
     }
 
+    if (inHostLane) {
+        // Obstacle is in host driving path
+        if (ttc < 1.4 || distZ < 6.5) {
+            // Imminent emergency collision
+            targetSpeed = 0.0;
+            setStatus("STOP", "OBSTRUCTION IMMINENT", "HIGH", distZ, currentSpeed);
+        } else if (distZ <= 26.0) {
+            // Evaluates Brain Lateral Swerve Clearance
+            const safeLane = findSafeLane();
+            if (safeLane !== null && !laneChanging && !avoidanceLocked) {
+                beginLaneChange();
+                showMessage("↪ Obstacle detected — executing evasive lane change");
+            }
 
-    finishScenario();
+            if (laneChanging) {
+                updateLaneChange(delta);
+                targetSpeed = 28.0;
+                const actName = targetLane === LEFT ? "MOVE_LEFT" : "MOVE_RIGHT";
+                setStatus(actName, "AVOIDING OBSTACLE", "MEDIUM", distZ, currentSpeed);
+            } else if (safeLane === null) {
+                // Swerve conflict (lateral lanes blocked)
+                targetSpeed = Math.max(0.0, currentSpeed - delta * 20);
+                setStatus("BRAKE", "LATERAL LANES BLOCKED", "HIGH", distZ, currentSpeed);
+            } else {
+                targetSpeed = 22.0;
+                setStatus("SLOW_DOWN", "OBSTRUCTION AHEAD", "MEDIUM", distZ, currentSpeed);
+            }
+        } else {
+            // Far distance warning
+            targetSpeed = 45.0;
+            setStatus("CONTINUE", "OBSTRUCTION MONITORED", "LOW", distZ, currentSpeed);
+        }
+    } else {
+        // Host vehicle has cleared into adjacent lane
+        if (laneChanging) {
+            updateLaneChange(delta);
+        }
+        targetSpeed = 40.0;
+        setStatus("CONTINUE", "NAVIGATING AROUND OBSTACLE", "LOW", distZ, currentSpeed);
+    }
 }
 
 
 /* =========================================================
-   COLLISION SCENARIO
+   COLLISION SCENARIO (BRAIN.PY CONTINUOUS TTC & RISK)
 ========================================================= */
 
 function updateCollisionScenario(delta){
 
-    scenarioTime += delta;
+    // Find lead traffic vehicle in front of host car
+    const leadCar = traffic.find(c => c.lane === currentLane && c.mesh.position.z < smartCar.position.z);
+    const distZ = leadCar ? Math.max(0.1, Math.abs(leadCar.mesh.position.z - smartCar.position.z)) : 999.0;
+    const relSpeed = leadCar ? Math.max(8.0, currentSpeed - leadCar.speed) : currentSpeed;
+    const kin = computeBrainKinematics(currentSpeed, distZ, relSpeed);
+    const ttc = kin.ttcSeconds ? parseFloat(kin.ttcSeconds) : 999.0;
 
-
-    if(
-        scenarioTime<2
-    ){
-
-        targetSpeed=28;
-
-        setStatus(
-            "PREDICTING",
-            "COLLISION",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<3.5
-    ){
-
-        targetSpeed=3;
-
-        setStatus(
-            "EMERGENCY BRAKE",
-            "COLLISION",
-            "HIGH"
-        );
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<6
-    ){
-
-        if(
-            !laneChanging &&
-            !avoidanceLocked
-        ){
-
-            if(
-                beginLaneChange()
-            ){
-
-                showMessage(
-                    "↪ Collision avoided — safe lane selected"
-                );
-            }
+    if (distZ < 7.0 || ttc < 1.2) {
+        // Critical TTC: Emergency Braking
+        targetSpeed = 0.0;
+        setStatus("BRAKE", "IMMINENT COLLISION", "CRITICAL", distZ, relSpeed);
+    } else if (distZ < 18.0 || ttc < 2.6) {
+        // High Risk: Evaluate safe evasive overtake
+        const safeLane = findSafeLane();
+        if (safeLane !== null && !laneChanging && !avoidanceLocked) {
+            beginLaneChange();
+            showMessage("↪ Lead vehicle deceleration — evasive overtake initiated");
         }
 
-
-        if(laneChanging){
-
+        if (laneChanging) {
             updateLaneChange(delta);
-
-            targetSpeed=14;
-
-            setStatus(
-                "EVASIVE",
-                "COLLISION",
-                "HIGH"
-            );
-
+            targetSpeed = Math.max(20.0, currentSpeed * 0.7);
+            const actName = targetLane === LEFT ? "MOVE_LEFT" : "MOVE_RIGHT";
+            setStatus(actName, "EVASIVE OVERTAKE", "HIGH", distZ, relSpeed);
+        } else {
+            targetSpeed = Math.max(8.0, currentSpeed * 0.4);
+            setStatus("BRAKE", "DECELERATING LEAD VEHICLE", "HIGH", distZ, relSpeed);
         }
-
-        else{
-
-            targetSpeed=0;
-
-            setStatus(
-                "STOPPED",
-                "NO SAFE LANE",
-                "HIGH"
-            );
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<11
-    ){
-
-        if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=5;
-
-            setStatus(
-                "BRAKING",
-                "VEHICLE DETECTED",
-                "HIGH"
-            );
-
-        }
-
-        else{
-
-            targetSpeed=29;
-
-            setStatus(
-                "AVOIDING",
-                "DANGER PASSED",
-                "LOW"
-            );
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<16
-    ){
-
-        if(!laneChanging){
-
-            if(
-                tryReturnToOriginal()
-            ){
-
-                targetSpeed=35;
-
-                setStatus(
-                    "RESUMING",
-                    "SAFE ROAD",
-                    "LOW"
-                );
-
-            }
-
-            else{
-
-                targetSpeed=22;
-
-                setStatus(
-                    "CAUTIOUS",
-                    "WAITING FOR LANE",
-                    "LOW"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
+    } else if (distZ < 30.0 || ttc < 4.5) {
+        targetSpeed = Math.max(25.0, currentSpeed * 0.75);
+        setStatus("SLOW_DOWN", "FOLLOWING TRAFFIC", "MEDIUM", distZ, relSpeed);
+    } else {
+        if (laneChanging) {
             updateLaneChange(delta);
         }
-
-        return;
+        targetSpeed = 50.0;
+        setStatus("CONTINUE", "SAFE FOLLOWING DISTANCE", "LOW", distZ, relSpeed);
     }
-
-
-    finishScenario();
 }
 
 
 /* =========================================================
-   WEATHER SCENARIO
+   WEATHER SCENARIO (BRAIN.PY DEGRADED SENSORS)
 ========================================================= */
 
 function updateWeatherScenario(){
 
-    if(
-        activeScenario==="rain"
-    ){
+    const isStorm = (activeScenario === "storm");
+    const targetKmh = isStorm ? 20.0 : 28.0;
+    targetSpeed = targetKmh;
 
-        targetSpeed=26;
-
-        setStatus(
-            "CAUTIOUS",
-            "HEAVY RAIN",
-            "MEDIUM"
-        );
-
-    }
-
-    else{
-
-        targetSpeed=17;
-
-        setStatus(
-            "CAUTION",
-            "SEVERE STORM",
-            "HIGH"
-        );
-    }
+    const eventName = isStorm ? "SEVERE STORM (SENSORS DEGRADED)" : "HEAVY RAIN (REDUCED FRICTION)";
+    setStatus(
+        "SLOW_DOWN",
+        eventName,
+        "UNCERTAIN"
+    );
 }
 
 
 /* =========================================================
    FINISH SCENARIO
 ========================================================= */
+
 
 function finishScenario(){
 
@@ -3724,12 +3579,10 @@ function startScenario(scenario){
 
 
         showWeather("rain");
-
-
         setStatus(
-            "CAUTIOUS",
-            "HEAVY RAIN",
-            "MEDIUM"
+            "SLOW_DOWN",
+            "HEAVY RAIN (REDUCED FRICTION)",
+            "UNCERTAIN"
         );
     }
 
@@ -3739,26 +3592,22 @@ function startScenario(scenario){
     ){
 
         rain.visible=true;
-
         rain.material.opacity=.95;
-
 
         scene.background =
             new THREE.Color(
                 0x414d5b
             );
 
-
         showWeather("storm");
-
-
         setStatus(
-            "CAUTION",
-            "SEVERE STORM",
-            "HIGH"
+            "SLOW_DOWN",
+            "SEVERE STORM (SENSORS DEGRADED)",
+            "UNCERTAIN"
         );
     }
 }
+
 
 
 /* =========================================================

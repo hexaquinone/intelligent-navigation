@@ -5,7 +5,8 @@
 
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Tuple
+
 
 
 # ------------------------------------------
@@ -200,10 +201,49 @@ class Decision:
     def __getitem__(self, item: str) -> Any:
         return self.to_dict()[item]
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Provides dictionary-compatible .get() support."""
+        return self.to_dict().get(key, default)
+
+    def keys(self):
+        return self.to_dict().keys()
+
 
 # ------------------------------------------
 # HELPER KINEMATIC & TTC FUNCTIONS
 # ------------------------------------------
+
+@dataclass
+class KinematicsTelemetry:
+    """Detailed vehicle stopping physics and safety buffer metrics."""
+    speed_ms: float
+    reaction_dist_m: float
+    braking_dist_m: float
+    total_stopping_dist_m: float
+    required_decel_ms2: Optional[float] = None
+    safety_margin_m: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "speed_ms": self.speed_ms,
+            "reaction_dist_m": self.reaction_dist_m,
+            "braking_dist_m": self.braking_dist_m,
+            "total_stopping_dist_m": self.total_stopping_dist_m,
+            "required_decel_ms2": self.required_decel_ms2,
+            "safety_margin_m": self.safety_margin_m
+        }
+
+    def __getitem__(self, item: str) -> Any:
+        return self.to_dict()[item]
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Provides dictionary-compatible .get() support."""
+        return self.to_dict().get(key, default)
+
+    def keys(self):
+        return self.to_dict().keys()
+
+
 
 def calculate_ttc(distance: Optional[float], closing_speed_kmh: Optional[float]) -> Optional[float]:
     """
@@ -216,6 +256,46 @@ def calculate_ttc(distance: Optional[float], closing_speed_kmh: Optional[float])
     if closing_speed_ms <= 0.1:
         return None
     return round(distance / closing_speed_ms, 2)
+
+
+def compute_kinematics(
+    ego_speed_kmh: float,
+    distance_m: Optional[float] = None,
+    closing_speed_kmh: Optional[float] = None,
+    t_reaction: float = 1.2,
+    mu: float = 0.75
+) -> KinematicsTelemetry:
+    """
+    Computes physics-based stopping distance, required deceleration, and safety margin.
+    - d_reaction = v * t_reaction
+    - d_braking = v^2 / (2 * mu * g)
+    - total_stopping_dist = d_reaction + d_braking
+    - safety_margin = distance_m - total_stopping_dist
+    """
+    v_ms = ego_speed_kmh / 3.6
+    g = 9.81
+    d_reaction = v_ms * t_reaction
+    d_braking = (v_ms ** 2) / (2 * mu * g)
+    total_stopping_dist = d_reaction + d_braking
+
+    req_decel = None
+    safety_margin = None
+
+    if distance_m is not None and distance_m > 0:
+        closing_v_ms = (closing_speed_kmh / 3.6) if closing_speed_kmh is not None else v_ms
+        if closing_v_ms > 0:
+            req_decel = round((closing_v_ms ** 2) / (2 * distance_m), 2)
+        safety_margin = round(distance_m - total_stopping_dist, 1)
+
+    return KinematicsTelemetry(
+        speed_ms=round(v_ms, 1),
+        reaction_dist_m=round(d_reaction, 1),
+        braking_dist_m=round(d_braking, 1),
+        total_stopping_dist_m=round(total_stopping_dist, 1),
+        required_decel_ms2=req_decel,
+        safety_margin_m=safety_margin
+    )
+
 
 
 # ------------------------------------------
@@ -649,6 +729,113 @@ def evaluate_lane_departure_safety(
                 target_speed_kmh=max(15.0, ego_state.speed_kmh * 0.6),
                 metadata={"lane_offset_px": offset, "assist": "lane_keeping_blocked"}
             )
+
+
+@dataclass
+class SectorOccupancy:
+    """Classifies roadway sectors around host vehicle into occupancy status."""
+    left_hazards: List[HazardEvent] = field(default_factory=list)
+    front_hazards: List[HazardEvent] = field(default_factory=list)
+    right_hazards: List[HazardEvent] = field(default_factory=list)
+    is_left_clear: bool = True
+    is_front_clear: bool = True
+    is_right_clear: bool = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "left_hazards": self.left_hazards,
+            "front_hazards": self.front_hazards,
+            "right_hazards": self.right_hazards,
+            "is_left_clear": self.is_left_clear,
+            "is_front_clear": self.is_front_clear,
+            "is_right_clear": self.is_right_clear
+        }
+
+    def __getitem__(self, item: str) -> Any:
+        return self.to_dict()[item]
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Provides dictionary-compatible .get() support."""
+        return self.to_dict().get(key, default)
+
+    def keys(self):
+        return self.to_dict().keys()
+
+
+
+def get_sector_occupancy(hazards: List[HazardEvent]) -> SectorOccupancy:
+    """Categorizes active hazards into left, front, and right roadway sectors."""
+    left = [h for h in hazards if getattr(h.position, "value", str(h.position)).lower() == "left" and "clear" not in getattr(h.type, "value", str(h.type)).lower()]
+    front = [h for h in hazards if getattr(h.position, "value", str(h.position)).lower() == "front" and "clear" not in getattr(h.type, "value", str(h.type)).lower()]
+    right = [h for h in hazards if getattr(h.position, "value", str(h.position)).lower() == "right" and "clear" not in getattr(h.type, "value", str(h.type)).lower()]
+    return SectorOccupancy(
+        left_hazards=left,
+        front_hazards=front,
+        right_hazards=right,
+        is_left_clear=len(left) == 0,
+        is_front_clear=len(front) == 0,
+        is_right_clear=len(right) == 0
+    )
+
+
+def evaluate_scene(
+    hazards: List[Union[Dict[str, Any], HazardEvent]],
+    ego_state: Optional[Union[Dict[str, Any], EgoState]] = None,
+    lane_info: Any = None,
+    radar_hazards: Optional[List[HazardEvent]] = None,
+    lidar_hazards: Optional[List[HazardEvent]] = None
+) -> Tuple[Decision, KinematicsTelemetry, SectorOccupancy]:
+    """
+    Unified high-level Brain evaluation interface:
+    1. Normalizes hazard events and ego state.
+    2. Runs multi-sensor fusion or multi-hazard arbitration.
+    3. Evaluates lane keeping safety if lane drift is active.
+    4. Computes kinematic stopping metrics and sector occupancy.
+    Returns: (decision, kinematics, sector_occupancy)
+    """
+    if ego_state is None:
+        ego = EgoState()
+    elif isinstance(ego_state, dict):
+        ego = EgoState(
+            speed_kmh=ego_state.get("speed_kmh", 40.0),
+            lane=ego_state.get("lane", "center"),
+            sensor_status=SensorStatus.from_value(ego_state.get("sensor_status", "active"))
+        )
+    else:
+        ego = ego_state
+
+    # Normalize hazards
+    norm_hazards = [
+        HazardEvent.from_dict(h) if isinstance(h, dict) else h
+        for h in hazards
+    ]
+
+    # Check for multi-sensor fusion
+    if radar_hazards or lidar_hazards:
+        decision = fuse_sensor_streams(norm_hazards, radar_hazards=radar_hazards, lidar_hazards=lidar_hazards, ego_state=ego)
+    else:
+        decision = make_decisions(norm_hazards, ego)
+
+    # Check for lane keeping assistance override if nominal continue
+    if lane_info is not None and getattr(lane_info, "departure_warning", False) and decision.action in [Action.CONTINUE.value, Action.MAINTAIN_SPEED.value]:
+        lane_decision = evaluate_lane_departure_safety(lane_info, norm_hazards, ego)
+        if lane_decision is not None:
+            decision = lane_decision
+
+    # Primary hazard for forward kinematics
+    front_hazards = [h for h in norm_hazards if getattr(h.position, "value", str(h.position)).lower() == "front" and "clear" not in getattr(h.type, "value", str(h.type)).lower()]
+    primary_hazard = front_hazards[0] if front_hazards else (norm_hazards[0] if norm_hazards else HazardEvent(type=HazardType.CLEAR))
+
+    kinematics = compute_kinematics(
+        ego_speed_kmh=ego.speed_kmh,
+        distance_m=primary_hazard.distance,
+        closing_speed_kmh=primary_hazard.relative_speed_kmh
+    )
+
+    sectors = get_sector_occupancy(norm_hazards)
+
+    return decision, kinematics, sectors
+
 
 
 # ==========================================
