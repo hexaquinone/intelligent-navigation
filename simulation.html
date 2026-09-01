@@ -1,0 +1,4259 @@
+<!-- simulation.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Road Safety Simulation</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Inter,Arial,sans-serif;
+    background:#87ceeb;
+}
+
+#app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    overflow:hidden;
+}
+
+#canvas{
+    position:absolute;
+    inset:0;
+}
+
+canvas{
+    display:block;
+}
+
+
+/* =========================================================
+   TOP TITLE
+========================================================= */
+
+#title{
+    position:absolute;
+    top:16px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 25px;
+    border-radius:30px;
+    background:rgba(255,255,255,.94);
+    color:#26313a;
+    font-size:17px;
+    font-weight:800;
+    letter-spacing:.2px;
+    box-shadow:0 10px 35px rgba(0,0,0,.18);
+    z-index:20;
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   LEFT TELEMETRY
+========================================================= */
+
+#telemetry{
+    position:absolute;
+    left:18px;
+    top:18px;
+    width:245px;
+    padding:18px;
+    border-radius:20px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 12px 40px rgba(0,0,0,.18);
+    backdrop-filter:blur(12px);
+    z-index:20;
+}
+
+.telemetry-title{
+    font-size:16px;
+    font-weight:800;
+    margin-bottom:15px;
+}
+
+.row{
+    margin-bottom:12px;
+}
+
+.label{
+    font-size:8px;
+    color:#8b9299;
+    font-weight:700;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+}
+
+.value{
+    margin-top:4px;
+    font-size:14px;
+    color:#29313a;
+    font-weight:750;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:4px;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:10px;
+    font-weight:850;
+}
+
+
+/* =========================================================
+   RIGHT CONTROL PANEL
+========================================================= */
+
+#controls{
+    position:absolute;
+    right:18px;
+    top:18px;
+    width:255px;
+    padding:17px;
+    border-radius:20px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 12px 40px rgba(0,0,0,.18);
+    backdrop-filter:blur(12px);
+    z-index:20;
+}
+
+.control-title{
+    font-size:16px;
+    font-weight:800;
+    color:#29313a;
+    margin-bottom:13px;
+}
+
+button{
+    width:100%;
+    border:none;
+    padding:10px 12px;
+    margin-bottom:7px;
+    border-radius:11px;
+    background:#eef2f5;
+    color:#303840;
+    font-size:11px;
+    font-weight:750;
+    cursor:pointer;
+    transition:.15s ease;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    background:#dfe7ed;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+#reset{
+    background:#29313a;
+    color:white;
+}
+
+
+/* =========================================================
+   WEATHER WARNING
+========================================================= */
+
+#weather{
+    position:absolute;
+    top:170px;
+    right:292px;
+    width:310px;
+    padding:17px;
+    border-radius:19px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 15px 45px rgba(0,0,0,.22);
+    z-index:25;
+    opacity:0;
+    transform:translateX(20px);
+    pointer-events:none;
+    transition:.3s;
+}
+
+#weather.show{
+    opacity:1;
+    transform:translateX(0);
+}
+
+#weatherIcon{
+    font-size:30px;
+}
+
+#weatherTitle{
+    font-size:17px;
+    font-weight:850;
+    margin-top:4px;
+}
+
+#weatherText{
+    margin-top:7px;
+    color:#626b73;
+    font-size:11px;
+    line-height:1.5;
+}
+
+#weatherSpeed{
+    display:inline-block;
+    margin-top:11px;
+    padding:7px 11px;
+    border-radius:15px;
+    background:#fff0ce;
+    color:#946000;
+    font-size:10px;
+    font-weight:850;
+}
+
+
+/* =========================================================
+   EVENT MESSAGE
+========================================================= */
+
+#message{
+    position:absolute;
+    bottom:34px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    padding:11px 20px;
+    border-radius:25px;
+    background:rgba(24,29,34,.93);
+    color:white;
+    font-size:12px;
+    font-weight:750;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
+    z-index:30;
+    opacity:0;
+    transition:.25s;
+    white-space:nowrap;
+}
+
+#message.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+
+
+/* =========================================================
+   CAMERA HINT
+========================================================= */
+
+#hint{
+    position:absolute;
+    bottom:12px;
+    right:18px;
+    color:rgba(255,255,255,.8);
+    font-size:9px;
+    z-index:10;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div id="app">
+
+<div id="canvas"></div>
+
+<div id="title">
+    🚗 AI ROAD SAFETY • PREDICT • PREVENT • PROTECT
+</div>
+
+
+<div id="telemetry">
+
+    <div class="telemetry-title">
+        Vehicle Telemetry
+    </div>
+
+    <div class="row">
+        <div class="label">Vehicle</div>
+        <div class="value">SMART-CAR 01</div>
+    </div>
+
+    <div class="row">
+        <div class="label">Speed</div>
+        <div class="value">
+            <span id="speed">40</span> km/h
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Lane</div>
+        <div class="value" id="lane">
+            RIGHT LANE
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Risk Level</div>
+        <div>
+            <span class="badge" id="risk">FINE</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Detected Event</div>
+        <div class="value" id="event">
+            CLEAR
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">AI Status</div>
+        <div>
+            <span class="badge" id="status">
+                DRIVING
+            </span>
+        </div>
+    </div>
+
+</div>
+
+
+<div id="controls">
+
+    <div class="control-title">
+        🛡️ Prevention Scenarios
+    </div>
+
+    <button onclick="startScenario('human')">
+        🧍 Pedestrian Crossing
+    </button>
+
+    <button onclick="startScenario('animal')">
+        🐕 Animal Crossing
+    </button>
+
+    <button onclick="startScenario('obstacle')">
+        🚧 Road Obstruction
+    </button>
+
+    <button onclick="startScenario('collision')">
+        🚗 Collision Risk
+    </button>
+
+    <button onclick="startScenario('rain')">
+        🌧️ Heavy Rain
+    </button>
+
+    <button onclick="startScenario('storm')">
+        ⛈️ Severe Storm
+    </button>
+
+    <button id="reset" onclick="resetSimulation()">
+        ↻ Reset Simulation
+    </button>
+
+</div>
+
+
+<div id="weather">
+
+    <div id="weatherIcon"></div>
+
+    <div id="weatherTitle"></div>
+
+    <div id="weatherText"></div>
+
+    <div id="weatherSpeed"></div>
+
+</div>
+
+
+<div id="message"></div>
+
+<div id="hint">
+    Drag to rotate camera • Scroll to zoom
+</div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+
+<script>
+
+/* =========================================================
+   SCENE
+========================================================= */
+
+const scene = new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0x91d8ff);
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+const camera =
+    new THREE.PerspectiveCamera(
+        52,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+
+camera.position.set(
+    10,
+    7.5,
+    18
+);
+
+
+/* =========================================================
+   RENDERER
+========================================================= */
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias:true
+    });
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio,2)
+);
+
+renderer.shadowMap.enabled=true;
+
+renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+document
+    .getElementById("canvas")
+    .appendChild(renderer.domElement);
+
+
+/* =========================================================
+   LIGHTING
+========================================================= */
+
+const hemisphere =
+    new THREE.HemisphereLight(
+        0xdff5ff,
+        0x597553,
+        2.8
+    );
+
+scene.add(hemisphere);
+
+
+const sunlight =
+    new THREE.DirectionalLight(
+        0xfff4d0,
+        3.4
+    );
+
+sunlight.position.set(
+    -25,
+    35,
+    20
+);
+
+sunlight.castShadow=true;
+
+sunlight.shadow.mapSize.width=2048;
+sunlight.shadow.mapSize.height=2048;
+
+sunlight.shadow.camera.left=-40;
+sunlight.shadow.camera.right=40;
+sunlight.shadow.camera.top=40;
+sunlight.shadow.camera.bottom=-40;
+
+scene.add(sunlight);
+
+
+/* =========================================================
+   SKY SUN
+========================================================= */
+
+const sunMesh =
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            3.5,
+            32,
+            32
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0xffefaa
+        })
+    );
+
+sunMesh.position.set(
+    -30,
+    28,
+    -80
+);
+
+scene.add(sunMesh);
+
+
+/* =========================================================
+   GROUND
+========================================================= */
+
+const ground =
+    new THREE.Mesh(
+        new THREE.PlaneGeometry(
+            500,
+            500
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x83c879,
+            roughness:1
+        })
+    );
+
+ground.rotation.x=-Math.PI/2;
+ground.position.y=-0.12;
+ground.receiveShadow=true;
+
+scene.add(ground);
+
+
+/* =========================================================
+   ROAD
+========================================================= */
+
+const road =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            12,
+            .2,
+            500
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x30343a,
+            roughness:.75,
+            metalness:.05
+        })
+    );
+
+road.receiveShadow=true;
+
+scene.add(road);
+
+
+/* =========================================================
+   ROAD SHOULDERS
+========================================================= */
+
+function addRoadShoulder(x){
+
+    const shoulder =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .8,
+                .035,
+                500
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xb7b9a9,
+                roughness:1
+            })
+        );
+
+    shoulder.position.set(
+        x,
+        .12,
+        0
+    );
+
+    scene.add(shoulder);
+}
+
+addRoadShoulder(-6);
+addRoadShoulder(6);
+
+
+/* =========================================================
+   ROAD EDGE LINES
+========================================================= */
+
+function addRoadLine(x){
+
+    const line =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .16,
+                .06,
+                500
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xffffff
+            })
+        );
+
+    line.position.set(
+        x,
+        .16,
+        0
+    );
+
+    scene.add(line);
+}
+
+addRoadLine(-5.55);
+addRoadLine(5.55);
+
+
+/* =========================================================
+   CENTER DASHES
+========================================================= */
+
+const centerMarkers=[];
+
+for(
+    let z=-250;
+    z<250;
+    z+=8
+){
+
+    const marker =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .12,
+                .06,
+                4
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xffffff
+            })
+        );
+
+    marker.position.set(
+        0,
+        .17,
+        z
+    );
+
+    scene.add(marker);
+
+    centerMarkers.push(marker);
+}
+
+
+/* =========================================================
+   LANE POSITIONS
+========================================================= */
+
+const LEFT=-3;
+const RIGHT=3;
+
+const LANES=[LEFT,RIGHT];
+
+
+/* =========================================================
+   TREE CREATOR
+========================================================= */
+
+function createTree(
+    x,
+    z,
+    scale=1
+){
+
+    const tree =
+        new THREE.Group();
+
+
+    const trunk =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .20,
+                .32,
+                2.4,
+                10
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x795548,
+                roughness:1
+            })
+        );
+
+    trunk.position.y=1.2;
+    trunk.castShadow=true;
+
+    tree.add(trunk);
+
+
+    const foliageMat =
+        new THREE.MeshStandardMaterial({
+            color:0x3e9951,
+            roughness:1
+        });
+
+
+    const lower =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                1.25,
+                16,
+                12
+            ),
+            foliageMat
+        );
+
+    lower.position.y=2.35;
+    lower.castShadow=true;
+
+    tree.add(lower);
+
+
+    const middle =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                1.05,
+                16,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x51a85e,
+                roughness:1
+            })
+        );
+
+    middle.position.set(
+        -.45,
+        3.2,
+        0
+    );
+
+    middle.castShadow=true;
+
+    tree.add(middle);
+
+
+    const top =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .8,
+                16,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x67b96d,
+                roughness:1
+            })
+        );
+
+    top.position.set(
+        .35,
+        3.65,
+        0
+    );
+
+    top.castShadow=true;
+
+    tree.add(top);
+
+
+    tree.position.set(
+        x,
+        0,
+        z
+    );
+
+    tree.scale.setScalar(scale);
+
+    scene.add(tree);
+
+    return tree;
+}
+
+
+const trees=[];
+
+
+/* =========================================================
+   ROAD SIDE TREES
+========================================================= */
+
+for(
+    let z=-10;
+    z>-340;
+    z-=13
+){
+
+    const leftTree =
+        createTree(
+            -8.5-Math.random()*2,
+            z,
+            .75+Math.random()*.45
+        );
+
+    const rightTree =
+        createTree(
+            8.5+Math.random()*2,
+            z-5,
+            .75+Math.random()*.45
+        );
+
+    trees.push(leftTree);
+    trees.push(rightTree);
+}
+
+
+/* =========================================================
+   BUSH CREATOR
+========================================================= */
+
+function createBush(
+    x,
+    z,
+    scale=1
+){
+
+    const bush =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .7,
+                14,
+                10
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x4d9f50,
+                roughness:1
+            })
+        );
+
+    bush.position.set(
+        x,
+        .5,
+        z
+    );
+
+    bush.scale.set(
+        1.4*scale,
+        .8*scale,
+        1.1*scale
+    );
+
+    bush.castShadow=true;
+
+    scene.add(bush);
+}
+
+
+/* =========================================================
+   BUSHES
+========================================================= */
+
+for(
+    let z=-8;
+    z>-320;
+    z-=9
+){
+
+    createBush(
+        -7.2,
+        z,
+        .55+Math.random()*.5
+    );
+
+    createBush(
+        7.2,
+        z-3,
+        .55+Math.random()*.5
+    );
+}
+
+
+/* =========================================================
+   FLOWERS
+========================================================= */
+
+function createFlower(
+    x,
+    z
+){
+
+    const flower =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .09,
+                8,
+                8
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xffe28a
+            })
+        );
+
+    flower.position.set(
+        x,
+        .18,
+        z
+    );
+
+    scene.add(flower);
+}
+
+
+for(
+    let z=-5;
+    z>-300;
+    z-=4
+){
+
+    createFlower(
+        -6.65-Math.random()*.4,
+        z
+    );
+
+    createFlower(
+        6.65+Math.random()*.4,
+        z-1.5
+    );
+}
+
+
+/* =========================================================
+   CLOUDS
+========================================================= */
+
+function createCloud(
+    x,
+    y,
+    z,
+    scale
+){
+
+    const cloud =
+        new THREE.Group();
+
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color:0xffffff,
+            roughness:1
+        });
+
+
+    const parts=[
+        [-1.5,0,0,1],
+        [-.6,.35,0,1.35],
+        [.55,.25,0,1.15],
+        [1.4,0,0,.85]
+    ];
+
+
+    parts.forEach(
+        p=>{
+
+            const puff =
+                new THREE.Mesh(
+                    new THREE.SphereGeometry(
+                        p[3],
+                        16,
+                        12
+                    ),
+                    material
+                );
+
+            puff.position.set(
+                p[0],
+                p[1],
+                p[2]
+            );
+
+            cloud.add(puff);
+        }
+    );
+
+
+    cloud.position.set(
+        x,
+        y,
+        z
+    );
+
+    cloud.scale.setScalar(scale);
+
+    scene.add(cloud);
+
+    return cloud;
+}
+
+
+const clouds=[];
+
+clouds.push(
+    createCloud(-20,17,-60,2.2)
+);
+
+clouds.push(
+    createCloud(20,18,-120,1.8)
+);
+
+clouds.push(
+    createCloud(-24,15,-200,1.6)
+);
+
+clouds.push(
+    createCloud(25,17,-270,2)
+);
+
+
+/* =========================================================
+   MOUNTAINS
+========================================================= */
+
+function createMountain(
+    x,
+    z,
+    height,
+    radius
+){
+
+    const mountain =
+        new THREE.Mesh(
+            new THREE.ConeGeometry(
+                radius,
+                height,
+                7
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x789a80,
+                roughness:1
+            })
+        );
+
+    mountain.position.set(
+        x,
+        height/2-.15,
+        z
+    );
+
+    scene.add(mountain);
+}
+
+
+for(
+    let z=-40;
+    z>-320;
+    z-=45
+){
+
+    createMountain(
+        -22,
+        z,
+        15+Math.random()*8,
+        10+Math.random()*5
+    );
+
+    createMountain(
+        23,
+        z-20,
+        14+Math.random()*9,
+        10+Math.random()*5
+    );
+}
+
+
+/* =========================================================
+   STREET LIGHTS
+========================================================= */
+
+const streetLights=[];
+
+
+function createStreetLight(
+    x,
+    z
+){
+
+    const group =
+        new THREE.Group();
+
+
+    const pole =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .08,
+                .1,
+                4,
+                10
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x596168,
+                metalness:.6,
+                roughness:.4
+            })
+        );
+
+    pole.position.y=2;
+
+    group.add(pole);
+
+
+    const arm =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .8,
+                .08,
+                .08
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x596168
+            })
+        );
+
+    arm.position.set(
+        x<0?.35:-.35,
+        4,
+        0
+    );
+
+    group.add(arm);
+
+
+    const lamp =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .16,
+                12,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xfff0a8,
+                emissive:0xffd85a,
+                emissiveIntensity:1
+            })
+        );
+
+    lamp.position.set(
+        x<0?.7:-.7,
+        3.92,
+        0
+    );
+
+    group.add(lamp);
+
+
+    group.position.set(
+        x,
+        0,
+        z
+    );
+
+    scene.add(group);
+
+    return group;
+}
+
+
+for(
+    let z=-15;
+    z>-300;
+    z-=30
+){
+
+    streetLights.push(
+        createStreetLight(-6.9,z)
+    );
+
+    streetLights.push(
+        createStreetLight(6.9,z-15)
+    );
+}
+
+
+/* =========================================================
+   CAR CREATOR
+========================================================= */
+
+function createCar(
+    color,
+    isPlayer=false
+){
+
+    const car =
+        new THREE.Group();
+
+
+    /* BODY */
+
+    const body =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.75,
+                .58,
+                3.25
+            ),
+            new THREE.MeshStandardMaterial({
+                color:color,
+                roughness:.3,
+                metalness:.15
+            })
+        );
+
+    body.position.y=.57;
+    body.castShadow=true;
+
+    car.add(body);
+
+
+    /* LOWER BODY */
+
+    const lower =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.9,
+                .28,
+                2.8
+            ),
+            new THREE.MeshStandardMaterial({
+                color:color,
+                roughness:.35
+            })
+        );
+
+    lower.position.y=.38;
+
+    car.add(lower);
+
+
+    /* CABIN */
+
+    const cabin =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.35,
+                .67,
+                1.65
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x75c6d9,
+                roughness:.1,
+                metalness:.35,
+                transparent:true,
+                opacity:.9
+            })
+        );
+
+    cabin.position.y=1.02;
+
+    cabin.castShadow=true;
+
+    car.add(cabin);
+
+
+    /* ROOF */
+
+    const roof =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.22,
+                .07,
+                1.48
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x5faabd,
+                roughness:.2
+            })
+        );
+
+    roof.position.y=1.37;
+
+    car.add(roof);
+
+
+    /* WHEELS */
+
+    const wheelGeo =
+        new THREE.CylinderGeometry(
+            .34,
+            .34,
+            .25,
+            20
+        );
+
+    const wheelMat =
+        new THREE.MeshStandardMaterial({
+            color:0x17191c,
+            roughness:.7
+        });
+
+
+    [
+        [-.94,.38,-1.05],
+        [.94,.38,-1.05],
+        [-.94,.38,1.05],
+        [.94,.38,1.05]
+    ].forEach(
+        p=>{
+
+            const wheel =
+                new THREE.Mesh(
+                    wheelGeo,
+                    wheelMat
+                );
+
+            wheel.rotation.z=
+                Math.PI/2;
+
+            wheel.position.set(
+                p[0],
+                p[1],
+                p[2]
+            );
+
+            wheel.castShadow=true;
+
+            car.add(wheel);
+        }
+    );
+
+
+    /* HEADLIGHTS */
+
+    const headMat =
+        new THREE.MeshStandardMaterial({
+            color:0xffffc2,
+            emissive:0xffdd70,
+            emissiveIntensity:1.7
+        });
+
+
+    [-.53,.53].forEach(
+        x=>{
+
+            const light =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        .3,
+                        .14,
+                        .08
+                    ),
+                    headMat
+                );
+
+            light.position.set(
+                x,
+                .68,
+                -1.65
+            );
+
+            car.add(light);
+        }
+    );
+
+
+    /* BRAKE LIGHTS */
+
+    const brakeMat =
+        new THREE.MeshStandardMaterial({
+            color:0xff3030,
+            emissive:0xff1111,
+            emissiveIntensity:.7
+        });
+
+
+    [-.53,.53].forEach(
+        x=>{
+
+            const light =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        .28,
+                        .13,
+                        .08
+                    ),
+                    brakeMat
+                );
+
+            light.position.set(
+                x,
+                .67,
+                1.65
+            );
+
+            car.add(light);
+        }
+    );
+
+
+    /* PLAYER SENSOR RING */
+
+    if(isPlayer){
+
+        const ring =
+            new THREE.Mesh(
+                new THREE.RingGeometry(
+                    2.1,
+                    2.16,
+                    48
+                ),
+                new THREE.MeshBasicMaterial({
+                    color:0x70e1ff,
+                    transparent:true,
+                    opacity:.3,
+                    side:THREE.DoubleSide
+                })
+            );
+
+        ring.rotation.x=
+            -Math.PI/2;
+
+        ring.position.y=.22;
+
+        car.add(ring);
+    }
+
+
+    return car;
+}
+
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const smartCar =
+    createCar(
+        0xff6591,
+        true
+    );
+
+smartCar.position.set(
+    RIGHT,
+    0,
+    0
+);
+
+scene.add(smartCar);
+
+
+/* =========================================================
+   TRAFFIC
+========================================================= */
+
+const traffic=[];
+
+
+function addTraffic(
+    lane,
+    z,
+    color,
+    speed
+){
+
+    const mesh =
+        createCar(
+            color,
+            false
+        );
+
+    mesh.position.set(
+        lane,
+        0,
+        z
+    );
+
+    scene.add(mesh);
+
+
+    const car={
+        mesh:mesh,
+        lane:lane,
+        speed:speed,
+        baseSpeed:speed
+    };
+
+
+    traffic.push(car);
+
+    return car;
+}
+
+
+/*
+    Traffic is spread out so that
+    avoidance has enough space.
+*/
+
+addTraffic(
+    LEFT,
+    -70,
+    0x5b8cff,
+    17
+);
+
+addTraffic(
+    RIGHT,
+    -125,
+    0xffc44d,
+    19
+);
+
+addTraffic(
+    LEFT,
+    -180,
+    0x9c7bea,
+    18
+);
+
+addTraffic(
+    RIGHT,
+    -235,
+    0x55d39a,
+    17
+);
+
+addTraffic(
+    LEFT,
+    -285,
+    0xff775f,
+    20
+);
+
+
+/* =========================================================
+   PEDESTRIAN
+========================================================= */
+
+let pedestrian=null;
+
+
+function createPedestrian(){
+
+    const person =
+        new THREE.Group();
+
+
+    const legsMat =
+        new THREE.MeshStandardMaterial({
+            color:0x303a7a
+        });
+
+
+    [-.13,.13].forEach(
+        x=>{
+
+            const leg =
+                new THREE.Mesh(
+                    new THREE.CylinderGeometry(
+                        .09,
+                        .1,
+                        .65,
+                        10
+                    ),
+                    legsMat
+                );
+
+            leg.position.set(
+                x,
+                .35,
+                0
+            );
+
+            person.add(leg);
+        }
+    );
+
+
+    const body =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .24,
+                .3,
+                .85,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x526bd1
+            })
+        );
+
+    body.position.y=.98;
+
+    person.add(body);
+
+
+    const head =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .28,
+                16,
+                16
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xf0b48c
+            })
+        );
+
+    head.position.y=1.6;
+
+    person.add(head);
+
+
+    const hair =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .29,
+                16,
+                16
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x33261f
+            })
+        );
+
+    hair.position.set(
+        0,
+        1.72,
+        0
+    );
+
+    hair.scale.set(
+        1,
+        .65,
+        1
+    );
+
+    person.add(hair);
+
+
+    scene.add(person);
+
+    return person;
+}
+
+
+/* =========================================================
+   ANIMAL
+========================================================= */
+
+let animal=null;
+
+
+function createAnimal(){
+
+    const dog =
+        new THREE.Group();
+
+
+    const body =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .52,
+                16,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xa66b40,
+                roughness:1
+            })
+        );
+
+    body.scale.set(
+        1.35,
+        .75,
+        1.5
+    );
+
+    body.position.y=.58;
+
+    dog.add(body);
+
+
+    const head =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .37,
+                16,
+                12
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xb87846
+            })
+        );
+
+    head.position.set(
+        0,
+        .75,
+        -.7
+    );
+
+    dog.add(head);
+
+
+    const earMat =
+        new THREE.MeshStandardMaterial({
+            color:0x77482d
+        });
+
+
+    [-.23,.23].forEach(
+        x=>{
+
+            const ear =
+                new THREE.Mesh(
+                    new THREE.ConeGeometry(
+                        .15,
+                        .4,
+                        8
+                    ),
+                    earMat
+                );
+
+            ear.position.set(
+                x,
+                1.05,
+                -.73
+            );
+
+            dog.add(ear);
+        }
+    );
+
+
+    for(
+        let i=0;
+        i<4;
+        i++
+    ){
+
+        const leg =
+            new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    .08,
+                    .1,
+                    .45,
+                    8
+                ),
+                earMat
+            );
+
+        leg.position.set(
+            i<2 ? -.35:.35,
+            .25,
+            i%2===0 ? -.42:.42
+        );
+
+        dog.add(leg);
+    }
+
+
+    scene.add(dog);
+
+    return dog;
+}
+
+
+/* =========================================================
+   OBSTACLE
+========================================================= */
+
+let obstacle=null;
+
+
+function createObstacle(){
+
+    const group =
+        new THREE.Group();
+
+
+    const base =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.55,
+                .8,
+                1.5
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0xffa52c,
+                roughness:.8
+            })
+        );
+
+    base.position.y=.5;
+
+    base.castShadow=true;
+
+    group.add(base);
+
+
+    for(
+        let z=-.58;
+        z<=.58;
+        z+=.38
+    ){
+
+        const stripe =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    1.6,
+                    .09,
+                    .17
+                ),
+                new THREE.MeshStandardMaterial({
+                    color:0x252525
+                })
+            );
+
+        stripe.position.set(
+            0,
+            .72,
+            z
+        );
+
+        group.add(stripe);
+    }
+
+
+    const warning =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .08,
+                .9,
+                .08
+            ),
+            new THREE.MeshStandardMaterial({
+                color:0x555555
+            })
+        );
+
+    warning.position.set(
+        0,
+        1.15,
+        0
+    );
+
+    group.add(warning);
+
+
+    group.visible=false;
+
+    scene.add(group);
+
+    return group;
+}
+
+
+obstacle=
+    createObstacle();
+
+
+/* =========================================================
+   RAIN
+========================================================= */
+
+let rain=null;
+
+
+function createRain(){
+
+    const count=2200;
+
+    const geometry =
+        new THREE.BufferGeometry();
+
+    const positions =
+        new Float32Array(
+            count*3
+        );
+
+
+    for(
+        let i=0;
+        i<count;
+        i++
+    ){
+
+        positions[i*3]=
+            (Math.random()-.5)*45;
+
+        positions[i*3+1]=
+            Math.random()*30;
+
+        positions[i*3+2]=
+            (Math.random()-.5)*140;
+    }
+
+
+    geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+            positions,
+            3
+        )
+    );
+
+
+    const material =
+        new THREE.PointsMaterial({
+            color:0xd4eaff,
+            size:.13,
+            transparent:true,
+            opacity:.8
+        });
+
+
+    rain =
+        new THREE.Points(
+            geometry,
+            material
+        );
+
+    rain.visible=false;
+
+    scene.add(rain);
+}
+
+
+createRain();
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let activeScenario="normal";
+
+let scenarioTime=0;
+
+let currentSpeed=40;
+
+let targetSpeed=40;
+
+let currentLane=RIGHT;
+
+let originalLane=RIGHT;
+
+let targetLane=null;
+
+let laneChanging=false;
+
+let avoidanceLocked=false;
+
+let eventFinished=false;
+
+
+/* =========================================================
+   SAFETY PARAMETERS
+========================================================= */
+
+const FRONT_DISTANCE=22;
+
+const REAR_DISTANCE=18;
+
+const SIDE_MARGIN=1.8;
+
+
+/* =========================================================
+   UI
+========================================================= */
+
+function setRisk(level){
+
+    const el=
+        document.getElementById("risk");
+
+    el.textContent=level;
+
+
+    if(level==="FINE"){
+
+        el.style.background="#d8f5df";
+        el.style.color="#277746";
+
+    }
+
+    else if(level==="LOW"){
+
+        el.style.background="#fff2c5";
+        el.style.color="#876900";
+
+    }
+
+    else if(level==="MEDIUM"){
+
+        el.style.background="#ffe1ba";
+        el.style.color="#a85c00";
+
+    }
+
+    else{
+
+        el.style.background="#ffd7d7";
+        el.style.color="#a42e2e";
+    }
+}
+
+
+function setStatus(
+    status,
+    event,
+    risk
+){
+
+    document.getElementById(
+        "status"
+    ).textContent=status;
+
+    document.getElementById(
+        "event"
+    ).textContent=event;
+
+    setRisk(risk);
+}
+
+
+function updateLaneUI(){
+
+    document.getElementById(
+        "lane"
+    ).textContent=
+        currentLane===LEFT
+        ? "LEFT LANE"
+        : "RIGHT LANE";
+}
+
+
+function showMessage(text){
+
+    const el=
+        document.getElementById(
+            "message"
+        );
+
+    el.textContent=text;
+
+    el.classList.add("show");
+
+    clearTimeout(
+        el.timer
+    );
+
+    el.timer=
+        setTimeout(
+            ()=>{
+                el.classList.remove(
+                    "show"
+                );
+            },
+            2800
+        );
+}
+
+
+/* =========================================================
+   WEATHER UI
+========================================================= */
+
+function showWeather(type){
+
+    const box=
+        document.getElementById(
+            "weather"
+        );
+
+    const icon=
+        document.getElementById(
+            "weatherIcon"
+        );
+
+    const title=
+        document.getElementById(
+            "weatherTitle"
+        );
+
+    const text=
+        document.getElementById(
+            "weatherText"
+        );
+
+    const speed=
+        document.getElementById(
+            "weatherSpeed"
+        );
+
+
+    box.classList.add("show");
+
+
+    if(type==="rain"){
+
+        icon.textContent="🌧️";
+
+        title.textContent=
+            "HEAVY RAIN DETECTED";
+
+        text.textContent=
+            "Due to heavy rain, sensors may be compromised. Visibility and road traction are reduced. The AI automatically reduces vehicle speed and increases following distance.";
+
+        speed.textContent=
+            "AI RESPONSE • REDUCE SPEED";
+
+    }
+
+    else{
+
+        icon.textContent="⛈️";
+
+        title.textContent=
+            "SEVERE STORM DETECTED";
+
+        text.textContent=
+            "Storm conditions can compromise sensor reliability and visibility. The vehicle enters high-caution mode and significantly reduces speed.";
+
+        speed.textContent=
+            "AI RESPONSE • HIGH CAUTION";
+
+    }
+}
+
+
+function hideWeather(){
+
+    document
+        .getElementById(
+            "weather"
+        )
+        .classList.remove("show");
+}
+
+
+/* =========================================================
+   VEHICLE COLLISION CHECK
+========================================================= */
+
+function vehicleSafeInLane(
+    lane,
+    ourZ
+){
+
+    for(
+        const car of traffic
+    ){
+
+        if(
+            Math.abs(
+                car.mesh.position.x-lane
+            ) > SIDE_MARGIN
+        ){
+            continue;
+        }
+
+
+        const dz=
+            car.mesh.position.z-ourZ;
+
+
+        /*
+            Vehicle ahead.
+        */
+
+        if(
+            dz > -7 &&
+            dz < FRONT_DISTANCE
+        ){
+
+            return false;
+        }
+
+
+        /*
+            Vehicle behind.
+
+            This prevents the smart car
+            from moving directly in front
+            of a fast approaching car.
+        */
+
+        if(
+            dz <= -7 &&
+            dz > -REAR_DISTANCE
+        ){
+
+            return false;
+        }
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   OBJECT SAFETY CHECK
+========================================================= */
+
+function objectSafeInLane(
+    lane,
+    ourZ
+){
+
+    if(
+        obstacle &&
+        obstacle.visible
+    ){
+
+        if(
+            Math.abs(
+                obstacle.position.x-lane
+            ) < 1.7
+        ){
+
+            const dz=
+                obstacle.position.z-ourZ;
+
+            if(
+                dz>-7 &&
+                dz<FRONT_DISTANCE
+            ){
+
+                return false;
+            }
+        }
+    }
+
+
+    if(pedestrian){
+
+        if(
+            Math.abs(
+                pedestrian.position.x-lane
+            )<1.8
+        ){
+
+            const dz=
+                pedestrian.position.z-ourZ;
+
+            if(
+                dz>-5 &&
+                dz<18
+            ){
+
+                return false;
+            }
+        }
+    }
+
+
+    if(animal){
+
+        if(
+            Math.abs(
+                animal.position.x-lane
+            )<1.8
+        ){
+
+            const dz=
+                animal.position.z-ourZ;
+
+            if(
+                dz>-5 &&
+                dz<18
+            ){
+
+                return false;
+            }
+        }
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   COMPLETE SAFETY CHECK
+========================================================= */
+
+function laneIsSafe(
+    lane
+){
+
+    const ourZ=
+        smartCar.position.z;
+
+
+    return (
+        vehicleSafeInLane(
+            lane,
+            ourZ
+        )
+        &&
+        objectSafeInLane(
+            lane,
+            ourZ
+        )
+    );
+}
+
+
+/* =========================================================
+   PREDICTIVE SAFETY
+========================================================= */
+
+function laneWillRemainSafe(
+    lane
+){
+
+    const ourZ=
+        smartCar.position.z;
+
+
+    for(
+        const car of traffic
+    ){
+
+        if(
+            Math.abs(
+                car.mesh.position.x-lane
+            )>SIDE_MARGIN
+        ){
+            continue;
+        }
+
+
+        /*
+            Estimate where the
+            other car will be during
+            our lane change.
+        */
+
+        const predicted =
+            car.mesh.position.z +
+            car.speed*0.12*2.5;
+
+
+        const dz=
+            predicted-ourZ;
+
+
+        if(
+            dz>-8 &&
+            dz<28
+        ){
+
+            return false;
+        }
+    }
+
+
+    return laneIsSafe(lane);
+}
+
+
+/* =========================================================
+   FIND SAFE LANE
+========================================================= */
+
+function findSafeLane(){
+
+    const otherLane=
+        currentLane===RIGHT
+        ? LEFT
+        : RIGHT;
+
+
+    /*
+        The destination lane is checked
+        before the manoeuvre AND
+        continuously during it.
+    */
+
+    if(
+        laneWillRemainSafe(
+            otherLane
+        )
+    ){
+
+        return otherLane;
+    }
+
+
+    return null;
+}
+
+
+/* =========================================================
+   START LANE CHANGE
+========================================================= */
+
+function beginLaneChange(){
+
+    if(laneChanging){
+        return true;
+    }
+
+
+    if(avoidanceLocked){
+        return false;
+    }
+
+
+    const safeLane=
+        findSafeLane();
+
+
+    if(
+        safeLane===null
+    ){
+
+        return false;
+    }
+
+
+    targetLane=
+        safeLane;
+
+    laneChanging=true;
+
+    avoidanceLocked=true;
+
+    return true;
+}
+
+
+/* =========================================================
+   EXECUTE LANE CHANGE
+========================================================= */
+
+function updateLaneChange(
+    delta
+){
+
+    if(!laneChanging){
+        return;
+    }
+
+
+    /*
+        CRITICAL:
+
+        Check the destination lane
+        AGAIN every frame.
+
+        If another vehicle approaches,
+        the lane change stops immediately.
+    */
+
+    if(
+        !laneWillRemainSafe(
+            targetLane
+        )
+    ){
+
+        laneChanging=false;
+        targetLane=null;
+
+        targetSpeed=5;
+
+        setStatus(
+            "BRAKING",
+            "LANE BLOCKED",
+            "HIGH"
+        );
+
+        showMessage(
+            "⚠️ Unsafe lane detected — emergency braking"
+        );
+
+        return;
+    }
+
+
+    const dx=
+        targetLane-
+        smartCar.position.x;
+
+
+    smartCar.position.x +=
+        dx*
+        Math.min(
+            delta*3.2,
+            1
+        );
+
+
+    smartCar.rotation.z=
+        -dx*.035;
+
+
+    if(
+        Math.abs(dx)<.06
+    ){
+
+        smartCar.position.x=
+            targetLane;
+
+        currentLane=
+            targetLane;
+
+        laneChanging=false;
+
+        targetLane=null;
+
+        smartCar.rotation.z=0;
+
+        updateLaneUI();
+    }
+}
+
+
+/* =========================================================
+   SAFE RETURN
+========================================================= */
+
+function tryReturnToOriginal(){
+
+    if(
+        currentLane===originalLane
+    ){
+
+        return true;
+    }
+
+
+    if(
+        !laneIsSafe(
+            originalLane
+        )
+    ){
+
+        targetSpeed=18;
+
+        return false;
+    }
+
+
+    if(
+        !laneWillRemainSafe(
+            originalLane
+        )
+    ){
+
+        targetSpeed=18;
+
+        return false;
+    }
+
+
+    targetLane=
+        originalLane;
+
+    laneChanging=true;
+
+    return true;
+}
+
+
+/* =========================================================
+   SPEED
+========================================================= */
+
+function updateSpeed(delta){
+
+    currentSpeed +=
+        (
+            targetSpeed-currentSpeed
+        )*
+        Math.min(
+            delta*2.5,
+            1
+        );
+
+
+    document.getElementById(
+        "speed"
+    ).textContent=
+        Math.max(
+            0,
+            Math.round(currentSpeed)
+        );
+}
+
+
+/* =========================================================
+   TRAFFIC MOVEMENT
+========================================================= */
+
+function updateTraffic(delta){
+
+    traffic.forEach(
+        car=>{
+
+            car.mesh.position.z +=
+                car.speed*
+                delta*
+                .12;
+
+
+            /*
+                Keep cars continuously moving.
+            */
+
+            if(
+                car.mesh.position.z>100
+            ){
+
+                /*
+                    Recycle far ahead.
+
+                    Never spawn immediately
+                    beside the smart car.
+                */
+
+                let farthest=-50;
+
+                traffic.forEach(
+                    other=>{
+                        if(
+                            other!==car
+                        ){
+                            farthest=
+                                Math.min(
+                                    farthest,
+                                    other.mesh.position.z
+                                );
+                        }
+                    }
+                );
+
+
+                car.mesh.position.z=
+                    farthest-
+                    45-
+                    Math.random()*35;
+
+
+                car.lane=
+                    LANES[
+                        Math.floor(
+                            Math.random()*LANES.length
+                        )
+                    ];
+
+                car.mesh.position.x=
+                    car.lane;
+
+                car.speed=
+                    16+
+                    Math.random()*5;
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   SCENARIO OBJECT MOVEMENT
+========================================================= */
+
+function updatePedestrian(
+    delta
+){
+
+    if(!pedestrian){
+        return;
+    }
+
+
+    /*
+        Pedestrian keeps walking.
+        It NEVER stops for the car.
+    */
+
+    pedestrian.position.x +=
+        delta*1.15;
+
+
+    /*
+        Small walking animation.
+    */
+
+    pedestrian.rotation.z=
+        Math.sin(
+            scenarioTime*8
+        )*.04;
+}
+
+
+function updateAnimal(
+    delta
+){
+
+    if(!animal){
+        return;
+    }
+
+
+    /*
+        Animal keeps moving.
+    */
+
+    animal.position.x -=
+        delta*1.25;
+
+
+    animal.rotation.y=
+        Math.sin(
+            scenarioTime*7
+        )*.08;
+}
+
+
+/* =========================================================
+   RAIN
+========================================================= */
+
+function updateRain(delta){
+
+    if(
+        !rain ||
+        !rain.visible
+    ){
+        return;
+    }
+
+
+    const pos=
+        rain.geometry
+        .attributes
+        .position
+        .array;
+
+
+    for(
+        let i=0;
+        i<pos.length;
+        i+=3
+    ){
+
+        pos[i+1]-=
+            delta*27;
+
+
+        pos[i+2]+=
+            delta*3;
+
+
+        if(
+            pos[i+1]<0
+        ){
+
+            pos[i+1]=30;
+
+            pos[i]=
+                (Math.random()-.5)*45;
+
+            pos[i+2]=
+                (Math.random()-.5)*140;
+        }
+    }
+
+
+    rain.geometry
+        .attributes
+        .position
+        .needsUpdate=true;
+}
+
+
+/* =========================================================
+   HUMAN SCENARIO
+========================================================= */
+
+function updateHumanScenario(delta){
+
+    updatePedestrian(delta);
+
+
+    /*
+        Detection phase
+    */
+
+    if(
+        scenarioTime<1.5
+    ){
+
+        targetSpeed=30;
+
+        setStatus(
+            "DETECTING",
+            "PEDESTRIAN",
+            "MEDIUM"
+        );
+
+        return;
+    }
+
+
+    /*
+        Brake before deciding.
+    */
+
+    if(
+        scenarioTime<3
+    ){
+
+        targetSpeed=14;
+
+        setStatus(
+            "BRAKING",
+            "PEDESTRIAN",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    /*
+        Attempt avoidance.
+    */
+
+    if(
+        scenarioTime<5.5
+    ){
+
+        if(
+            !laneChanging &&
+            !avoidanceLocked
+        ){
+
+            if(
+                beginLaneChange()
+            ){
+
+                showMessage(
+                    "↪ Pedestrian detected — safe lane confirmed"
+                );
+
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+
+            targetSpeed=21;
+
+            setStatus(
+                "EVASIVE",
+                "PEDESTRIAN",
+                "HIGH"
+            );
+
+        }
+
+        else if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=3;
+
+            setStatus(
+                "STOPPED",
+                "NO SAFE LANE",
+                "HIGH"
+            );
+
+        }
+
+        return;
+    }
+
+
+    /*
+        Continue past pedestrian.
+    */
+
+    if(
+        scenarioTime<10
+    ){
+
+        /*
+            Keep checking the lane.
+
+            If another car enters,
+            brake instead of colliding.
+        */
+
+        if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=6;
+
+            setStatus(
+                "BRAKING",
+                "NEW VEHICLE",
+                "HIGH"
+            );
+
+        }
+
+        else{
+
+            targetSpeed=28;
+
+            setStatus(
+                "AVOIDING",
+                "PEDESTRIAN",
+                "LOW"
+            );
+        }
+
+        return;
+    }
+
+
+    /*
+        Return only when original lane
+        is completely safe.
+    */
+
+    if(
+        scenarioTime<15
+    ){
+
+        if(
+            !laneChanging
+        ){
+
+            if(
+                tryReturnToOriginal()
+            ){
+
+                targetSpeed=34;
+
+                setStatus(
+                    "RESUMING",
+                    "SAFE ROAD",
+                    "LOW"
+                );
+
+            }
+            else{
+
+                targetSpeed=22;
+
+                setStatus(
+                    "CAUTIOUS",
+                    "WAITING FOR LANE",
+                    "LOW"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+        }
+
+        return;
+    }
+
+
+    finishScenario();
+}
+
+
+/* =========================================================
+   ANIMAL SCENARIO
+========================================================= */
+
+function updateAnimalScenario(delta){
+
+    updateAnimal(delta);
+
+
+    if(
+        scenarioTime<1.5
+    ){
+
+        targetSpeed=30;
+
+        setStatus(
+            "DETECTING",
+            "ANIMAL",
+            "MEDIUM"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<3
+    ){
+
+        targetSpeed=14;
+
+        setStatus(
+            "BRAKING",
+            "ANIMAL",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<5.5
+    ){
+
+        if(
+            !laneChanging &&
+            !avoidanceLocked
+        ){
+
+            if(
+                beginLaneChange()
+            ){
+
+                showMessage(
+                    "↪ Animal detected — safe lane confirmed"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+
+            targetSpeed=21;
+
+            setStatus(
+                "EVASIVE",
+                "ANIMAL",
+                "HIGH"
+            );
+
+        }
+
+        else if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=3;
+
+            setStatus(
+                "STOPPED",
+                "NO SAFE LANE",
+                "HIGH"
+            );
+
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<10
+    ){
+
+        if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=6;
+
+            setStatus(
+                "BRAKING",
+                "NEW VEHICLE",
+                "HIGH"
+            );
+
+        }
+
+        else{
+
+            targetSpeed=28;
+
+            setStatus(
+                "AVOIDING",
+                "ANIMAL",
+                "LOW"
+            );
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<15
+    ){
+
+        if(
+            !laneChanging
+        ){
+
+            if(
+                tryReturnToOriginal()
+            ){
+
+                targetSpeed=34;
+
+                setStatus(
+                    "RESUMING",
+                    "SAFE ROAD",
+                    "LOW"
+                );
+
+            }
+            else{
+
+                targetSpeed=22;
+
+                setStatus(
+                    "CAUTIOUS",
+                    "WAITING FOR LANE",
+                    "LOW"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+        }
+
+        return;
+    }
+
+
+    finishScenario();
+}
+
+
+/* =========================================================
+   OBSTACLE SCENARIO
+========================================================= */
+
+function updateObstacleScenario(delta){
+
+    if(!obstacle){
+        return;
+    }
+
+
+    /*
+        Obstacle stays in the road.
+    */
+
+    if(
+        scenarioTime<2
+    ){
+
+        targetSpeed=27;
+
+        setStatus(
+            "DETECTING",
+            "OBSTRUCTION",
+            "MEDIUM"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<3.5
+    ){
+
+        targetSpeed=7;
+
+        setStatus(
+            "BRAKING",
+            "OBSTRUCTION",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<6
+    ){
+
+        if(
+            !laneChanging &&
+            !avoidanceLocked
+        ){
+
+            if(
+                beginLaneChange()
+            ){
+
+                showMessage(
+                    "↪ Obstacle detected — alternate lane verified"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+
+            targetSpeed=16;
+
+            setStatus(
+                "EVASIVE",
+                "OBSTRUCTION",
+                "HIGH"
+            );
+
+        }
+
+        else if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=0;
+
+            setStatus(
+                "STOPPED",
+                "NO SAFE LANE",
+                "HIGH"
+            );
+
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<11
+    ){
+
+        if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=5;
+
+            setStatus(
+                "BRAKING",
+                "VEHICLE IN LANE",
+                "HIGH"
+            );
+
+        }
+
+        else{
+
+            targetSpeed=29;
+
+            setStatus(
+                "AVOIDING",
+                "OBSTRUCTION",
+                "LOW"
+            );
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<16
+    ){
+
+        if(
+            !laneChanging
+        ){
+
+            if(
+                tryReturnToOriginal()
+            ){
+
+                targetSpeed=35;
+
+                setStatus(
+                    "RESUMING",
+                    "SAFE ROAD",
+                    "LOW"
+                );
+
+            }
+            else{
+
+                targetSpeed=22;
+
+                setStatus(
+                    "CAUTIOUS",
+                    "WAITING FOR LANE",
+                    "LOW"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+        }
+
+        return;
+    }
+
+
+    finishScenario();
+}
+
+
+/* =========================================================
+   COLLISION SCENARIO
+========================================================= */
+
+function updateCollisionScenario(delta){
+
+    /*
+        A car approaches in our lane.
+    */
+
+    if(
+        scenarioTime<2
+    ){
+
+        targetSpeed=28;
+
+        setStatus(
+            "PREDICTING",
+            "COLLISION",
+            "HIGH"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<3.5
+    ){
+
+        targetSpeed=4;
+
+        setStatus(
+            "EMERGENCY BRAKE",
+            "COLLISION",
+            "HIGH"
+        );
+
+        showMessage(
+            "🚨 Forward collision predicted — emergency braking"
+        );
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<6
+    ){
+
+        if(
+            !laneChanging &&
+            !avoidanceLocked
+        ){
+
+            if(
+                beginLaneChange()
+            ){
+
+                showMessage(
+                    "↪ Collision avoided — safe lane selected"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+
+            targetSpeed=14;
+
+            setStatus(
+                "EVASIVE",
+                "COLLISION",
+                "HIGH"
+            );
+
+        }
+
+        else{
+
+            targetSpeed=2;
+
+            setStatus(
+                "STOPPED",
+                "NO SAFE LANE",
+                "HIGH"
+            );
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<11
+    ){
+
+        if(
+            !laneIsSafe(currentLane)
+        ){
+
+            targetSpeed=5;
+
+            setStatus(
+                "BRAKING",
+                "VEHICLE DETECTED",
+                "HIGH"
+            );
+
+        }
+
+        else{
+
+            targetSpeed=29;
+
+            setStatus(
+                "AVOIDING",
+                "DANGER PASSED",
+                "LOW"
+            );
+        }
+
+        return;
+    }
+
+
+    if(
+        scenarioTime<16
+    ){
+
+        if(
+            !laneChanging
+        ){
+
+            if(
+                tryReturnToOriginal()
+            ){
+
+                targetSpeed=35;
+
+                setStatus(
+                    "RESUMING",
+                    "SAFE ROAD",
+                    "LOW"
+                );
+            }
+            else{
+
+                targetSpeed=22;
+
+                setStatus(
+                    "CAUTIOUS",
+                    "WAITING FOR LANE",
+                    "LOW"
+                );
+            }
+        }
+
+
+        if(laneChanging){
+
+            updateLaneChange(delta);
+        }
+
+        return;
+    }
+
+
+    finishScenario();
+}
+
+
+/* =========================================================
+   WEATHER SCENARIO
+========================================================= */
+
+function updateWeatherScenario(){
+
+    if(
+        activeScenario==="rain"
+    ){
+
+        targetSpeed=26;
+
+        setStatus(
+            "CAUTIOUS",
+            "HEAVY RAIN",
+            "MEDIUM"
+        );
+
+    }
+
+    else{
+
+        targetSpeed=17;
+
+        setStatus(
+            "CAUTION",
+            "SEVERE STORM",
+            "HIGH"
+        );
+    }
+}
+
+
+/* =========================================================
+   FINISH SCENARIO
+========================================================= */
+
+function finishScenario(){
+
+    if(eventFinished){
+        return;
+    }
+
+    eventFinished=true;
+
+    avoidanceLocked=false;
+
+    laneChanging=false;
+
+    targetLane=null;
+
+    targetSpeed=40;
+
+    setStatus(
+        "DRIVING",
+        "CLEAR",
+        "FINE"
+    );
+
+    showMessage(
+        "✓ Hazard cleared — normal driving resumed"
+    );
+}
+
+
+/* =========================================================
+   START SCENARIO
+========================================================= */
+
+function startScenario(
+    scenario
+){
+
+    resetSimulation();
+
+    activeScenario=scenario;
+
+    scenarioTime=0;
+
+    eventFinished=false;
+
+
+    if(
+        scenario==="human"
+    ){
+
+        pedestrian=
+            createPedestrian();
+
+        pedestrian.position.set(
+            0,
+            0,
+            -31
+        );
+
+        setStatus(
+            "DETECTING",
+            "PEDESTRIAN",
+            "MEDIUM"
+        );
+
+        showMessage(
+            "🧍 Pedestrian detected ahead"
+        );
+    }
+
+
+    else if(
+        scenario==="animal"
+    ){
+
+        animal=
+            createAnimal();
+
+        animal.position.set(
+            0,
+            0,
+            -31
+        );
+
+        setStatus(
+            "DETECTING",
+            "ANIMAL",
+            "MEDIUM"
+        );
+
+        showMessage(
+            "🐕 Animal detected ahead"
+        );
+    }
+
+
+    else if(
+        scenario==="obstacle"
+    ){
+
+        obstacle.visible=true;
+
+        obstacle.position.set(
+            RIGHT,
+            0,
+            -32
+        );
+
+        setStatus(
+            "DETECTING",
+            "OBSTRUCTION",
+            "MEDIUM"
+        );
+
+        showMessage(
+            "🚧 Road obstruction detected"
+        );
+    }
+
+
+    else if(
+        scenario==="collision"
+    ){
+
+        /*
+            Put a vehicle ahead of us.
+        */
+
+        const danger=
+            traffic[1];
+
+        danger.lane=RIGHT;
+
+        danger.mesh.position.set(
+            RIGHT,
+            0,
+            -32
+        );
+
+        danger.speed=-14;
+
+        setStatus(
+            "PREDICTING",
+            "COLLISION",
+            "HIGH"
+        );
+
+        showMessage(
+            "🚨 Collision trajectory detected"
+        );
+    }
+
+
+    else if(
+        scenario==="rain"
+    ){
+
+        rain.visible=true;
+
+        scene.background=
+            new THREE.Color(
+                0x7595aa
+            );
+
+        showWeather("rain");
+
+        setStatus(
+            "CAUTIOUS",
+            "HEAVY RAIN",
+            "MEDIUM"
+        );
+    }
+
+
+    else if(
+        scenario==="storm"
+    ){
+
+        rain.visible=true;
+
+        rain.material.opacity=.95;
+
+        scene.background=
+            new THREE.Color(
+                0x414d5b
+            );
+
+        showWeather("storm");
+
+        setStatus(
+            "CAUTION",
+            "SEVERE STORM",
+            "HIGH"
+        );
+    }
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetSimulation(){
+
+    activeScenario="normal";
+
+    scenarioTime=0;
+
+    currentSpeed=40;
+
+    targetSpeed=40;
+
+    currentLane=RIGHT;
+
+    originalLane=RIGHT;
+
+    targetLane=null;
+
+    laneChanging=false;
+
+    avoidanceLocked=false;
+
+    eventFinished=false;
+
+
+    hideWeather();
+
+
+    if(pedestrian){
+
+        scene.remove(
+            pedestrian
+        );
+
+        pedestrian=null;
+    }
+
+
+    if(animal){
+
+        scene.remove(
+            animal
+        );
+
+        animal=null;
+    }
+
+
+    obstacle.visible=false;
+
+    rain.visible=false;
+
+    rain.material.opacity=.8;
+
+
+    scene.background=
+        new THREE.Color(
+            0x91d8ff
+        );
+
+
+    smartCar.position.set(
+        RIGHT,
+        0,
+        0
+    );
+
+    smartCar.rotation.set(
+        0,
+        0,
+        0
+    );
+
+
+    /*
+        Reset traffic positions.
+    */
+
+    const resetPositions=[
+        -70,
+        -125,
+        -180,
+        -235,
+        -285
+    ];
+
+
+    const resetSpeeds=[
+        17,
+        19,
+        18,
+        17,
+        20
+    ];
+
+
+    traffic.forEach(
+        (car,i)=>{
+
+            car.mesh.position.z=
+                resetPositions[i];
+
+            car.mesh.position.x=
+                car.lane;
+
+            car.speed=
+                resetSpeeds[i];
+
+            car.baseSpeed=
+                resetSpeeds[i];
+        }
+    );
+
+
+    setStatus(
+        "DRIVING",
+        "CLEAR",
+        "FINE"
+    );
+
+    updateLaneUI();
+}
+
+
+/* =========================================================
+   ENVIRONMENT MOVEMENT
+========================================================= */
+
+function updateEnvironment(delta){
+
+    /*
+        Trees move toward camera.
+    */
+
+    trees.forEach(
+        tree=>{
+
+            tree.position.z +=
+                currentSpeed*
+                delta*
+                .12;
+
+            if(
+                tree.position.z>30
+            ){
+
+                tree.position.z-=350;
+            }
+        }
+    );
+
+
+    /*
+        Street lights.
+    */
+
+    streetLights.forEach(
+        light=>{
+
+            light.position.z +=
+                currentSpeed*
+                delta*
+                .12;
+
+            if(
+                light.position.z>35
+            ){
+
+                light.position.z-=330;
+            }
+        }
+    );
+
+
+    /*
+        Clouds move slowly.
+    */
+
+    clouds.forEach(
+        cloud=>{
+
+            cloud.position.x +=
+                delta*.08;
+
+            if(
+                cloud.position.x>40
+            ){
+
+                cloud.position.x=-40;
+            }
+        }
+    );
+
+
+    /*
+        Lane markings.
+    */
+
+    centerMarkers.forEach(
+        marker=>{
+
+            marker.position.z +=
+                currentSpeed*
+                delta*
+                .12;
+
+            if(
+                marker.position.z>30
+            ){
+
+                marker.position.z-=500;
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+let cameraAngle=0;
+
+let cameraDistance=18;
+
+let cameraHeight=7.5;
+
+let dragging=false;
+
+let lastMouseX=0;
+
+let lastMouseY=0;
+
+
+renderer.domElement.addEventListener(
+    "mousedown",
+    e=>{
+
+        dragging=true;
+
+        lastMouseX=e.clientX;
+        lastMouseY=e.clientY;
+    }
+);
+
+
+window.addEventListener(
+    "mouseup",
+    ()=>{
+
+        dragging=false;
+    }
+);
+
+
+window.addEventListener(
+    "mousemove",
+    e=>{
+
+        if(!dragging){
+            return;
+        }
+
+
+        const dx=
+            e.clientX-lastMouseX;
+
+        const dy=
+            e.clientY-lastMouseY;
+
+
+        cameraAngle-=
+            dx*.005;
+
+        cameraHeight-=
+            dy*.025;
+
+
+        cameraHeight=
+            Math.max(
+                4.5,
+                Math.min(
+                    12,
+                    cameraHeight
+                )
+            );
+
+
+        lastMouseX=e.clientX;
+        lastMouseY=e.clientY;
+    }
+);
+
+
+renderer.domElement.addEventListener(
+    "wheel",
+    e=>{
+
+        cameraDistance+=
+            e.deltaY*.012;
+
+
+        cameraDistance=
+            Math.max(
+                11,
+                Math.min(
+                    30,
+                    cameraDistance
+                )
+            );
+    }
+);
+
+
+/* =========================================================
+   MAIN ANIMATION
+========================================================= */
+
+let previousTime=
+    performance.now();
+
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const now=
+        performance.now();
+
+
+    const delta=
+        Math.min(
+            (now-previousTime)/1000,
+            .05
+        );
+
+
+    previousTime=now;
+
+
+    /*
+        Traffic is ALWAYS moving.
+    */
+
+    updateTraffic(delta);
+
+
+    /*
+        Environment continuously moves.
+    */
+
+    updateEnvironment(delta);
+
+
+    /*
+        Weather.
+    */
+
+    updateRain(delta);
+
+
+    /*
+        Scenario.
+    */
+
+    if(
+        activeScenario==="human"
+    ){
+
+        updateHumanScenario(delta);
+    }
+
+    else if(
+        activeScenario==="animal"
+    ){
+
+        updateAnimalScenario(delta);
+    }
+
+    else if(
+        activeScenario==="obstacle"
+    ){
+
+        updateObstacleScenario(delta);
+    }
+
+    else if(
+        activeScenario==="collision"
+    ){
+
+        updateCollisionScenario(delta);
+    }
+
+    else if(
+        activeScenario==="rain" ||
+        activeScenario==="storm"
+    ){
+
+        updateWeatherScenario();
+    }
+
+
+    /*
+        Smooth speed.
+    */
+
+    updateSpeed(delta);
+
+
+    /*
+        Move player forward.
+
+        The road/environment moves too,
+        creating continuous driving.
+    */
+
+    smartCar.position.z -=
+        currentSpeed*
+        delta*
+        .12;
+
+
+    /*
+        Keep player in the visible zone.
+    */
+
+    if(
+        smartCar.position.z<-35
+    ){
+
+        smartCar.position.z=0;
+    }
+
+
+    /*
+        Camera follows vehicle.
+    */
+
+    camera.position.x=
+        smartCar.position.x+
+        Math.sin(cameraAngle)*
+        cameraDistance;
+
+
+    camera.position.y=
+        cameraHeight;
+
+
+    camera.position.z=
+        smartCar.position.z+
+        Math.cos(cameraAngle)*
+        cameraDistance;
+
+
+    camera.lookAt(
+        smartCar.position.x,
+        .7,
+        smartCar.position.z-6
+    );
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        camera.aspect=
+            window.innerWidth/
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+resetSimulation();
+
+animate();
+
+</script>
+
+</body>
+
+</html>
