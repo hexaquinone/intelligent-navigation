@@ -293,7 +293,7 @@ button:active{
     <div class="row">
         <div class="label">Speed</div>
         <div class="value">
-            <span id="speed">40</span> km/h
+            <span id="speed">50</span> km/h
         </div>
     </div>
 
@@ -1052,6 +1052,12 @@ function createBuilding(x, z, width, depth, height){
             })
         );
 
+    building.position.set(
+        x,
+        0,
+        z
+    );
+
     body.position.y = height / 2;
 
     body.castShadow = true;
@@ -1260,12 +1266,6 @@ function createBuilding(x, z, width, depth, height){
     building.add(roof);
 
 
-    building.position.set(
-        x,
-        0,
-        z
-    );
-
     scene.add(building);
 
     return building;
@@ -1317,6 +1317,7 @@ for(
         )
     );
 }
+
 
 /* =========================================================
    STREET LIGHTS
@@ -2169,9 +2170,9 @@ let activeScenario="normal";
 
 let scenarioTime=0;
 
-let currentSpeed=40;
+let currentSpeed=50;
 
-let targetSpeed=40;
+let targetSpeed=50;
 
 let currentLane=RIGHT;
 
@@ -2977,178 +2978,38 @@ function updateRain(delta){
 
 
 /* =========================================================
-   HUMAN SCENARIO
+   PEDESTRIAN
 ========================================================= */
 
-function updateHumanScenario(delta){
+function updatePedestrian(delta){
 
-    scenarioTime += delta;
-
-    updatePedestrian(delta);
-
-
-    if(
-        scenarioTime<1.5
-    ){
-
-        targetSpeed=30;
-
-        setStatus(
-            "DETECTING",
-            "PEDESTRIAN",
-            "MEDIUM"
-        );
-
+    if(!pedestrian){
         return;
     }
 
+    /*
+        Pedestrian moves independently of the car.
+        This means the pedestrian keeps walking even
+        when the smart car is completely stopped.
+    */
 
-    if(
-        scenarioTime<3
-    ){
+    pedestrian.position.z +=
+        1.5 *
+        delta;
 
-        targetSpeed=10;
+    /*
+        Pedestrian crosses the road.
+        Right side → left side.
+    */
 
-        setStatus(
-            "BRAKING",
-            "PEDESTRIAN",
-            "HIGH"
-        );
+    pedestrian.position.x -=
+        delta * 1.8;
 
-        return;
-    }
-
-
-    if(
-        scenarioTime<6
-    ){
-
-        if(
-            !laneChanging &&
-            !avoidanceLocked
-        ){
-
-            if(
-                beginLaneChange()
-            ){
-
-                showMessage(
-                    "↪ Pedestrian detected — safe lane confirmed"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
-            updateLaneChange(delta);
-
-            targetSpeed=20;
-
-            setStatus(
-                "EVASIVE",
-                "PEDESTRIAN",
-                "HIGH"
-            );
-
-        }
-
-        else if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=0;
-
-            setStatus(
-                "STOPPED",
-                "NO SAFE LANE",
-                "HIGH"
-            );
-
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<11
-    ){
-
-        if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=5;
-
-            setStatus(
-                "BRAKING",
-                "NEW VEHICLE",
-                "HIGH"
-            );
-
-        }
-
-        else{
-
-            targetSpeed=30;
-
-            setStatus(
-                "AVOIDING",
-                "PEDESTRIAN",
-                "LOW"
-            );
-        }
-
-        return;
-    }
-
-
-    if(
-        scenarioTime<16
-    ){
-
-        if(!laneChanging){
-
-            if(
-                tryReturnToOriginal()
-            ){
-
-                targetSpeed=35;
-
-                setStatus(
-                    "RESUMING",
-                    "SAFE ROAD",
-                    "LOW"
-                );
-
-            }
-
-            else{
-
-                targetSpeed=22;
-
-                setStatus(
-                    "CAUTIOUS",
-                    "WAITING FOR LANE",
-                    "LOW"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
-            updateLaneChange(delta);
-        }
-
-        return;
-    }
-
-
-    finishScenario();
+    pedestrian.rotation.z =
+        Math.sin(
+            scenarioTime * 8
+        ) * .04;
 }
-
 
 /* =========================================================
    ANIMAL SCENARIO
@@ -3158,14 +3019,23 @@ function updateAnimalScenario(delta){
 
     scenarioTime += delta;
 
+    /*
+        Animal continues moving even when
+        the smart car has stopped.
+    */
+
     updateAnimal(delta);
 
 
+    /*
+        DETECTION
+    */
+
     if(
-        scenarioTime<1.5
+        scenarioTime < 1.5
     ){
 
-        targetSpeed=30;
+        targetSpeed = 30;
 
         setStatus(
             "DETECTING",
@@ -3177,11 +3047,15 @@ function updateAnimalScenario(delta){
     }
 
 
+    /*
+        BRAKING
+    */
+
     if(
-        scenarioTime<3
+        scenarioTime < 3
     ){
 
-        targetSpeed=10;
+        targetSpeed = 0;
 
         setStatus(
             "BRAKING",
@@ -3193,128 +3067,80 @@ function updateAnimalScenario(delta){
     }
 
 
+    /*
+        STOP COMPLETELY WHILE ANIMAL
+        IS STILL IN THE ROAD
+    */
+
     if(
-        scenarioTime<6
+        animal &&
+        animal.position.x > -7 &&
+        animal.position.z < 12
     ){
 
-        if(
-            !laneChanging &&
-            !avoidanceLocked
-        ){
+        targetSpeed = 0;
 
-            if(
-                beginLaneChange()
-            ){
-
-                showMessage(
-                    "↪ Animal detected — safe lane confirmed"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
-            updateLaneChange(delta);
-
-            targetSpeed=20;
-
-            setStatus(
-                "EVASIVE",
-                "ANIMAL",
-                "HIGH"
-            );
-
-        }
-
-        else if(
-            !laneIsSafe(currentLane)
-        ){
-
-            targetSpeed=0;
-
-            setStatus(
-                "STOPPED",
-                "NO SAFE LANE",
-                "HIGH"
-            );
-
-        }
+        setStatus(
+            "STOPPED",
+            "ANIMAL CROSSING",
+            "HIGH"
+        );
 
         return;
     }
 
 
+    /*
+        ANIMAL IS OUT OF THE ROAD / OUT OF SIGHT
+        ONLY NOW CAN THE CAR MOVE AGAIN.
+    */
+
     if(
-        scenarioTime<11
+        animal &&
+        (
+            animal.position.x <= -7 ||
+            animal.position.z >= 12
+        )
     ){
 
-        if(
-            !laneIsSafe(currentLane)
-        ){
+        targetSpeed = 35;
 
-            targetSpeed=5;
+        setStatus(
+            "RESUMING",
+            "ANIMAL CLEAR",
+            "LOW"
+        );
 
-            setStatus(
-                "BRAKING",
-                "NEW VEHICLE",
-                "HIGH"
-            );
+        showMessage(
+            "✓ Animal cleared — resuming safely"
+        );
 
-        }
+        /*
+            Prevent the animal from affecting
+            the car again.
+        */
 
-        else{
-
-            targetSpeed=30;
-
-            setStatus(
-                "AVOIDING",
-                "ANIMAL",
-                "LOW"
-            );
-        }
+        animal.position.x = -20;
 
         return;
     }
 
 
+    /*
+        NORMAL RESUMPTION
+    */
+
     if(
-        scenarioTime<16
+        scenarioTime < 20
     ){
 
-        if(!laneChanging){
+        targetSpeed = 35;
 
-            if(
-                tryReturnToOriginal()
-            ){
-
-                targetSpeed=35;
-
-                setStatus(
-                    "RESUMING",
-                    "SAFE ROAD",
-                    "LOW"
-                );
-
-            }
-
-            else{
-
-                targetSpeed=22;
-
-                setStatus(
-                    "CAUTIOUS",
-                    "WAITING FOR LANE",
-                    "LOW"
-                );
-            }
-        }
-
-
-        if(laneChanging){
-
-            updateLaneChange(delta);
-        }
+        setStatus(
+            "DRIVING",
+            "ANIMAL CLEAR",
+            "LOW"
+        );
 
         return;
     }
@@ -3322,7 +3148,6 @@ function updateAnimalScenario(delta){
 
     finishScenario();
 }
-
 
 /* =========================================================
    OBSTACLE SCENARIO
@@ -3731,7 +3556,7 @@ function finishScenario(){
 
     targetLane=null;
 
-    targetSpeed=40;
+    targetSpeed=50;
 
 
     setStatus(
@@ -3946,9 +3771,9 @@ function resetSimulation(){
 
     scenarioTime=0;
 
-    currentSpeed=40;
+    currentSpeed=50;
 
-    targetSpeed=40;
+    targetSpeed=50;
 
     currentLane=RIGHT;
 
