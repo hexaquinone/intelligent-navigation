@@ -81,6 +81,12 @@ def get_cached_vision_engine(model_name: str = "yolov8n.pt", enable_lanes: bool 
 
 st.markdown("""
 <style>
+/* Header & Navbar clearance */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    z-index: 10 !important;
+}
+
 /* Base Dark Theme */
 .stApp {
     background-color: #06090e;
@@ -88,64 +94,182 @@ st.markdown("""
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Generous Top Padding for 100% Unobscured Visibility */
 .block-container {
     max-width: 1650px;
-    padding-top: 1.0rem;
+    padding-top: 4.8rem !important;
     padding-bottom: 2.5rem;
 }
 
-/* Header Banner */
+/* Prevent Streamlit DOM Ghosting & Fading during Auto-Rerun */
+div[data-testid="stVerticalBlock"] > div.element-container,
+div[data-testid="stVerticalBlock"] > div[data-testid="stBlock"] {
+    opacity: 1 !important;
+}
+
+/* Sidebar Custom Styling */
+section[data-testid="stSidebar"] {
+    background-color: #050a12;
+    border-right: 1px solid #1e293b;
+}
+
+.sidebar-brand-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #38bdf8;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 1.2rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.15);
+}
+
+.sidebar-brand-title {
+    font-size: 1.15rem;
+    font-weight: 850;
+    letter-spacing: 0.5px;
+    color: #38bdf8;
+    margin: 0;
+}
+
+.sidebar-brand-sub {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.sidebar-box {
+    background: #090e17;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 1rem;
+}
+
+.sidebar-box-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Top Hero Banner */
 .hud-header {
     background: linear-gradient(135deg, #0b1329 0%, #0f172a 100%);
     border: 1px solid #1e293b;
     border-radius: 16px;
-    padding: 18px 24px;
-    margin-bottom: 1.2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    padding: 20px 26px;
+    margin-top: 0.5rem;
+    margin-bottom: 1.0rem;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 14px;
 }
 
 .hud-title {
-    font-size: 1.85rem;
+    font-size: 1.95rem;
     font-weight: 850;
     letter-spacing: -0.5px;
     color: #f8fafc;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .hud-subtitle {
     color: #94a3b8;
-    font-size: 0.88rem;
+    font-size: 0.90rem;
     margin-top: 4px;
     margin-bottom: 0;
 }
 
-/* Cards & Containers */
-.hud-card {
-    background: #0f172a;
-    border: 1px solid #1e293b;
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    margin-bottom: 1rem;
+/* Mode Purpose Hero Banner */
+.mode-hero-banner {
+    background: linear-gradient(135deg, #0a1428 0%, #111e38 100%);
+    border: 1px solid #38bdf8;
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 1.3rem;
+    box-shadow: 0 6px 24px rgba(56, 189, 248, 0.12);
 }
 
-.section-label {
-    font-size: 1.0rem;
-    font-weight: 800;
-    color: #f1f5f9;
-    margin-bottom: 0.6rem;
+.mode-hero-title {
+    font-size: 1.25rem;
+    font-weight: 850;
+    color: #38bdf8;
     display: flex;
     align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.mode-hero-desc {
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.mode-pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.mode-pillar-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+.mode-pillar-header {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #7dd3fc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mode-pillar-text {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.mode-hero-tags {
+    display: flex;
     gap: 8px;
-    letter-spacing: 0.2px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 10px;
+}
+
+.mode-tag {
+    background: rgba(56, 189, 248, 0.12);
+    color: #bae6fd;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    font-size: 0.74rem;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-weight: 650;
 }
 
 /* Action Boxes */
@@ -189,16 +313,11 @@ div[data-testid="stMetricValue"] {
     font-weight: 800;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #04070b;
-    border-right: 1px solid #1e293b;
-}
-
 /* Badges */
-.badge-active { background: #064e3b; color: #34d399; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
-.badge-degraded { background: #78350f; color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
-.badge-failed { background: #7f1d1d; color: #f87171; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+.badge-active { background: #064e3b; color: #34d399; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
+.badge-degraded { background: #78350f; color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
+.badge-failed { background: #7f1d1d; color: #f87171; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
+.badge-anim { background: #1e1b4b; color: #818cf8; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -352,11 +471,18 @@ def render_bev_road_component(hazards: List[HazardEvent], decision: Decision, eg
 def initialize_session_state() -> None:
     defaults = {
         "sim_mode": "🚗 Live Trip Timeline",
-        "simulation_running": False,
+        "last_active_mode": "🚗 Live Trip Timeline",
+        "simulation_running": True,   # Auto-run by default on entering trip mode
         "simulation_index": 0,
+        "trip_loop_count": 0,
+        "trip_auto_loop": True,
         "event_history": [],
         "processed_steps": set(),
+        "sandbox_mode_type": "📚 Preset Benchmark Catalog",
         "selected_scenario": list(SCENARIOS.keys())[0],
+        "vision_anim_running": True,  # Auto-run by default on entering vision mode
+        "vision_frame_idx": 0,
+        "vision_play_speed": 0.08,
         "fault_fog": False,
         "fault_cam_blackout": False,
         "fault_lidar_noise": False,
@@ -376,119 +502,170 @@ initialize_session_state()
 
 def render_sidebar_controls():
     with st.sidebar:
-        st.markdown("### ⚙️ Command Control Center")
+        st.markdown(
+            """
+            <div class="sidebar-brand-card">
+                <div class="sidebar-brand-title">🚗 AI NAV-PILOT</div>
+                <div class="sidebar-brand-sub">Autonomous Decision Cockpit • HUD v2.5</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown("##### 🎛️ Select Operational Mode")
 
         active_mode = st.radio(
             "Operational Mode",
             [
                 "🚗 Live Trip Timeline",
                 "👁️ Live Vision & YOLO Perception",
-                "🔬 Preset Scenario Explorer",
-                "🛠️ Interactive What-If Sandbox",
+                "🔬 Scenarios & What-If Sandbox",
                 "🎮 3D Road Simulator (road.py)"
             ],
-            key="sim_mode"
+            key="sim_mode",
+            label_visibility="collapsed"
         )
+
+        # Detect tab switch and auto-activate loop
+        if "last_active_mode" not in st.session_state or st.session_state.last_active_mode != active_mode:
+            st.session_state.last_active_mode = active_mode
+            if active_mode == "🚗 Live Trip Timeline":
+                st.session_state.simulation_running = True
+            elif active_mode == "👁️ Live Vision & YOLO Perception":
+                st.session_state.vision_anim_running = True
 
         st.divider()
 
-        playback_speed = 3.0
+        playback_speed = 2.5
         sandbox_values = {}
 
         if active_mode == "🚗 Live Trip Timeline":
-            st.subheader("🎮 Drive Timeline Controls")
+            st.markdown("##### 🎮 Drive Timeline Controls")
 
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("▶️ Start Drive", use_container_width=True):
+                if st.button("▶️ Resume" if not st.session_state.simulation_running else "🟢 Driving", use_container_width=True, key="resume_drive_btn"):
                     st.session_state.simulation_running = True
             with c2:
-                if st.button("⏸️ Pause", use_container_width=True):
+                if st.button("⏸️ Pause", use_container_width=True, key="pause_drive_btn"):
                     st.session_state.simulation_running = False
 
             c3, c4 = st.columns(2)
             with c3:
-                if st.button("⏭️ Next Step", use_container_width=True):
+                if st.button("⏭️ Next Step", use_container_width=True, key="next_step_btn"):
                     st.session_state.simulation_running = False
-                    if st.session_state.simulation_index < len(TRIP_TIMELINE) - 1:
-                        st.session_state.simulation_index += 1
-                    else:
-                        st.session_state.simulation_index = 0
+                    st.session_state.simulation_index = (st.session_state.simulation_index + 1) % len(TRIP_TIMELINE)
                     st.rerun()
             with c4:
-                if st.button("🔄 Reset Drive", use_container_width=True):
-                    st.session_state.simulation_running = False
+                if st.button("🔄 Reset Drive", use_container_width=True, key="reset_drive_btn"):
+                    st.session_state.simulation_running = True
                     st.session_state.simulation_index = 0
+                    st.session_state.trip_loop_count = 0
                     st.session_state.event_history = []
                     st.session_state.processed_steps = set()
                     reset_metrics()
                     st.rerun()
 
             current_step_idx = st.slider(
-                "Timeline Position",
+                "Timeline Step",
                 min_value=0,
                 max_value=len(TRIP_TIMELINE) - 1,
                 value=st.session_state.simulation_index,
-                format="Step %d"
+                format="Step %d",
+                key="timeline_step_slider"
             )
             if current_step_idx != st.session_state.simulation_index:
                 st.session_state.simulation_index = current_step_idx
                 st.session_state.simulation_running = False
                 st.rerun()
 
-            playback_speed = st.slider("Playback Speed (sec)", min_value=1.0, max_value=5.0, value=3.0, step=0.5)
+            st.session_state.trip_auto_loop = st.checkbox("🔁 Auto-Loop Trip Timeline", value=st.session_state.trip_auto_loop, key="auto_loop_chk")
+            playback_speed = st.slider("Step Interval (sec)", min_value=1.0, max_value=5.0, value=2.5, step=0.5, key="step_interval_slider")
 
         elif active_mode == "👁️ Live Vision & YOLO Perception":
-            st.subheader("👁️ Perception Settings")
+            st.markdown("##### 👁️ Perception Configuration")
             sandbox_values["vision_source"] = st.radio(
                 "Input Source",
-                ["Preset Animated Driving Scenes", "Upload Image or Dashcam Video", "Live Camera Snapshot (Webcam)"]
+                ["Preset Animated Driving Scenes", "Upload Image or Dashcam Video", "Live Camera Snapshot (Webcam)"],
+                key="vision_source_radio"
             )
-            sandbox_values["vision_conf"] = st.slider("YOLO Confidence", 0.10, 0.95, 0.35, 0.05)
-            sandbox_values["vision_speed"] = st.slider("Host Ego Speed (km/h)", 0.0, 120.0, 40.0, 5.0)
-            sandbox_values["enable_lanes"] = st.checkbox("Enable OpenCV Lane Tracking", value=True)
-            sandbox_values["enable_fusion"] = st.checkbox("🔀 Multi-Sensor Fusion (Radar/LiDAR)", value=False)
+            sandbox_values["vision_conf"] = st.slider("YOLO Confidence Threshold", 0.10, 0.95, 0.35, 0.05, key="vision_conf_slider")
+            sandbox_values["vision_speed"] = st.slider("Host Ego Speed (km/h)", 0.0, 120.0, 40.0, 5.0, key="vision_speed_slider")
+            sandbox_values["enable_lanes"] = st.checkbox("Enable OpenCV Lane Tracking", value=True, key="vision_lane_chk")
+            sandbox_values["enable_fusion"] = st.checkbox("🔀 Multi-Sensor Fusion (Radar/LiDAR)", value=False, key="vision_fusion_chk")
 
-        elif active_mode == "🔬 Preset Scenario Explorer":
-            st.subheader("📚 Scenario Catalog")
-            sc_keys = SimulationEngine.list_scenarios()
-            selected_sc = st.selectbox(
-                "Select Scenario",
-                options=sc_keys,
-                format_func=lambda k: SCENARIOS[k]["title"]
+            if sandbox_values["vision_source"] == "Preset Animated Driving Scenes":
+                st.divider()
+                st.markdown("##### 🎬 Animation Playback")
+                vc1, vc2 = st.columns(2)
+                with vc1:
+                    if st.button("▶️ Play Live" if not st.session_state.vision_anim_running else "🟢 Playing", use_container_width=True, key="play_anim_btn"):
+                        st.session_state.vision_anim_running = True
+                with vc2:
+                    if st.button("⏸️ Pause", use_container_width=True, key="pause_anim_btn"):
+                        st.session_state.vision_anim_running = False
+
+                if st.button("🔄 Rewind Animation", use_container_width=True, key="rewind_anim_btn"):
+                    st.session_state.vision_frame_idx = 0
+                    st.session_state.vision_anim_running = True
+                    st.rerun()
+
+        elif active_mode == "🔬 Scenarios & What-If Sandbox":
+            st.markdown("##### 🔬 Evaluation Mode")
+            sandbox_values["sub_mode"] = st.radio(
+                "Select Mode",
+                ["📚 Preset Benchmark Catalog", "🛠️ Custom What-If Hazard Injector"],
+                label_visibility="collapsed",
+                key="sandbox_submode_radio"
             )
-            st.session_state.selected_scenario = selected_sc
 
-        elif active_mode == "🛠️ Interactive What-If Sandbox":
-            st.subheader("🛠️ Hazard Injector")
-            sandbox_values = {
-                "speed": st.slider("Host Speed (km/h)", 0.0, 130.0, 45.0, 5.0),
-                "hazard_type": st.selectbox("Primary Hazard", ["pedestrian", "vehicle", "static_obstacle", "cyclist", "clear"]),
-                "distance": st.slider("Distance (m)", 2.0, 60.0, 14.0, 1.0),
-                "position": st.selectbox("Position", ["front", "left", "right"]),
-                "closing_speed": st.slider("Closing Speed (km/h)", 0.0, 80.0, 20.0, 5.0),
-            }
+            if sandbox_values["sub_mode"] == "📚 Preset Benchmark Catalog":
+                st.markdown("##### 📚 Benchmark Catalog")
+                sc_keys = SimulationEngine.list_scenarios()
+                selected_sc = st.selectbox(
+                    "Select Benchmark Scenario",
+                    options=sc_keys,
+                    format_func=lambda k: SCENARIOS[k]["title"],
+                    key="scenario_select_box"
+                )
+                st.session_state.selected_scenario = selected_sc
+            else:
+                st.markdown("##### 🛠️ Custom Hazard Injection")
+                sandbox_values["speed"] = st.slider("Host Speed (km/h)", 0.0, 130.0, 45.0, 5.0, key="custom_speed_slider")
+                sandbox_values["hazard_type"] = st.selectbox("Primary Hazard", ["pedestrian", "vehicle", "static_obstacle", "cyclist", "clear"], key="custom_hazard_select")
+                sandbox_values["distance"] = st.slider("Distance (m)", 2.0, 60.0, 14.0, 1.0, key="custom_dist_slider")
+                sandbox_values["position"] = st.selectbox("Position", ["front", "left", "right"], key="custom_pos_select")
+                sandbox_values["closing_speed"] = st.slider("Closing Speed (km/h)", 0.0, 80.0, 20.0, 5.0, key="custom_closing_slider")
 
-            enable_pinch = st.checkbox("Dual Hazard (Swerve Conflict Matrix)", value=False)
-            if enable_pinch:
-                sandbox_values["secondary_type"] = st.selectbox("Secondary Hazard", ["cyclist", "static_obstacle", "vehicle"])
-                sandbox_values["secondary_position"] = "right" if sandbox_values["position"] == "left" else "left"
-                sandbox_values["secondary_distance"] = st.slider("Secondary Distance (m)", 3.0, 30.0, 10.0, 1.0)
-            sandbox_values["enable_secondary"] = enable_pinch
+                enable_pinch = st.checkbox("Dual Hazard (Swerve Conflict Matrix)", value=False, key="custom_dual_chk")
+                if enable_pinch:
+                    sandbox_values["secondary_type"] = st.selectbox("Secondary Hazard", ["cyclist", "static_obstacle", "vehicle"], key="custom_sec_type_select")
+                    sandbox_values["secondary_position"] = "right" if sandbox_values["position"] == "left" else "left"
+                    sandbox_values["secondary_distance"] = st.slider("Secondary Distance (m)", 3.0, 30.0, 10.0, 1.0, key="custom_sec_dist_slider")
+                sandbox_values["enable_secondary"] = enable_pinch
 
         else:
-            st.subheader("🎮 3D Road Simulator Settings")
+            st.markdown("##### 🎮 3D Simulator Viewport")
             st.caption("Powered by `road.py` & `simulation.html`")
-            sim_h = st.slider("Canvas Viewport Height (px)", min_value=650, max_value=1200, value=850, step=50)
+            sim_h = st.slider("Canvas Viewport Height (px)", min_value=650, max_value=1200, value=850, step=50, key="canvas_h_slider")
             sandbox_values["sim_height"] = sim_h
 
         st.divider()
-        st.subheader("📡 Subsystem Telemetry")
-        st.markdown("🟢 **Perception Fusion:** `ONLINE`")
-        st.markdown("🧠 **Brain Engine:** `ACTIVE`")
-        st.markdown("👁️ **Computer Vision (YOLO):** `READY`")
-        st.markdown("📊 **Blackbox Audit:** `LOGGING`")
-        st.markdown("🚗 **Road Simulator (`road.py`):** `LINKED`")
+        st.markdown(
+            """
+            <div class="sidebar-box">
+                <div class="sidebar-box-title">📡 Subsystem Telemetry</div>
+                <div style="font-size:0.75rem; color:#94a3b8; line-height:1.6;">
+                    <div>🟢 <b>Fusion Engine:</b> <span style="color:#34d399;">ONLINE</span></div>
+                    <div>🧠 <b>Decision Brain:</b> <span style="color:#34d399;">ACTIVE (100 Hz)</span></div>
+                    <div>👁️ <b>YOLOv8 Neural:</b> <span style="color:#38bdf8;">READY</span></div>
+                    <div>📊 <b>Blackbox Audit:</b> <span style="color:#a78bfa;">LOGGING</span></div>
+                    <div>🚗 <b>3D Physics:</b> <span style="color:#fbbf24;">60 FPS LINKED</span></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     return active_mode, playback_speed, sandbox_values
 
@@ -543,17 +720,65 @@ def render_top_hud(ego_state: EgoState, decision: Decision, kinematics: Union[Di
         """
         <div class="hud-header">
             <div>
-                <div class="hud-title">🚗 Intelligent Navigation & Autonomous Cockpit</div>
-                <div class="hud-subtitle">Explainable Multi-Modal Decision Support, 2D Bird's-Eye View Perception & Real-Time Kinematics</div>
+                <div class="hud-title">🚗 Intelligent Navigation & Autonomous Decision-Support Cockpit</div>
+                <div class="hud-subtitle">Explainable Multi-Modal Perception, Dynamic Kinematic Safety Envelopes & Deterministic Risk Arbitration</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
-                <span class="badge-active">● FUSION ACTIVE</span>
-                <span class="badge-active">● XAI ENGINE READY</span>
+                <span class="badge-active">● MULTI-SENSOR FUSION ONLINE</span>
+                <span class="badge-active">● XAI RATIONALE ENGINE ACTIVE</span>
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # Executive Overview & Engineering Architecture Guide
+    with st.expander("🎯 Project Vision & System Architecture (What is Being Solved & How?)", expanded=False):
+        p_col1, p_col2 = st.columns([1.1, 1.0])
+        with p_col1:
+            st.markdown("##### 🚨 The Critical Challenge in Autonomous Driving")
+            st.markdown("""
+            * **Black-Box Failures:** Traditional ADAS models act without explainability, making it impossible to verify why a sudden brake or swerve occurred.
+            * **Swerve Conflict Blindspots:** Evasive steering without full 360° sector awareness frequently leads to secondary side-swipe collisions.
+            * **Weather & Sensor Degradation:** Sensor dropouts (fog, glare, hardware gaps) often produce false alarms or silent catastrophic failures.
+            """)
+        with p_col2:
+            st.markdown("##### 💡 Our Multi-Modal Engineering Solution")
+            st.markdown("""
+            * **Sensor Fusion (Camera + Radar + LiDAR):** Fuses optical deep learning semantics with radar Doppler velocities and LiDAR depth.
+            * **Deterministic 5-Tier Priority Hierarchy:** Strict safety arbitration ($P_5$ Emergency $\\to$ $P_1$ Nominal) ensuring safety over convenience.
+            * **Dynamic Physics & Kinematic Envelopes:** Real-time stopping distance calculation factoring in host speed ($v$) and road friction ($\\mu$).
+            * **Explainable AI (XAI) & Audit Log:** Transparent natural language explanations and immutable blackbox CSV logs for every actuation.
+            """)
+
+        st.divider()
+
+        g1, g2, g3 = st.columns(3)
+        with g1:
+            st.markdown("##### 🚦 5-Tier Priority Hierarchy")
+            st.markdown("""
+            * **P5 (Emergency Intervention):** Collision path with $TTC < 1.0\\text{s}$ $\\to$ **EMERGENCY BRAKE / STOP**.
+            * **P4 (Urgent Avoidance):** Fast closing obstacle ($TTC < 2.5\\text{s}$) $\\to$ Urgent deceleration or safe swerve.
+            * **P3 (Active Caution):** Perimeter hazard or degraded sensors $\\to$ **SLOW DOWN**.
+            * **P2 (Lateral Maneuver):** Clear adjacent lane $\\to$ **MOVE LEFT / MOVE RIGHT**.
+            * **P1 (Nominal Cruise):** Unobstructed roadway $\\to$ **CONTINUE** cruising.
+            """)
+        with g2:
+            st.markdown("##### 📐 Kinematics & Stopping Math")
+            st.markdown("""
+            * **Stopping Envelope:** $d_{\\text{stop}} = d_{\\text{reaction}} + d_{\\text{brake}}$
+            * **Reaction Dist:** $d_{\\text{react}} = v \\cdot t_{\\text{react}}$ ($t_{\\text{react}} = 1.0\\text{s}$)
+            * **Braking Dist:** $d_{\\text{brake}} = \\frac{v^2}{2 \\mu g}$ (Dry $\\mu=0.75$, Rain $\\mu=0.55$)
+            * **Time-to-Collision (TTC):** $TTC = \\frac{d}{v_{\\text{closing}}}$
+            * **Safety Margin:** $\\text{Margin} = d - d_{\\text{stop}}$
+            """)
+        with g3:
+            st.markdown("##### 🛡️ Swerve Safety Matrix")
+            st.markdown("""
+            * **Left Obstacle Detected:** Check Right Sector. If clear $\\to$ `MOVE_RIGHT`. If occupied $\\to$ `SLOW_DOWN` in-lane.
+            * **Right Obstacle Detected:** Check Left Sector. If clear $\\to$ `MOVE_LEFT`. If occupied $\\to$ `SLOW_DOWN` in-lane.
+            * **Degraded Sensors:** Automatically reduce cruise speed and increase stopping safety margin.
+            """)
 
     k1, k2, k3, k4, k5 = st.columns(5)
     with k1:
@@ -677,93 +902,151 @@ def render_main_cockpit(current_hazards: List[HazardEvent], decision: Decision, 
         st.markdown("#### 🔬 Sensor Diagnostics & Fault Injection:")
         sf1, sf2, sf3 = st.columns(3)
         with sf1:
-            st.session_state.fault_fog = st.checkbox("🌫️ Severe Fog (Degraded)", value=st.session_state.fault_fog)
+            st.session_state.fault_fog = st.checkbox("🌫️ Severe Fog (Degraded)", value=st.session_state.fault_fog, key="fault_fog_chk")
         with sf2:
-            st.session_state.fault_cam_blackout = st.checkbox("🔌 Camera Disconnect (Failed)", value=st.session_state.fault_cam_blackout)
+            st.session_state.fault_cam_blackout = st.checkbox("🔌 Camera Disconnect (Failed)", value=st.session_state.fault_cam_blackout, key="fault_cam_chk")
         with sf3:
-            st.session_state.fault_lidar_noise = st.checkbox("🌧️ LiDAR Glare", value=st.session_state.fault_lidar_noise)
+            st.session_state.fault_lidar_noise = st.checkbox("🌧️ LiDAR Glare", value=st.session_state.fault_lidar_noise, key="fault_lidar_chk")
 
 
 def render_analytics(history: List[Dict[str, Any]]) -> None:
-    st.divider()
-    st.markdown('<div class="section-label">📊 Cumulative Performance & Blackbox Audit</div>', unsafe_allow_html=True)
+    """Renders the single consolidated blackbox audit analytics panel inside an isolated container."""
+    with st.container():
+        st.divider()
+        st.markdown('<div class="section-label">📊 Cumulative Performance & Blackbox Audit</div>', unsafe_allow_html=True)
 
-    live_metrics = get_metrics()
-    score = live_metrics.get("safety_score", 100)
-    score_color = "#10b981" if score >= 85 else ("#f59e0b" if score >= 65 else "#ef4444")
+        live_metrics = get_metrics()
+        score = live_metrics.get("safety_score", 100)
+        score_color = "#10b981" if score >= 85 else ("#f59e0b" if score >= 65 else "#ef4444")
 
-    p0, p1, p2, p3, p4, p5 = st.columns([1.2, 1.0, 1.0, 1.0, 1.0, 1.0])
-    with p0:
-        st.markdown(
-            f"""
-            <div style="background:#0d1522; border:1px solid #1e293b; border-radius:12px; padding:10px 14px; text-align:center;">
-                <div style="font-size:0.72rem; color:#94a3b8; font-weight:750; text-transform:uppercase;">Safety Score</div>
-                <div style="font-size:1.55rem; font-weight:850; color:{score_color};">{score}%</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    with p1:
-        st.metric("Total Distance", f"{live_metrics['trip_distance_km']:.2f} km")
-    with p2:
-        st.metric("Hazards Detected", live_metrics["hazards_detected"])
-    with p3:
-        st.metric("Warnings Issued", live_metrics["warnings_count"])
-    with p4:
-        st.metric("Brake Actions", live_metrics["brake_events"])
-    with p5:
-        st.metric("Avg Confidence", f"{live_metrics['average_confidence'] * 100:.0f}%")
-
-    if len(history) > 0:
-        graph_df = pd.DataFrame(history)
-
-        risk_num_map = {"UNCERTAIN": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
-        graph_df["Risk Numeric"] = graph_df["Risk"].map(risk_num_map).fillna(0)
-        graph_df["Distance Numeric"] = pd.to_numeric(graph_df["Distance"].str.replace(" m", "").replace("--", None), errors="coerce")
-
-        ch1, ch2 = st.columns(2)
-        with ch1:
-            st.subheader("⚠️ Risk Timeline")
-            st.line_chart(graph_df[["Step", "Risk Numeric"]].set_index("Step"), y="Risk Numeric", color="#ef4444")
-            st.caption("0: Uncertain | 1: Low | 2: Medium | 3: High | 4: Critical")
-
-        with ch2:
-            st.subheader("📏 Hazard Distance Timeline (m)")
-            dist_data = graph_df[["Step", "Distance Numeric"]].dropna().set_index("Step")
-            if not dist_data.empty:
-                st.line_chart(dist_data, y="Distance Numeric", color="#3b82f6")
-
-        st.subheader("📋 Blackbox Decision Audit History")
-        filter_col, dl_col = st.columns([0.7, 0.3])
-        with filter_col:
-            risk_filter = st.selectbox("Filter Risk", ["ALL", "HIGH & CRITICAL", "MEDIUM", "LOW", "UNCERTAIN"])
-
-        display_table = graph_df.copy()
-        if risk_filter == "HIGH & CRITICAL":
-            display_table = display_table[display_table["Risk"].isin(["HIGH", "CRITICAL"])]
-        elif risk_filter != "ALL":
-            display_table = display_table[display_table["Risk"] == risk_filter]
-
-        st.dataframe(display_table, use_container_width=True, hide_index=True)
-
-        with dl_col:
-            csv_data = display_table.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Export Telemetry (CSV)",
-                data=csv_data,
-                file_name=f"telemetry_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-                use_container_width=True
+        p0, p1, p2, p3, p4, p5 = st.columns([1.2, 1.0, 1.0, 1.0, 1.0, 1.0])
+        with p0:
+            st.markdown(
+                f"""
+                <div style="background:#0d1522; border:1px solid #1e293b; border-radius:12px; padding:10px 14px; text-align:center;">
+                    <div style="font-size:0.72rem; color:#94a3b8; font-weight:750; text-transform:uppercase;">Safety Score</div>
+                    <div style="font-size:1.55rem; font-weight:850; color:{score_color};">{score}%</div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
-    else:
-        st.info("💡 Start the trip timeline or inject hazards to populate telemetry analytics and blackbox logs.")
+        with p1:
+            st.metric("Total Distance", f"{live_metrics['trip_distance_km']:.2f} km")
+        with p2:
+            st.metric("Hazards Detected", live_metrics["hazards_detected"])
+        with p3:
+            st.metric("Warnings Issued", live_metrics["warnings_count"])
+        with p4:
+            st.metric("Brake Actions", live_metrics["brake_events"])
+        with p5:
+            st.metric("Avg Confidence", f"{live_metrics['average_confidence'] * 100:.0f}%")
+
+        if len(history) > 0:
+            # Build clean structured records with guaranteed unique sequential index
+            records = []
+            for i, h in enumerate(history, 1):
+                records.append({
+                    "#": i,
+                    "Time": h.get("Time", ""),
+                    "Step / Context": str(h.get("Step", f"Step {i}")),
+                    "Hazard": str(h.get("Hazard", "Clear")),
+                    "Position": str(h.get("Position", "Front")),
+                    "Distance": str(h.get("Distance", "--")),
+                    "Confidence": str(h.get("Confidence", "100%")),
+                    "Risk": str(h.get("Risk", "LOW")),
+                    "Action": str(h.get("Action", "CONTINUE")),
+                    "TTC": str(h.get("TTC", "--")),
+                    "Target Speed": str(h.get("Target Speed", "--")),
+                    "Reason": str(h.get("Reason", ""))
+                })
+
+            full_df = pd.DataFrame(records)
+
+            # Mapping for charts
+            risk_num_map = {"UNCERTAIN": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+            full_df["_risk_num"] = full_df["Risk"].map(risk_num_map).fillna(0)
+
+            def parse_dist(d_val):
+                if not isinstance(d_val, str):
+                    return float(d_val) if d_val is not None else np.nan
+                cleaned = d_val.replace(" m", "").replace("--", "").replace("N/A", "").strip()
+                try:
+                    return float(cleaned)
+                except (ValueError, TypeError):
+                    return np.nan
+
+            full_df["_dist_num"] = full_df["Distance"].apply(parse_dist)
+            full_df["_chart_label"] = full_df.apply(lambda r: f"#{r['#']} {r['Step / Context']}", axis=1)
+
+            # Charts Section
+            ch1, ch2 = st.columns(2)
+            with ch1:
+                st.subheader("⚠️ Risk Timeline")
+                risk_chart_data = full_df.set_index("_chart_label")[["_risk_num"]].rename(columns={"_risk_num": "Risk Severity (0-4)"})
+                st.line_chart(risk_chart_data, color="#ef4444")
+                st.caption("0: Uncertain | 1: Low | 2: Medium | 3: High | 4: Critical")
+
+            with ch2:
+                st.subheader("📏 Hazard Distance Timeline (m)")
+                dist_chart_data = full_df.dropna(subset=["_dist_num"]).set_index("_chart_label")[["_dist_num"]].rename(columns={"_dist_num": "Distance (m)"})
+                if not dist_chart_data.empty:
+                    st.line_chart(dist_chart_data, color="#38bdf8")
+                else:
+                    st.caption("No distance obstacles recorded for clear highway cruising.")
+
+            # Table & Controls Section
+            st.subheader("📋 Blackbox Decision Audit History")
+            
+            filter_col, clear_col, dl_col = st.columns([0.5, 0.25, 0.25])
+            with filter_col:
+                risk_filter = st.selectbox(
+                    "Filter Audit by Risk Level",
+                    ["ALL", "HIGH & CRITICAL", "MEDIUM", "LOW", "UNCERTAIN"],
+                    key="audit_risk_filter_box"
+                )
+
+            clean_cols = ["#", "Time", "Step / Context", "Hazard", "Position", "Distance", "Confidence", "Risk", "Action", "TTC", "Target Speed", "Reason"]
+            display_table = full_df[clean_cols].copy()
+
+            if risk_filter == "HIGH & CRITICAL":
+                display_table = display_table[display_table["Risk"].isin(["HIGH", "CRITICAL"])]
+            elif risk_filter != "ALL":
+                display_table = display_table[display_table["Risk"] == risk_filter]
+
+            with clear_col:
+                st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+                if st.button("🗑️ Clear Audit Log", use_container_width=True, key="audit_clear_action_btn"):
+                    st.session_state.event_history = []
+                    st.session_state.processed_steps = set()
+                    reset_metrics()
+                    st.rerun()
+
+            with dl_col:
+                st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+                csv_data = display_table.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Export Audit CSV",
+                    data=csv_data,
+                    file_name="blackbox_telemetry_audit.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="audit_export_csv_btn"
+                )
+
+            st.dataframe(display_table, use_container_width=True, hide_index=True, key="audit_table_grid")
+
+        else:
+            st.info("💡 Start the trip timeline, run Computer Vision, or inject hazards to populate telemetry analytics and the blackbox audit history.")
 
 
 def run_timeline_loop(playback_speed: float) -> None:
-    if st.session_state.simulation_running:
+    if st.session_state.simulation_running and st.session_state.sim_mode == "🚗 Live Trip Timeline":
         time.sleep(playback_speed)
         if st.session_state.simulation_index < len(TRIP_TIMELINE) - 1:
             st.session_state.simulation_index += 1
+        elif st.session_state.get("trip_auto_loop", True):
+            st.session_state.simulation_index = 0
+            st.session_state.trip_loop_count = st.session_state.get("trip_loop_count", 0) + 1
         else:
             st.session_state.simulation_running = False
         st.rerun()
@@ -779,13 +1062,32 @@ active_mode, playback_speed, sandbox_values = render_sidebar_controls()
 if active_mode == "🎮 3D Road Simulator (road.py)":
     st.markdown(
         """
-        <div class="hud-header">
-            <div>
-                <div class="hud-title">🎮 3D WebGL Road Safety Simulator</div>
-                <div class="hud-subtitle">Interactive 60 FPS Physics Engine, Dynamic Scenario Generation, and Spatial Hazard Avoidance</div>
+        <div class="mode-hero-banner">
+            <div class="mode-hero-title">🎮 3D WebGL Road Safety Simulator (Three.js Physics Engine)</div>
+            <div class="mode-hero-desc">
+                Interactive real-time 3D road environment featuring dynamic pedestrian and animal crossing animations, 
+                traffic car-following with anti-clipping ACC, multi-camera cockpit/BEV views, and adjustable cruise speed controls.
             </div>
-            <div>
-                <span class="badge-active">● 3D ENGINE ONLINE</span>
+            <div class="mode-pillars-grid">
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🎯 What This Tests</div>
+                    <p class="mode-pillar-text">Dynamic spatial obstacle avoidance, realistic 4-legged trot gait, perpendicular sidewalk crossings.</p>
+                </div>
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🔬 Active Physics Models</div>
+                    <p class="mode-pillar-text">Adaptive Cruise Control (7.5m hard buffer), Weather road friction (μ=0.75 dry to μ=0.45 storm).</p>
+                </div>
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🎮 Live Controls</div>
+                    <p class="mode-pillar-text">Cruise Speed Slider (10–130 km/h), Quick ±10 km/h buttons, WASD / Arrow keys & Cockpit camera mode.</p>
+                </div>
+            </div>
+            <div class="mode-hero-tags">
+                <span class="mode-tag">● Three.js WebGL Engine</span>
+                <span class="mode-tag">● Cockpit POV Driver Eye View</span>
+                <span class="mode-tag">● 4-Legged Diagonal Trot Kinematics</span>
+                <span class="mode-tag">● High-Altitude Cloud Shading</span>
+                <span class="mode-tag">● Standalone Mode (`road.py`)</span>
             </div>
         </div>
         """,
@@ -794,11 +1096,11 @@ if active_mode == "🎮 3D Road Simulator (road.py)":
 
     info_c1, info_c2, info_c3 = st.columns(3)
     with info_c1:
-        st.info("🎮 **Simulation Controls:** Use interactive onscreen buttons or WASD / Arrow keys to maneuver.")
+        st.info("🎮 **Controls:** Use onscreen buttons, Speed slider, or WASD / Arrow keys.")
     with info_c2:
-        st.success("🟢 **Perception Status:** Canvas Graphics & Physics Engine Active")
+        st.success("🟢 **Status:** 3D Canvas Graphics & Physics Active")
     with info_c3:
-        st.warning("⚡ **Standalone Mode:** You can also launch directly via `streamlit run road.py`")
+        st.warning("⚡ **Direct Access:** Also available via `streamlit run road.py`")
 
     canvas_h = sandbox_values.get("sim_height", 850)
     render_road_simulation_component(height=canvas_h)
@@ -806,13 +1108,32 @@ if active_mode == "🎮 3D Road Simulator (road.py)":
 elif active_mode == "👁️ Live Vision & YOLO Perception":
     st.markdown(
         """
-        <div class="hud-header">
-            <div>
-                <div class="hud-title">👁️ Computer Vision & YOLO Perception Suite</div>
-                <div class="hud-subtitle">Real-Time Object Detection (YOLOv8), Monocular Distance Estimation, OpenCV Lane Tracking, and Explainable AI Decisions</div>
+        <div class="mode-hero-banner">
+            <div class="mode-hero-title">👁️ Computer Vision & YOLOv8 Neural Perception Suite</div>
+            <div class="mode-hero-desc">
+                Simulates or ingests camera streams to demonstrate how deep learning object detection (YOLOv8) combines with 
+                OpenCV Hough lane tracking, monocular distance estimation, and closing velocity dynamics to feed the AI Brain.
             </div>
-            <div>
-                <span class="badge-active">● YOLOv8 ACTIVE</span>
+            <div class="mode-pillars-grid">
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🎯 What This Tests</div>
+                    <p class="mode-pillar-text">Optical object recognition, real-time bounding box tracking, and lane departure detection.</p>
+                </div>
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🔬 Active AI Models</div>
+                    <p class="mode-pillar-text">YOLOv8n neural weights, Canny edge detection, Hough Line Transform, and monocular focal depth estimation.</p>
+                </div>
+                <div class="mode-pillar-card">
+                    <div class="mode-pillar-header">🎮 Live Controls</div>
+                    <p class="mode-pillar-text">Auto-playing 15 FPS driving scenes, video/image upload, webcam capture, and sensor fusion toggle.</p>
+                </div>
+            </div>
+            <div class="mode-hero-tags">
+                <span class="mode-tag">● YOLOv8 Deep Learning</span>
+                <span class="mode-tag">● OpenCV Hough Lane Assist</span>
+                <span class="mode-tag">● Monocular Distance Model (d = f·H / h)</span>
+                <span class="mode-tag">● Auto-Playing 15 FPS Stream</span>
+                <span class="mode-tag">● Multi-Modal Radar Fusion</span>
             </div>
         </div>
         """,
@@ -838,16 +1159,31 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                     "🚶 Urban Pedestrian Crossing (Center Lane Risk)",
                     "🚙 Highway Lead Vehicle Rapid Deceleration",
                     "🚧 Dual Hazard Pinch (Left Barrier + Right Cyclist)"
-                ]
+                ],
+                key="vision_scene_select"
             )
             sc_key = "urban_pedestrian" if "Pedestrian" in sc_choice else ("highway_lead_vehicle" if "Highway" in sc_choice else "dual_hazard_pinch")
         with sc_col2:
-            frame_slider = st.slider("🎬 Animation Timeline Step (30 FPS)", 0, 160, 25, 1)
+            anim_status = "🟢 Auto-Playing" if st.session_state.vision_anim_running else "⏸️ Paused"
+            frame_slider = st.slider(
+                f"🎬 Timeline Frame: {st.session_state.vision_frame_idx}/160 ({anim_status})",
+                min_value=0,
+                max_value=160,
+                value=st.session_state.vision_frame_idx,
+                step=1,
+                key="vision_frame_scrubber"
+            )
+            if frame_slider != st.session_state.vision_frame_idx and not st.session_state.vision_anim_running:
+                st.session_state.vision_frame_idx = frame_slider
 
-        frame_to_process, override_boxes = generate_animated_driving_frame(scenario=sc_key, frame_idx=frame_slider)
+        # Generate the animated driving frame
+        frame_to_process, override_boxes = generate_animated_driving_frame(
+            scenario=sc_key,
+            frame_idx=st.session_state.vision_frame_idx
+        )
 
     elif source_choice == "Upload Image or Dashcam Video":
-        uploaded_file = st.file_uploader("Upload Dashcam Image or Video (JPG, PNG, MP4, AVI, MOV)", type=["jpg", "jpeg", "png", "mp4", "avi", "mov"])
+        uploaded_file = st.file_uploader("Upload Dashcam Image or Video (JPG, PNG, MP4, AVI, MOV)", type=["jpg", "jpeg", "png", "mp4", "avi", "mov"], key="vision_uploader")
         if uploaded_file is not None:
             filename = uploaded_file.name.lower()
             if any(filename.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
@@ -864,7 +1200,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                 with v_col1:
                     st.caption(f"🎥 Video Loaded: {total_frames} frames ({fps} FPS)")
                 with v_col2:
-                    frame_num = st.slider("Video Frame Scrubber", 0, max(0, total_frames - 1), 0, 1)
+                    frame_num = st.slider("Video Frame Scrubber", 0, max(0, total_frames - 1), 0, 1, key="vid_scrubber")
 
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
                 ret, frame_read = cap.read()
@@ -877,7 +1213,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             st.info("👆 Please upload a dashcam image (.jpg/.png) or video clip (.mp4) above to run Computer Vision perception.")
 
     elif source_choice == "Live Camera Snapshot (Webcam)":
-        cam_snap = st.camera_input("Capture Dashcam Frame from Webcam")
+        cam_snap = st.camera_input("Capture Dashcam Frame from Webcam", key="webcam_capture")
         if cam_snap is not None:
             bytes_data = cam_snap.getvalue()
             frame_to_process = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
@@ -941,7 +1277,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         # Action Buttons for Blackbox Logging
         log_col1, log_col2 = st.columns([0.6, 0.4])
         with log_col1:
-            if st.button("💾 Record Vision Detection to Blackbox Audit Log", use_container_width=True):
+            if st.button("💾 Record Vision Detection to Blackbox Audit Log", use_container_width=True, key="record_vision_audit_btn"):
                 primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
                 for h in current_hazards:
                     record_event(
@@ -985,6 +1321,12 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         # Analytics / Blackbox History
         render_analytics(st.session_state.event_history)
 
+        # Auto-advance animated driving scene loop
+        if source_choice == "Preset Animated Driving Scenes" and st.session_state.vision_anim_running:
+            time.sleep(0.08)
+            st.session_state.vision_frame_idx = (st.session_state.vision_frame_idx + 3) % 160
+            st.rerun()
+
 else:
     # ------------------------------------------------------------
     # SENSOR INGESTION & KINEMATICS EVALUATION
@@ -995,6 +1337,40 @@ else:
     step_id: Any = 1
 
     if active_mode == "🚗 Live Trip Timeline":
+        st.markdown(
+            f"""
+            <div class="mode-hero-banner">
+                <div class="mode-hero-title">🚗 Sequential Autonomous Drive Simulation (Live Timeline)</div>
+                <div class="mode-hero-desc">
+                    Simulates a continuous 8-step driving journey across highway, urban, and adverse conditions. 
+                    Watch the autonomous vehicle automatically adapt its speed, execute emergency braking for pedestrians, 
+                    navigate construction barriers, handle dense fog, and recover from sensor dropouts.
+                </div>
+                <div class="mode-pillars-grid">
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🎯 What This Tests</div>
+                        <p class="mode-pillar-text">Dynamic speed adaptation, pedestrian crossing reactions, obstacle evasion, and sensor failsafes.</p>
+                    </div>
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🔬 Active Kinematics</div>
+                        <p class="mode-pillar-text">Dynamic reaction distance, stopping distance envelopes (d_stop), TTC thresholds, and safety margins.</p>
+                    </div>
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🎮 Live Controls</div>
+                        <p class="mode-pillar-text">Auto-driving loop, play/pause toggles, step scrubbing, and automatic 0–100% safety scoring.</p>
+                    </div>
+                </div>
+                <div class="mode-hero-tags">
+                    <span class="mode-tag">● Step {st.session_state.simulation_index + 1} of {len(TRIP_TIMELINE)}</span>
+                    <span class="mode-tag">● Dynamic Stopping Envelopes</span>
+                    <span class="mode-tag">● Real-Time Safety Scoring (0–100%)</span>
+                    <span class="mode-tag">● Continuous Blackbox Audit Log</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         timeline = SimulationEngine.get_trip_timeline()
         curr_step = timeline[st.session_state.simulation_index]
         step_id = curr_step.get("timestep", st.session_state.simulation_index + 1)
@@ -1002,47 +1378,86 @@ else:
         ego_state = EgoState(speed_kmh=curr_step.get("ego_speed", 40.0))
         current_hazards = [HazardEvent.from_dict(ev) for ev in curr_step.get("events", [])]
 
-    elif active_mode == "🔬 Preset Scenario Explorer":
-        sc_data = SimulationEngine.get_scenario(st.session_state.selected_scenario)
-        ego_state = sc_data["ego_state"]
-        step_desc = sc_data["description"]
-        current_hazards = sc_data["events"]
-        step_id = st.session_state.selected_scenario
-
     else:
-        ego_state = EgoState(speed_kmh=sandbox_values.get("speed", 45.0))
-        step_desc = f"Interactive Sandbox: {sandbox_values.get('hazard_type')} at {sandbox_values.get('distance')}m ({sandbox_values.get('position')})."
-        h1 = HazardEvent(
-            id=901,
-            type=HazardType.from_value(sandbox_values.get("hazard_type", "pedestrian")),
-            subtype=sandbox_values.get("hazard_type", "pedestrian"),
-            position=Position.from_value(sandbox_values.get("position", "front")),
-            distance=sandbox_values.get("distance") if sandbox_values.get("hazard_type") != "clear" else None,
-            confidence=0.96,
-            sensor_status=SensorStatus.ACTIVE,
-            relative_speed_kmh=sandbox_values.get("closing_speed") if sandbox_values.get("hazard_type") != "clear" else None
+        # ============================================================
+        # COMBINED: 🔬 Scenarios & What-If Sandbox
+        # ============================================================
+        st.markdown(
+            """
+            <div class="mode-hero-banner">
+                <div class="mode-hero-title">🔬 Scenario Catalog Explorer & What-If Sandbox</div>
+                <div class="mode-hero-desc">
+                    Combined testing suite: Choose from pre-configured benchmark safety edge-cases (Urban Pedestrian, Highway Braking, Fog, Sensor Gap) 
+                    or switch to the Custom What-If Injector to test live parameter tuning, speed variations, and dual-hazard swerve conflict resolution.
+                </div>
+                <div class="mode-pillars-grid">
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🎯 What This Tests</div>
+                        <p class="mode-pillar-text">Deterministic edge-case verification, lateral swerve vs in-lane braking arbitration, and custom obstacle geometry.</p>
+                    </div>
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🔬 Active Decision Models</div>
+                        <p class="mode-pillar-text">5-Tier Priority Hierarchy, Swerve Conflict Resolution Matrix, and degraded sensor fallback logic.</p>
+                    </div>
+                    <div class="mode-pillar-card">
+                        <div class="mode-pillar-header">🎮 Live Controls</div>
+                        <p class="mode-pillar-text">Switch between Preset Scenarios and What-If Injector via top tabs; adjust speed, distance, and secondary obstacles.</p>
+                    </div>
+                </div>
+                <div class="mode-hero-tags">
+                    <span class="mode-tag">● Benchmark Scenario Catalog</span>
+                    <span class="mode-tag">● Custom Parameter Injector</span>
+                    <span class="mode-tag">● Swerve Conflict Matrix</span>
+                    <span class="mode-tag">● Instant Stopping Margin Math</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
-        current_hazards = [h1]
-        if sandbox_values.get("enable_secondary"):
-            h2 = HazardEvent(
-                id=902,
-                type=HazardType.from_value(sandbox_values["secondary_type"]),
-                subtype=sandbox_values["secondary_type"],
-                position=Position.from_value(sandbox_values["secondary_position"]),
-                distance=sandbox_values["secondary_distance"],
-                confidence=0.94,
+
+        sub_tab = sandbox_values.get("sub_mode", "📚 Preset Benchmark Catalog")
+
+        if sub_tab == "📚 Preset Benchmark Catalog":
+            sc_data = SimulationEngine.get_scenario(st.session_state.selected_scenario)
+            ego_state = sc_data["ego_state"]
+            step_desc = f"📚 Preset Benchmark: {sc_data['title']} — {sc_data['description']}"
+            current_hazards = sc_data["events"]
+            step_id = st.session_state.selected_scenario
+        else:
+            ego_state = EgoState(speed_kmh=sandbox_values.get("speed", 45.0))
+            step_desc = f"🛠️ What-If Custom Injection: {sandbox_values.get('hazard_type')} at {sandbox_values.get('distance')}m ({sandbox_values.get('position')}) with host speed {ego_state.speed_kmh:.0f} km/h."
+            h1 = HazardEvent(
+                id=901,
+                type=HazardType.from_value(sandbox_values.get("hazard_type", "pedestrian")),
+                subtype=sandbox_values.get("hazard_type", "pedestrian"),
+                position=Position.from_value(sandbox_values.get("position", "front")),
+                distance=sandbox_values.get("distance") if sandbox_values.get("hazard_type") != "clear" else None,
+                confidence=0.96,
                 sensor_status=SensorStatus.ACTIVE,
-                relative_speed_kmh=10.0
+                relative_speed_kmh=sandbox_values.get("closing_speed") if sandbox_values.get("hazard_type") != "clear" else None
             )
-            current_hazards.append(h2)
-        step_id = "Sandbox"
+            current_hazards = [h1]
+            if sandbox_values.get("enable_secondary"):
+                h2 = HazardEvent(
+                    id=902,
+                    type=HazardType.from_value(sandbox_values["secondary_type"]),
+                    subtype=sandbox_values["secondary_type"],
+                    position=Position.from_value(sandbox_values["secondary_position"]),
+                    distance=sandbox_values["secondary_distance"],
+                    confidence=0.94,
+                    sensor_status=SensorStatus.ACTIVE,
+                    relative_speed_kmh=10.0
+                )
+                current_hazards.append(h2)
+            step_id = "Sandbox"
 
     apply_sensor_faults(current_hazards)
     decision, kinematics, _ = evaluate_scene(current_hazards, ego_state)
     primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
 
     if active_mode == "🚗 Live Trip Timeline":
-        step_key = f"step_{st.session_state.simulation_index}_{step_id}"
+        loop_cnt = st.session_state.get("trip_loop_count", 0)
+        step_key = f"loop_{loop_cnt}_step_{st.session_state.simulation_index}_{step_id}"
         if step_key not in st.session_state.processed_steps:
             st.session_state.processed_steps.add(step_key)
             for h in current_hazards:
@@ -1053,7 +1468,8 @@ else:
                     speed_kmh=ego_state.speed_kmh,
                     dt_seconds=3.0
                 )
-            st.session_state.event_history.append(build_history_entry(primary_hazard, decision, step_id))
+            step_label = f"Step {st.session_state.simulation_index + 1}" if loop_cnt == 0 else f"Step {st.session_state.simulation_index + 1} (Loop {loop_cnt + 1})"
+            st.session_state.event_history.append(build_history_entry(primary_hazard, decision, step_label))
 
     # ============================================================
     # 7. MAIN COCKPIT HUD
@@ -1064,6 +1480,23 @@ else:
     # 8. CENTRAL SPLIT COCKPIT (BEV MAP + DECISION ENGINE)
     # ============================================================
     render_main_cockpit(current_hazards, decision, ego_state, kinematics, step_desc)
+
+    # Optional Blackbox Logger Button for Scenario / What-If
+    if active_mode == "🔬 Scenarios & What-If Sandbox":
+        sc_log_col1, sc_log_col2 = st.columns([0.6, 0.4])
+        with sc_log_col1:
+            if st.button("💾 Record Scenario Decision to Blackbox Audit Log", use_container_width=True, key="record_scenario_audit_btn"):
+                for h in current_hazards:
+                    record_event(
+                        event=h,
+                        risk=decision.risk,
+                        action=decision.action,
+                        speed_kmh=ego_state.speed_kmh,
+                        dt_seconds=3.0
+                    )
+                log_tag = f"Scenario_{st.session_state.selected_scenario}" if sandbox_values.get("sub_mode") == "📚 Preset Benchmark Catalog" else f"WhatIf_{len(st.session_state.event_history) + 1}"
+                st.session_state.event_history.append(build_history_entry(primary_hazard, decision, log_tag))
+                st.toast("✅ Scenario decision logged to Blackbox Audit!")
 
     # ============================================================
     # 9. PERFORMANCE KPIS, CHARTS & BLACKBOX AUDIT LOG
