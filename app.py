@@ -63,7 +63,7 @@ from vision import (
 # ============================================================
 
 st.set_page_config(
-    page_title="Autonomous AI Cockpit • Intelligent Navigation",
+    page_title="AI Nav-Pilot • Autonomous Cockpit",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -72,7 +72,7 @@ st.set_page_config(
 
 @st.cache_resource
 def get_cached_vision_engine(model_name: str = "yolov8n.pt", enable_lanes: bool = True) -> VisionPerceptionEngine:
-    """Caches the YOLOv8 perception engine in memory to avoid redundant reloads."""
+    """Caches the YOLOv8 perception engine in memory to avoid redundant model initialization."""
     return VisionPerceptionEngine(model_name=model_name, enable_lanes=enable_lanes)
 
 
@@ -92,13 +92,13 @@ header[data-testid="stHeader"] {
 .stApp {
     background-color: #06090e;
     color: #e2e8f0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Generous Top Padding for 100% Unobscured Visibility */
 .block-container {
     max-width: 1650px;
-    padding-top: 4.8rem !important;
+    padding-top: 4.6rem !important;
     padding-bottom: 2.5rem;
 }
 
@@ -106,6 +106,7 @@ header[data-testid="stHeader"] {
 div[data-testid="stVerticalBlock"] > div.element-container,
 div[data-testid="stVerticalBlock"] > div[data-testid="stBlock"] {
     opacity: 1 !important;
+    transition: opacity 0.1s ease-in-out !important;
 }
 
 /* Sidebar Custom Styling */
@@ -115,13 +116,13 @@ section[data-testid="stSidebar"] {
 }
 
 .sidebar-brand-card {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border: 1px solid #38bdf8;
+    background: linear-gradient(135deg, #091224 0%, #111e38 100%);
+    border: 1px solid rgba(56, 189, 248, 0.4);
     border-radius: 12px;
     padding: 14px;
     margin-bottom: 1.2rem;
     text-align: center;
-    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.15);
+    box-shadow: 0 4px 18px rgba(56, 189, 248, 0.12);
 }
 
 .sidebar-brand-title {
@@ -133,7 +134,7 @@ section[data-testid="stSidebar"] {
 }
 
 .sidebar-brand-sub {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: #94a3b8;
     font-weight: 600;
     margin-top: 2px;
@@ -144,11 +145,12 @@ section[data-testid="stSidebar"] {
     border: 1px solid #1e293b;
     border-radius: 10px;
     padding: 12px;
-    margin-bottom: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.8rem;
 }
 
 .sidebar-box-title {
-    font-size: 0.82rem;
+    font-size: 0.80rem;
     font-weight: 800;
     color: #f1f5f9;
     text-transform: uppercase;
@@ -161,13 +163,13 @@ section[data-testid="stSidebar"] {
 
 /* Top Hero Banner */
 .hud-header {
-    background: linear-gradient(135deg, #0b1329 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #0a1329 0%, #0f172a 100%);
     border: 1px solid #1e293b;
     border-radius: 16px;
-    padding: 20px 26px;
-    margin-top: 0.5rem;
+    padding: 18px 24px;
+    margin-top: 0.3rem;
     margin-bottom: 1.0rem;
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -176,7 +178,7 @@ section[data-testid="stSidebar"] {
 }
 
 .hud-title {
-    font-size: 1.95rem;
+    font-size: 1.85rem;
     font-weight: 850;
     letter-spacing: -0.5px;
     color: #f8fafc;
@@ -188,101 +190,122 @@ section[data-testid="stSidebar"] {
 
 .hud-subtitle {
     color: #94a3b8;
-    font-size: 0.90rem;
+    font-size: 0.88rem;
     margin-top: 4px;
     margin-bottom: 0;
 }
 
 /* Mode Purpose Hero Banner */
 .mode-hero-banner {
-    background: linear-gradient(135deg, #0a1428 0%, #111e38 100%);
-    border: 1px solid #38bdf8;
-    border-radius: 16px;
-    padding: 18px 24px;
-    margin-bottom: 1.3rem;
-    box-shadow: 0 6px 24px rgba(56, 189, 248, 0.12);
+    background: linear-gradient(135deg, #091326 0%, #0d1b36 100%);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 14px;
+    padding: 16px 22px;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.08);
 }
 
 .mode-hero-title {
-    font-size: 1.25rem;
+    font-size: 1.20rem;
     font-weight: 850;
     color: #38bdf8;
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
 .mode-hero-desc {
-    font-size: 0.92rem;
+    font-size: 0.90rem;
     color: #cbd5e1;
-    line-height: 1.5;
-    margin-bottom: 12px;
+    line-height: 1.45;
+    margin-bottom: 10px;
 }
 
 .mode-pillars-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
-    margin-top: 10px;
-    margin-bottom: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+    margin-bottom: 6px;
 }
 
 .mode-pillar-card {
-    background: rgba(15, 23, 42, 0.75);
+    background: rgba(15, 23, 42, 0.7);
     border: 1px solid #1e293b;
-    border-radius: 10px;
-    padding: 10px 14px;
+    border-radius: 9px;
+    padding: 9px 12px;
 }
 
 .mode-pillar-header {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 800;
     color: #7dd3fc;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .mode-pillar-text {
-    font-size: 0.82rem;
+    font-size: 0.80rem;
     color: #94a3b8;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 
 .mode-hero-tags {
     display: flex;
-    gap: 8px;
+    gap: 7px;
     flex-wrap: wrap;
-    margin-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding-top: 10px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 8px;
 }
 
 .mode-tag {
-    background: rgba(56, 189, 248, 0.12);
+    background: rgba(56, 189, 248, 0.10);
     color: #bae6fd;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    font-size: 0.74rem;
-    padding: 3px 9px;
-    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 5px;
     font-weight: 650;
+}
+
+/* Glass Section Container */
+.glass-panel {
+    background: #090e17;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 1rem;
+}
+
+.section-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* Action Boxes */
 .act-box {
     text-align: center;
-    padding: 16px;
+    padding: 14px;
     border-radius: 12px;
-    font-size: 1.85rem;
+    font-size: 1.75rem;
     font-weight: 900;
-    letter-spacing: 1px;
-    margin: 6px 0 12px 0;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+    letter-spacing: 0.8px;
+    margin: 4px 0 10px 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.35);
 }
 
 .act-continue { background: linear-gradient(135deg, #064e3b, #047857); color: #ecfdf5; border: 1px solid #10b981; }
@@ -297,28 +320,27 @@ div[data-testid="stMetric"] {
     border: 1px solid #1e293b;
     border-radius: 12px;
     padding: 10px 14px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 div[data-testid="stMetricLabel"] {
     color: #94a3b8;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 750;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
 }
 
 div[data-testid="stMetricValue"] {
     color: #f8fafc;
-    font-size: 1.35rem;
+    font-size: 1.30rem;
     font-weight: 800;
 }
 
 /* Badges */
-.badge-active { background: #064e3b; color: #34d399; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
-.badge-degraded { background: #78350f; color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
-.badge-failed { background: #7f1d1d; color: #f87171; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
-.badge-anim { background: #1e1b4b; color: #818cf8; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 750; }
+.badge-active { background: #064e3b; color: #34d399; padding: 4px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 750; border: 1px solid #059669; }
+.badge-degraded { background: #78350f; color: #fbbf24; padding: 4px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 750; border: 1px solid #d97706; }
+.badge-failed { background: #7f1d1d; color: #f87171; padding: 4px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 750; border: 1px solid #dc2626; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -516,7 +538,7 @@ def render_sidebar_controls():
             unsafe_allow_html=True
         )
 
-        st.markdown("##### 🎛️ Select Operational Mode")
+        st.markdown("##### 🎛️ Operational Mode")
 
         active_mode = st.radio(
             "Operational Mode",
@@ -671,7 +693,6 @@ def render_sidebar_controls():
             sim_h = st.slider("Canvas Viewport Height (px)", min_value=650, max_value=1200, value=850, step=50, key="canvas_h_slider")
             sandbox_values["sim_height"] = sim_h
 
-        st.divider()
         st.markdown(
             """
             <div class="sidebar-box">
@@ -1172,10 +1193,12 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
     override_boxes = None
     is_video_mode = False
     total_video_frames = 160
+    current_frame_id = 0
 
     if source_choice == "Preset Animated Driving Scenes":
         is_video_mode = True
         total_video_frames = 160
+        current_frame_id = st.session_state.vision_frame_idx
 
         sc_col1, sc_col2 = st.columns([1.2, 1.0])
         with sc_col1:
@@ -1201,6 +1224,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             )
             if frame_slider != st.session_state.vision_frame_idx and not st.session_state.vision_anim_running:
                 st.session_state.vision_frame_idx = frame_slider
+                current_frame_id = frame_slider
 
         # Generate the animated driving frame
         frame_to_process, override_boxes = generate_animated_driving_frame(
@@ -1239,6 +1263,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                     cap = cv2.VideoCapture(temp_vid_path)
                     total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
                     fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+                    current_frame_id = st.session_state.video_frame_idx
 
                     v_col1, v_col2 = st.columns([1.2, 1.0])
                     with v_col1:
@@ -1255,6 +1280,7 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                         )
                         if v_slider != st.session_state.video_frame_idx and not st.session_state.video_anim_running:
                             st.session_state.video_frame_idx = v_slider
+                            current_frame_id = v_slider
 
                     cap.set(cv2.CAP_PROP_POS_FRAMES, st.session_state.video_frame_idx)
                     ret, frame_read = cap.read()
@@ -1301,11 +1327,28 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             radar_hazards=radar_sim
         )
 
+        # Dynamic Auto-Telemetry Streaming into Blackbox & Charts
+        primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
+        v_step_tag = f"Frame {current_frame_id}"
+        
+        # Log to live rolling metrics if new or on periodic stride (smooth graph updates)
+        if (current_frame_id % 3 == 0) or (primary_hazard.type != HazardType.CLEAR and (len(st.session_state.event_history) == 0 or st.session_state.event_history[-1].get("Step") != v_step_tag)):
+            record_event(
+                event=primary_hazard,
+                risk=decision.risk,
+                action=decision.action,
+                speed_kmh=ego_state.speed_kmh,
+                dt_seconds=0.10
+            )
+            st.session_state.event_history.append(build_history_entry(primary_hazard, decision, v_step_tag))
+            if len(st.session_state.event_history) > 100:
+                st.session_state.event_history.pop(0)
+
         # Render Top HUD
         render_top_hud(ego_state, decision, kinematics)
 
-        # Central Split
-        c_vis, c_bev = st.columns([1.25, 1.0])
+        # Central Split Cockpit (Identical richness to Live Trip)
+        c_vis, c_bev = st.columns([1.1, 1.0])
         with c_vis:
             st.markdown('<div class="section-label">📸 AR Cockpit Vision Perception (OpenCV + YOLO)</div>', unsafe_allow_html=True)
             rgb_disp = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
@@ -1316,63 +1359,69 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             elif lane_info.left_line and lane_info.right_line:
                 st.success("🟢 **Lane Keeping Assist:** Vehicle Centered in Host Lane")
 
+            # Detected Targets Breakdown
+            st.markdown("##### 🎯 Detected Targets Breakdown")
+            hazard_rows = []
+            for h in current_hazards:
+                h_type_str = h.type.value if hasattr(h.type, "value") else str(h.type)
+                if "clear" in h_type_str.lower():
+                    continue
+                hazard_rows.append({
+                    "Target ID": h.id,
+                    "Classification": h_type_str.title(),
+                    "Subtype": (h.subtype or "--").title(),
+                    "Position": (h.position.value if hasattr(h.position, "value") else str(h.position)).title(),
+                    "Estimated Distance": f"{h.distance:.1f} m" if h.distance is not None else "--",
+                    "Confidence": f"{h.confidence * 100:.0f}%",
+                    "Relative Speed": f"{h.relative_speed_kmh:.1f} km/h" if h.relative_speed_kmh is not None else "--",
+                    "Sensor": h.sensor
+                })
+
+            if hazard_rows:
+                st.dataframe(pd.DataFrame(hazard_rows), use_container_width=True, hide_index=True)
+            else:
+                st.success("🟢 No active roadway hazards detected in camera view.")
+
         with c_bev:
             st.markdown('<div class="section-label">🗺️ Synchronized 2D Bird\'s-Eye View (BEV)</div>', unsafe_allow_html=True)
             render_bev_road_component(current_hazards, decision, ego_state.speed_kmh)
+            render_sector_cards(current_hazards)
+
+            p_lvl = getattr(decision, "priority_level", 1)
+            p_names = {1: "Nominal Cruising", 2: "Lateral Maneuver", 3: "Active Caution", 4: "Urgent Avoidance", 5: "Emergency Intervention"}
+            p_badge = f'<span style="float: right; font-size: 0.75rem; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 6px;">Priority {p_lvl}/5: {p_names.get(p_lvl, "Standard")}</span>'
 
             st.markdown(
                 f'<div class="act-box {action_class_for(decision.action)}">'
                 f'🚦 {decision.action.replace("_", " ")}'
+                f'{p_badge}'
                 f'</div>',
                 unsafe_allow_html=True
             )
             st.info(f"💡 **AI Rationale:** {decision.reason}")
 
-        # Action Buttons for Blackbox Logging
-        log_col1, log_col2 = st.columns([0.6, 0.4])
-        with log_col1:
-            if st.button("💾 Record Vision Detection to Blackbox Audit Log", use_container_width=True, key="record_vision_audit_btn"):
-                primary_hazard = current_hazards[0] if current_hazards else HazardEvent(type=HazardType.CLEAR)
-                for h in current_hazards:
-                    record_event(
-                        event=h,
-                        risk=decision.risk,
-                        action=decision.action,
-                        speed_kmh=ego_state.speed_kmh,
-                        dt_seconds=3.0
-                    )
-                st.session_state.event_history.append(build_history_entry(primary_hazard, decision, f"Vision_{len(st.session_state.event_history) + 1}"))
-                st.toast("✅ Vision detection event successfully logged to trip blackbox audit!")
-        with log_col2:
-            if enable_fusion:
-                st.success("🔀 Multi-Modal Sensor Fusion Active (Camera + Radar)")
-            else:
-                st.info("📷 Optical Camera Perception Active")
+            # Kinematic Safety Telemetry metrics in Vision Mode
+            st.markdown("#### 📐 Kinematic Safety Telemetry:")
+            kn1, kn2, kn3 = st.columns(3)
+            with kn1:
+                st.metric("Reaction Dist", f"{kinematics['reaction_dist_m']} m")
+            with kn2:
+                st.metric("Braking Dist", f"{kinematics['braking_dist_m']} m")
+            with kn3:
+                decel_disp = f"{kinematics['required_decel_ms2']} m/s²" if kinematics['required_decel_ms2'] is not None else "0.0 m/s²"
+                st.metric("Required Decel", decel_disp)
 
-        # Detected Targets Breakdown
-        st.markdown("### 🎯 Detected Environmental Hazards")
-        hazard_rows = []
-        for h in current_hazards:
-            h_type_str = h.type.value if hasattr(h.type, "value") else str(h.type)
-            if "clear" in h_type_str.lower():
-                continue
-            hazard_rows.append({
-                "Target ID": h.id,
-                "Classification": h_type_str.title(),
-                "Subtype": (h.subtype or "--").title(),
-                "Position": (h.position.value if hasattr(h.position, "value") else str(h.position)).title(),
-                "Estimated Distance": f"{h.distance:.1f} m" if h.distance is not None else "--",
-                "Confidence": f"{h.confidence * 100:.0f}%",
-                "Relative Speed": f"{h.relative_speed_kmh:.1f} km/h" if h.relative_speed_kmh is not None else "--",
-                "Sensor": h.sensor
-            })
+            if kinematics.get("safety_margin_m") is not None:
+                margin = kinematics["safety_margin_m"]
+                margin_txt = f"{margin:+.1f} m"
+                if margin > 5.0:
+                    st.caption(f"🛡️ **Safety Stopping Margin:** `{margin_txt}` (Adequate Buffer)")
+                elif margin >= 0:
+                    st.caption(f"⚠️ **Safety Stopping Margin:** `{margin_txt}` (Tight Threshold)")
+                else:
+                    st.caption(f"🚨 **Safety Stopping Margin:** `{margin_txt}` (Negative Margin - Emergency Intervention Triggered)")
 
-        if hazard_rows:
-            st.dataframe(pd.DataFrame(hazard_rows), use_container_width=True, hide_index=True)
-        else:
-            st.success("🟢 No active roadway hazards detected in field of view.")
-
-        # Analytics / Blackbox History
+        # Performance KPIs, Live Graphs & Blackbox Audit History
         render_analytics(st.session_state.event_history)
 
         # Auto-advance for Preset Animated Driving Scenes
