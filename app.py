@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional, Union
 import numpy as np
 import cv2
 import tempfile
+import os
 from PIL import Image
 
 from brain import (
@@ -480,9 +481,12 @@ def initialize_session_state() -> None:
         "processed_steps": set(),
         "sandbox_mode_type": "📚 Preset Benchmark Catalog",
         "selected_scenario": list(SCENARIOS.keys())[0],
-        "vision_anim_running": True,  # Auto-run by default on entering vision mode
+        "vision_anim_running": True,  # Auto-play by default on entering vision mode
         "vision_frame_idx": 0,
-        "vision_play_speed": 0.08,
+        "video_anim_running": True,   # Auto-play by default for video files
+        "video_frame_idx": 0,
+        "video_temp_path": None,
+        "last_uploaded_name": None,
         "fault_fog": False,
         "fault_cam_blackout": False,
         "fault_lidar_noise": False,
@@ -533,6 +537,7 @@ def render_sidebar_controls():
                 st.session_state.simulation_running = True
             elif active_mode == "👁️ Live Vision & YOLO Perception":
                 st.session_state.vision_anim_running = True
+                st.session_state.video_anim_running = True
 
         st.divider()
 
@@ -586,7 +591,7 @@ def render_sidebar_controls():
             st.markdown("##### 👁️ Perception Configuration")
             sandbox_values["vision_source"] = st.radio(
                 "Input Source",
-                ["Preset Animated Driving Scenes", "Upload Image or Dashcam Video", "Live Camera Snapshot (Webcam)"],
+                ["Preset Animated Driving Scenes", "Upload Dashcam Video / Image", "Live Camera Snapshot (Webcam)"],
                 key="vision_source_radio"
             )
             sandbox_values["vision_conf"] = st.slider("YOLO Confidence Threshold", 0.10, 0.95, 0.35, 0.05, key="vision_conf_slider")
@@ -599,7 +604,7 @@ def render_sidebar_controls():
                 st.markdown("##### 🎬 Animation Playback")
                 vc1, vc2 = st.columns(2)
                 with vc1:
-                    if st.button("▶️ Play Live" if not st.session_state.vision_anim_running else "🟢 Playing", use_container_width=True, key="play_anim_btn"):
+                    if st.button("▶️ Play" if not st.session_state.vision_anim_running else "🟢 Playing", use_container_width=True, key="play_anim_btn"):
                         st.session_state.vision_anim_running = True
                 with vc2:
                     if st.button("⏸️ Pause", use_container_width=True, key="pause_anim_btn"):
@@ -608,6 +613,22 @@ def render_sidebar_controls():
                 if st.button("🔄 Rewind Animation", use_container_width=True, key="rewind_anim_btn"):
                     st.session_state.vision_frame_idx = 0
                     st.session_state.vision_anim_running = True
+                    st.rerun()
+
+            elif sandbox_values["vision_source"] == "Upload Dashcam Video / Image":
+                st.divider()
+                st.markdown("##### 🎬 Video Playback Controls")
+                p1, p2 = st.columns(2)
+                with p1:
+                    if st.button("▶️ Play Video" if not st.session_state.video_anim_running else "🟢 Playing", use_container_width=True, key="play_video_btn"):
+                        st.session_state.video_anim_running = True
+                with p2:
+                    if st.button("⏸️ Pause Video", use_container_width=True, key="pause_video_btn"):
+                        st.session_state.video_anim_running = False
+
+                if st.button("🔄 Rewind Video", use_container_width=True, key="rewind_video_btn"):
+                    st.session_state.video_frame_idx = 0
+                    st.session_state.video_anim_running = True
                     st.rerun()
 
         elif active_mode == "🔬 Scenarios & What-If Sandbox":
@@ -1111,13 +1132,13 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         <div class="mode-hero-banner">
             <div class="mode-hero-title">👁️ Computer Vision & YOLOv8 Neural Perception Suite</div>
             <div class="mode-hero-desc">
-                Simulates or ingests camera streams to demonstrate how deep learning object detection (YOLOv8) combines with 
-                OpenCV Hough lane tracking, monocular distance estimation, and closing velocity dynamics to feed the AI Brain.
+                Real-time video & animation perception stream: Deep learning object detection (YOLOv8) automatically tracks 
+                dynamic objects frame-by-frame, combining OpenCV Hough lane tracking, monocular distance estimation, and closing velocity dynamics.
             </div>
             <div class="mode-pillars-grid">
                 <div class="mode-pillar-card">
                     <div class="mode-pillar-header">🎯 What This Tests</div>
-                    <p class="mode-pillar-text">Optical object recognition, real-time bounding box tracking, and lane departure detection.</p>
+                    <p class="mode-pillar-text">Continuous video object detection, real-time bounding box tracking, and lane departure warnings.</p>
                 </div>
                 <div class="mode-pillar-card">
                     <div class="mode-pillar-header">🔬 Active AI Models</div>
@@ -1125,15 +1146,15 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
                 </div>
                 <div class="mode-pillar-card">
                     <div class="mode-pillar-header">🎮 Live Controls</div>
-                    <p class="mode-pillar-text">Auto-playing 15 FPS driving scenes, video/image upload, webcam capture, and sensor fusion toggle.</p>
+                    <p class="mode-pillar-text">Auto-playing video animation, frame scrubber slider, video upload, webcam capture, and sensor fusion.</p>
                 </div>
             </div>
             <div class="mode-hero-tags">
                 <span class="mode-tag">● YOLOv8 Deep Learning</span>
                 <span class="mode-tag">● OpenCV Hough Lane Assist</span>
+                <span class="mode-tag">● Real-Time Video Frame Stepping</span>
                 <span class="mode-tag">● Monocular Distance Model (d = f·H / h)</span>
-                <span class="mode-tag">● Auto-Playing 15 FPS Stream</span>
-                <span class="mode-tag">● Multi-Modal Radar Fusion</span>
+                <span class="mode-tag">● Auto-Playing 20 FPS Stream</span>
             </div>
         </div>
         """,
@@ -1149,8 +1170,13 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
     ego_state = EgoState(speed_kmh=speed_val, lane="center")
     frame_to_process = None
     override_boxes = None
+    is_video_mode = False
+    total_video_frames = 160
 
     if source_choice == "Preset Animated Driving Scenes":
+        is_video_mode = True
+        total_video_frames = 160
+
         sc_col1, sc_col2 = st.columns([1.2, 1.0])
         with sc_col1:
             sc_choice = st.selectbox(
@@ -1182,35 +1208,63 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
             frame_idx=st.session_state.vision_frame_idx
         )
 
-    elif source_choice == "Upload Image or Dashcam Video":
-        uploaded_file = st.file_uploader("Upload Dashcam Image or Video (JPG, PNG, MP4, AVI, MOV)", type=["jpg", "jpeg", "png", "mp4", "avi", "mov"], key="vision_uploader")
+    elif source_choice == "Upload Dashcam Video / Image":
+        uploaded_file = st.file_uploader(
+            "Upload Dashcam Video or Image (MP4, AVI, MOV, JPG, PNG)",
+            type=["mp4", "avi", "mov", "mkv", "jpg", "jpeg", "png", "webp"],
+            key="vision_uploader"
+        )
         if uploaded_file is not None:
             filename = uploaded_file.name.lower()
             if any(filename.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
                 image_pil = Image.open(uploaded_file).convert("RGB")
                 frame_to_process = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
             else:
-                tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-                tfile.write(uploaded_file.read())
-                cap = cv2.VideoCapture(tfile.name)
-                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
-                fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+                # Video processing mode
+                is_video_mode = True
 
-                v_col1, v_col2 = st.columns([1.2, 1.0])
-                with v_col1:
-                    st.caption(f"🎥 Video Loaded: {total_frames} frames ({fps} FPS)")
-                with v_col2:
-                    frame_num = st.slider("Video Frame Scrubber", 0, max(0, total_frames - 1), 0, 1, key="vid_scrubber")
+                # Cache video to temp file if new upload
+                if st.session_state.get("last_uploaded_name") != uploaded_file.name:
+                    tfile = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{uploaded_file.name}")
+                    tfile.write(uploaded_file.read())
+                    tfile.flush()
+                    tfile.close()
+                    st.session_state.video_temp_path = tfile.name
+                    st.session_state.last_uploaded_name = uploaded_file.name
+                    st.session_state.video_frame_idx = 0
+                    st.session_state.video_anim_running = True
 
-                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
-                ret, frame_read = cap.read()
-                cap.release()
-                if ret:
-                    frame_to_process = frame_read
-                else:
-                    st.error("Could not extract selected frame from video.")
+                temp_vid_path = st.session_state.get("video_temp_path")
+                if temp_vid_path and os.path.exists(temp_vid_path):
+                    cap = cv2.VideoCapture(temp_vid_path)
+                    total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
+                    fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+
+                    v_col1, v_col2 = st.columns([1.2, 1.0])
+                    with v_col1:
+                        status_str = "🟢 Auto-Playing Video" if st.session_state.video_anim_running else "⏸️ Paused"
+                        st.caption(f"🎥 Video Loaded: {total_video_frames} frames ({fps} FPS) — **{status_str}**")
+                    with v_col2:
+                        v_slider = st.slider(
+                            f"🎬 Video Frame Scrubber ({st.session_state.video_frame_idx}/{max(0, total_video_frames - 1)})",
+                            min_value=0,
+                            max_value=max(0, total_video_frames - 1),
+                            value=min(st.session_state.video_frame_idx, max(0, total_video_frames - 1)),
+                            step=1,
+                            key="vid_scrubber_slider"
+                        )
+                        if v_slider != st.session_state.video_frame_idx and not st.session_state.video_anim_running:
+                            st.session_state.video_frame_idx = v_slider
+
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, st.session_state.video_frame_idx)
+                    ret, frame_read = cap.read()
+                    cap.release()
+                    if ret:
+                        frame_to_process = frame_read
+                    else:
+                        st.error("Could not extract frame from uploaded video.")
         else:
-            st.info("👆 Please upload a dashcam image (.jpg/.png) or video clip (.mp4) above to run Computer Vision perception.")
+            st.info("👆 Please upload a dashcam video clip (.mp4 / .avi / .mov) or image above to start real-time YOLO detection.")
 
     elif source_choice == "Live Camera Snapshot (Webcam)":
         cam_snap = st.camera_input("Capture Dashcam Frame from Webcam", key="webcam_capture")
@@ -1321,10 +1375,17 @@ elif active_mode == "👁️ Live Vision & YOLO Perception":
         # Analytics / Blackbox History
         render_analytics(st.session_state.event_history)
 
-        # Auto-advance animated driving scene loop
+        # Auto-advance for Preset Animated Driving Scenes
         if source_choice == "Preset Animated Driving Scenes" and st.session_state.vision_anim_running:
-            time.sleep(0.08)
+            time.sleep(0.06)
             st.session_state.vision_frame_idx = (st.session_state.vision_frame_idx + 3) % 160
+            st.rerun()
+
+        # Auto-advance for Uploaded Video Streams
+        elif source_choice == "Upload Dashcam Video / Image" and is_video_mode and st.session_state.video_anim_running:
+            time.sleep(0.04)
+            step_stride = 2 if total_video_frames > 60 else 1
+            st.session_state.video_frame_idx = (st.session_state.video_frame_idx + step_stride) % max(1, total_video_frames)
             st.rerun()
 
 else:
